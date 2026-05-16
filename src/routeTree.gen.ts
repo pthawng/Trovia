@@ -13,7 +13,17 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
+import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app.index'
+import { Route as AuthenticatedAppSavedRouteImport } from './routes/_authenticated/app.saved'
+import { Route as AuthenticatedAppRequestsRouteImport } from './routes/_authenticated/app.requests'
+import { Route as AuthenticatedAppProfileRouteImport } from './routes/_authenticated/app.profile'
+import { Route as AuthenticatedAppMessagesRouteImport } from './routes/_authenticated/app.messages'
+import { Route as AuthenticatedAppLandlordRouteImport } from './routes/_authenticated/app.landlord'
+import { Route as AuthenticatedAppExploreRouteImport } from './routes/_authenticated/app.explore'
+import { Route as AuthenticatedAppBecomeLandlordRouteImport } from './routes/_authenticated/app.become-landlord'
+import { Route as AuthenticatedAppPropertyIdRouteImport } from './routes/_authenticated/app.property.$id'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
@@ -35,11 +45,65 @@ const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
   path: '/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedRoute = AuthenticatedRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAppIndexRoute = AuthenticatedAppIndexRouteImport.update({
+  id: '/app/',
+  path: '/app/',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedAppSavedRoute = AuthenticatedAppSavedRouteImport.update({
+  id: '/app/saved',
+  path: '/app/saved',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedAppRequestsRoute =
+  AuthenticatedAppRequestsRouteImport.update({
+    id: '/app/requests',
+    path: '/app/requests',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedAppProfileRoute = AuthenticatedAppProfileRouteImport.update({
+  id: '/app/profile',
+  path: '/app/profile',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedAppMessagesRoute =
+  AuthenticatedAppMessagesRouteImport.update({
+    id: '/app/messages',
+    path: '/app/messages',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedAppLandlordRoute =
+  AuthenticatedAppLandlordRouteImport.update({
+    id: '/app/landlord',
+    path: '/app/landlord',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedAppExploreRoute = AuthenticatedAppExploreRouteImport.update({
+  id: '/app/explore',
+  path: '/app/explore',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedAppBecomeLandlordRoute =
+  AuthenticatedAppBecomeLandlordRouteImport.update({
+    id: '/app/become-landlord',
+    path: '/app/become-landlord',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedAppPropertyIdRoute =
+  AuthenticatedAppPropertyIdRouteImport.update({
+    id: '/app/property/$id',
+    path: '/app/property/$id',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -47,6 +111,15 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/app/become-landlord': typeof AuthenticatedAppBecomeLandlordRoute
+  '/app/explore': typeof AuthenticatedAppExploreRoute
+  '/app/landlord': typeof AuthenticatedAppLandlordRoute
+  '/app/messages': typeof AuthenticatedAppMessagesRoute
+  '/app/profile': typeof AuthenticatedAppProfileRoute
+  '/app/requests': typeof AuthenticatedAppRequestsRoute
+  '/app/saved': typeof AuthenticatedAppSavedRoute
+  '/app/': typeof AuthenticatedAppIndexRoute
+  '/app/property/$id': typeof AuthenticatedAppPropertyIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -54,14 +127,33 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/app/become-landlord': typeof AuthenticatedAppBecomeLandlordRoute
+  '/app/explore': typeof AuthenticatedAppExploreRoute
+  '/app/landlord': typeof AuthenticatedAppLandlordRoute
+  '/app/messages': typeof AuthenticatedAppMessagesRoute
+  '/app/profile': typeof AuthenticatedAppProfileRoute
+  '/app/requests': typeof AuthenticatedAppRequestsRoute
+  '/app/saved': typeof AuthenticatedAppSavedRoute
+  '/app': typeof AuthenticatedAppIndexRoute
+  '/app/property/$id': typeof AuthenticatedAppPropertyIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/_authenticated/app/become-landlord': typeof AuthenticatedAppBecomeLandlordRoute
+  '/_authenticated/app/explore': typeof AuthenticatedAppExploreRoute
+  '/_authenticated/app/landlord': typeof AuthenticatedAppLandlordRoute
+  '/_authenticated/app/messages': typeof AuthenticatedAppMessagesRoute
+  '/_authenticated/app/profile': typeof AuthenticatedAppProfileRoute
+  '/_authenticated/app/requests': typeof AuthenticatedAppRequestsRoute
+  '/_authenticated/app/saved': typeof AuthenticatedAppSavedRoute
+  '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
+  '/_authenticated/app/property/$id': typeof AuthenticatedAppPropertyIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -71,19 +163,53 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/reset-password'
+    | '/app/become-landlord'
+    | '/app/explore'
+    | '/app/landlord'
+    | '/app/messages'
+    | '/app/profile'
+    | '/app/requests'
+    | '/app/saved'
+    | '/app/'
+    | '/app/property/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/forgot-password' | '/login' | '/register' | '/reset-password'
-  id:
-    | '__root__'
+  to:
     | '/'
     | '/forgot-password'
     | '/login'
     | '/register'
     | '/reset-password'
+    | '/app/become-landlord'
+    | '/app/explore'
+    | '/app/landlord'
+    | '/app/messages'
+    | '/app/profile'
+    | '/app/requests'
+    | '/app/saved'
+    | '/app'
+    | '/app/property/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/forgot-password'
+    | '/login'
+    | '/register'
+    | '/reset-password'
+    | '/_authenticated/app/become-landlord'
+    | '/_authenticated/app/explore'
+    | '/_authenticated/app/landlord'
+    | '/_authenticated/app/messages'
+    | '/_authenticated/app/profile'
+    | '/_authenticated/app/requests'
+    | '/_authenticated/app/saved'
+    | '/_authenticated/app/'
+    | '/_authenticated/app/property/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
   RegisterRoute: typeof RegisterRoute
@@ -120,6 +246,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -127,11 +260,103 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/app/': {
+      id: '/_authenticated/app/'
+      path: '/app'
+      fullPath: '/app/'
+      preLoaderRoute: typeof AuthenticatedAppIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/app/saved': {
+      id: '/_authenticated/app/saved'
+      path: '/app/saved'
+      fullPath: '/app/saved'
+      preLoaderRoute: typeof AuthenticatedAppSavedRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/app/requests': {
+      id: '/_authenticated/app/requests'
+      path: '/app/requests'
+      fullPath: '/app/requests'
+      preLoaderRoute: typeof AuthenticatedAppRequestsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/app/profile': {
+      id: '/_authenticated/app/profile'
+      path: '/app/profile'
+      fullPath: '/app/profile'
+      preLoaderRoute: typeof AuthenticatedAppProfileRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/app/messages': {
+      id: '/_authenticated/app/messages'
+      path: '/app/messages'
+      fullPath: '/app/messages'
+      preLoaderRoute: typeof AuthenticatedAppMessagesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/app/landlord': {
+      id: '/_authenticated/app/landlord'
+      path: '/app/landlord'
+      fullPath: '/app/landlord'
+      preLoaderRoute: typeof AuthenticatedAppLandlordRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/app/explore': {
+      id: '/_authenticated/app/explore'
+      path: '/app/explore'
+      fullPath: '/app/explore'
+      preLoaderRoute: typeof AuthenticatedAppExploreRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/app/become-landlord': {
+      id: '/_authenticated/app/become-landlord'
+      path: '/app/become-landlord'
+      fullPath: '/app/become-landlord'
+      preLoaderRoute: typeof AuthenticatedAppBecomeLandlordRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/app/property/$id': {
+      id: '/_authenticated/app/property/$id'
+      path: '/app/property/$id'
+      fullPath: '/app/property/$id'
+      preLoaderRoute: typeof AuthenticatedAppPropertyIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
   }
 }
 
+interface AuthenticatedRouteChildren {
+  AuthenticatedAppBecomeLandlordRoute: typeof AuthenticatedAppBecomeLandlordRoute
+  AuthenticatedAppExploreRoute: typeof AuthenticatedAppExploreRoute
+  AuthenticatedAppLandlordRoute: typeof AuthenticatedAppLandlordRoute
+  AuthenticatedAppMessagesRoute: typeof AuthenticatedAppMessagesRoute
+  AuthenticatedAppProfileRoute: typeof AuthenticatedAppProfileRoute
+  AuthenticatedAppRequestsRoute: typeof AuthenticatedAppRequestsRoute
+  AuthenticatedAppSavedRoute: typeof AuthenticatedAppSavedRoute
+  AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
+  AuthenticatedAppPropertyIdRoute: typeof AuthenticatedAppPropertyIdRoute
+}
+
+const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedAppBecomeLandlordRoute: AuthenticatedAppBecomeLandlordRoute,
+  AuthenticatedAppExploreRoute: AuthenticatedAppExploreRoute,
+  AuthenticatedAppLandlordRoute: AuthenticatedAppLandlordRoute,
+  AuthenticatedAppMessagesRoute: AuthenticatedAppMessagesRoute,
+  AuthenticatedAppProfileRoute: AuthenticatedAppProfileRoute,
+  AuthenticatedAppRequestsRoute: AuthenticatedAppRequestsRoute,
+  AuthenticatedAppSavedRoute: AuthenticatedAppSavedRoute,
+  AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,
+  AuthenticatedAppPropertyIdRoute: AuthenticatedAppPropertyIdRoute,
+}
+
+const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
+  AuthenticatedRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRoute: AuthenticatedRouteWithChildren,
   ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,
@@ -140,3 +365,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
