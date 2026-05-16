@@ -1,6 +1,7 @@
 import { motion } from "motion/react";
 import { Home, Menu } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Link } from "@tanstack/react-router";
 
 const links = [
   { label: "Explore", href: "#explore" },
@@ -51,12 +52,12 @@ export function Navbar() {
             ))}
           </nav>
           <div className="flex items-center gap-2">
-            <button className="hidden sm:inline-flex px-4 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+            <Link to="/login" className="hidden sm:inline-flex px-4 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
               Login
-            </button>
-            <button className="inline-flex items-center gap-1.5 rounded-lg bg-foreground text-background px-4 py-2.5 text-sm font-medium shadow-sm hover:opacity-90 transition-opacity">
+            </Link>
+            <Link to="/register" className="inline-flex items-center gap-1.5 rounded-lg bg-foreground text-background px-4 py-2.5 text-sm font-medium shadow-sm hover:opacity-90 transition-opacity">
               Get Started
-            </button>
+            </Link>
             <button className="md:hidden p-2 rounded-lg hover:bg-secondary" aria-label="Menu">
               <Menu className="h-5 w-5" />
             </button>
