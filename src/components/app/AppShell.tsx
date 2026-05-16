@@ -14,14 +14,15 @@ import { useAuth } from "@/lib/auth-context";
 import { useTheme } from "@/lib/theme-context";
 import { cn } from "@/lib/utils";
 
-const nav = [
+type NavItem = { to: string; label: string; icon: typeof Home; exact?: boolean; badge?: number };
+const nav: NavItem[] = [
   { to: "/app", label: "Dashboard", icon: Home, exact: true },
   { to: "/app/explore", label: "Explore", icon: Compass },
   { to: "/app/saved", label: "Saved", icon: Heart },
   { to: "/app/messages", label: "Messages", icon: MessageSquare, badge: 3 },
   { to: "/app/requests", label: "Rental requests", icon: FileText },
   { to: "/app/profile", label: "Profile", icon: User },
-] as const;
+];
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { user, signOut } = useAuth();
