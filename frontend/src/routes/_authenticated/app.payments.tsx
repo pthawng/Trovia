@@ -1,7 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { CreditCard, Calendar, CheckCircle2, AlertCircle, Receipt, X, ShieldCheck, QrCode } from "lucide-react";
+import { 
+  CreditCard, Calendar, CheckCircle2, AlertCircle, Receipt, X, 
+  ShieldCheck, QrCode, ArrowRight, HelpCircle
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { PaymentService, type Payment } from "@/services/payment.service";
@@ -58,6 +61,11 @@ function PaymentsPage() {
   const activeBills = payments.filter((p) => p.status === "PENDING" && p.tenantId === currentUser?.id);
   const paymentHistory = payments.filter((p) => p.status === "PAID");
 
+  // Move-in bills matching deposit and first month rent
+  const depositBill = activeBills.find((b) => b.type === "DEPOSIT");
+  const rentBill = activeBills.find((b) => b.type === "FIRST_MONTH_RENT" || b.type === "MONTHLY_RENT");
+  const hasMoveInBills = depositBill || rentBill;
+
   return (
     <div className="space-y-8 max-w-5xl">
       <div>
@@ -77,15 +85,116 @@ function PaymentsPage() {
           <div className="h-44 bg-muted animate-pulse rounded-2xl" />
         </div>
       ) : (
-        <div className="grid lg:grid-cols-3 gap-8">
+        <div className="grid lg:grid-cols-3 gap-8 items-start">
           
           {/* Left Columns - Bills & History */}
           <div className="lg:col-span-2 space-y-8">
             
-            {/* Active Bills */}
+            {/* SECTION: Thanh toán cần thực hiện (Move-in Bills Summary Block) */}
+            {hasMoveInBills && (
+              <motion.section 
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/5 via-background to-secondary/30 p-6 shadow-md relative overflow-hidden"
+              >
+                <div className="absolute top-0 right-0 p-6 opacity-[0.03] pointer-events-none">
+                  <CreditCard className="h-40 w-40 text-foreground" />
+                </div>
+
+                <div className="flex items-center gap-2 pb-3 mb-5 border-b border-border/60">
+                  <span className="flex h-2.5 w-2.5 rounded-full bg-primary animate-ping shrink-0" />
+                  <h3 className="font-bold text-base text-foreground">Thanh toán cần thực hiện</h3>
+                </div>
+
+                {/* Cards for each fee item */}
+                <div className="grid sm:grid-cols-3 gap-4 mb-6">
+                  {depositBill && (
+                    <div className="rounded-2xl border border-border bg-surface p-4 text-xs space-y-1 relative shadow-sm">
+                      <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Tiền cọc (Deposit)</span>
+                      <span className="font-bold text-foreground block text-sm mt-1">{Number(depositBill.amount).toLocaleString('vi-VN')} đ</span>
+                      <span className="text-[9px] text-amber-600 bg-amber-50 rounded-full px-2 py-0.5 mt-2.5 inline-block font-semibold">Chờ thanh toán</span>
+                    </div>
+                  )}
+                  {rentBill && (
+                    <div className="rounded-2xl border border-border bg-surface p-4 text-xs space-y-1 relative shadow-sm">
+                      <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Tháng đầu (First Month)</span>
+                      <span className="font-bold text-foreground block text-sm mt-1">{Number(rentBill.amount).toLocaleString('vi-VN')} đ</span>
+                      <span className="text-[9px] text-amber-600 bg-amber-50 rounded-full px-2 py-0.5 mt-2.5 inline-block font-semibold">Chờ thanh toán</span>
+                    </div>
+                  )}
+                  <div className="rounded-2xl border border-border bg-surface p-4 text-xs space-y-1 relative shadow-sm">
+                    <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Phí dịch vụ (Service fee)</span>
+                    <span className="font-bold text-foreground block text-sm mt-1">100.000 đ</span>
+                    <span className="text-[9px] text-emerald-600 bg-emerald-50 rounded-full px-2 py-0.5 mt-2.5 inline-block font-semibold font-medium">Cố định</span>
+                  </div>
+                </div>
+
+                {/* Summary block */}
+                <div className="rounded-2xl bg-secondary/25 p-4 border border-border/40 text-xs space-y-2 mb-6">
+                  {depositBill && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-muted-foreground">Tiền cọc:</span>
+                      <span className="font-semibold text-foreground">{Number(depositBill.amount).toLocaleString('vi-VN')}đ</span>
+                    </div>
+                  )}
+                  {rentBill && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-muted-foreground">Tháng đầu:</span>
+                      <span className="font-semibold text-foreground">{Number(rentBill.amount).toLocaleString('vi-VN')}đ</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground">Phí dịch vụ:</span>
+                    <span className="font-semibold text-foreground">100.000đ</span>
+                  </div>
+                  <div className="flex justify-between items-center font-bold pt-2 border-t border-border/60 text-sm">
+                    <span className="text-foreground">Tổng cộng:</span>
+                    <span className="text-primary">
+                      {Number((depositBill?.amount || 0) + (rentBill?.amount || 0) + 100000).toLocaleString('vi-VN')}đ
+                    </span>
+                  </div>
+                </div>
+
+                {/* Bulk pay button */}
+                <div className="flex justify-end">
+                  <Button 
+                    className="w-full sm:w-auto px-6 h-11 text-xs font-bold rounded-xl bg-primary text-primary-foreground hover:bg-primary/95 flex items-center justify-center gap-1.5 shadow-[var(--shadow-glow)] transition"
+                    onClick={() => {
+                      const totalAmount = (depositBill?.amount || 0) + (rentBill?.amount || 0) + 100000;
+                      setActivePayInvoice({
+                        id: depositBill?.id || rentBill?.id || "bulk",
+                        amount: totalAmount,
+                        type: "DEPOSIT",
+                        contractId: depositBill?.contractId || rentBill?.contractId || "",
+                        tenantId: currentUser?.id || "",
+                        status: "PENDING",
+                        dueDate: depositBill?.dueDate || new Date().toISOString(),
+                        paidAt: null,
+                        providerTransactionId: null,
+                        createdAt: new Date().toISOString(),
+                        updatedAt: new Date().toISOString(),
+                        contract: depositBill?.contract || rentBill?.contract || {
+                          property: { title: "Căn hộ của bạn", address: "", city: "", district: "" },
+                          room: { title: "" }
+                        },
+                        landlord: depositBill?.landlord || rentBill?.landlord || { fullName: "" },
+                        tenant: depositBill?.tenant || rentBill?.tenant || { fullName: "" },
+                        // Custom bulk flags
+                        isBulk: true,
+                        bulkIds: [depositBill?.id, rentBill?.id].filter(Boolean) as string[]
+                      } as any);
+                    }}
+                  >
+                    Thanh toán ngay <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </motion.section>
+            )}
+
+            {/* General Bills Section */}
             <section className="space-y-4">
               <h2 className="text-xl font-semibold tracking-tight flex items-center gap-2 text-foreground">
-                <CreditCard className="h-5 w-5 text-primary" /> Hóa đơn cần thanh toán
+                <CreditCard className="h-5 w-5 text-primary" /> Hóa đơn cần thanh toán khác
               </h2>
               <div className="space-y-3">
                 {activeBills.length === 0 ? (
@@ -96,9 +205,9 @@ function PaymentsPage() {
                   activeBills.map((b) => {
                     const formattedDue = new Date(b.dueDate).toLocaleDateString("vi-VN", { dateStyle: "medium" });
                     return (
-                      <div key={b.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-5 rounded-2xl bg-surface-elevated ring-1 ring-border border border-border/80 hover:shadow-elegant transition gap-4">
+                      <div key={b.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-5 rounded-2xl bg-surface border border-border hover:shadow-md transition gap-4">
                         <div className="flex items-start gap-3">
-                          <div className="h-10 w-10 rounded-xl bg-primary-soft text-primary grid place-items-center shrink-0 border border-primary/20">
+                          <div className="h-10 w-10 rounded-xl bg-primary-soft text-primary grid place-items-center shrink-0 border border-primary/10">
                             <CreditCard className="h-4.5 w-4.5" />
                           </div>
                           <div>
@@ -117,7 +226,7 @@ function PaymentsPage() {
                             <div className="font-bold text-xs text-foreground">{Number(b.amount).toLocaleString('vi-VN')} VND</div>
                             <span className="text-[9px] font-semibold text-amber-600 bg-amber-50 rounded-full px-2 py-0.5 mt-0.5 inline-block text-center border border-amber-200">Đợi thanh toán</span>
                           </div>
-                          <Button size="sm" className="font-semibold shadow-[var(--shadow-glow)] rounded-xl text-xs h-9 cursor-pointer" onClick={() => setActivePayInvoice(b)}>
+                          <Button size="sm" className="font-semibold shadow-sm rounded-xl text-xs h-9 cursor-pointer" onClick={() => setActivePayInvoice(b)}>
                             Thanh toán
                           </Button>
                         </div>
@@ -131,9 +240,9 @@ function PaymentsPage() {
             {/* Payment History */}
             <section className="space-y-4">
               <h2 className="text-xl font-semibold tracking-tight flex items-center gap-2 text-foreground">
-                <Receipt className="h-5 w-5 text-primary" /> Lịch sử thanh toán
+                <Receipt className="h-5 w-5 text-primary" /> Lịch sử giao dịch thành công
               </h2>
-              <div className="rounded-2xl bg-surface-elevated ring-1 ring-border overflow-hidden divide-y divide-border border border-border">
+              <div className="rounded-2xl bg-surface ring-1 ring-border overflow-hidden divide-y divide-border border border-border">
                 {paymentHistory.length === 0 ? (
                   <div className="p-8 text-center text-xs text-muted-foreground bg-secondary/10">
                     Chưa có giao dịch lịch sử nào được ghi nhận.
@@ -142,7 +251,7 @@ function PaymentsPage() {
                   paymentHistory.map((h) => {
                     const formattedPaid = h.paidAt ? new Date(h.paidAt).toLocaleDateString("vi-VN", { dateStyle: "medium" }) : "Vừa xong";
                     return (
-                      <div key={h.id} className="flex items-center justify-between p-4 hover:bg-secondary/10 transition">
+                      <div key={h.id} className="flex items-center justify-between p-4 hover:bg-secondary/5 transition">
                         <div className="flex items-center gap-3">
                           <div className="h-9 w-9 rounded-lg bg-emerald-50 text-emerald-700 grid place-items-center shrink-0 border border-emerald-200">
                             <CheckCircle2 className="h-4.5 w-4.5" />
@@ -173,8 +282,8 @@ function PaymentsPage() {
           <div className="space-y-8">
             
             {/* Preferred Payout */}
-            <section className="rounded-2xl bg-surface-elevated ring-1 ring-border p-6 space-y-4 border border-border">
-              <h3 className="text-sm font-semibold tracking-tight text-foreground">Phương thức đề xuất</h3>
+            <section className="rounded-2xl bg-surface border border-border p-6 space-y-4 shadow-sm">
+              <h3 className="text-sm font-bold tracking-tight text-foreground">Phương thức đề xuất</h3>
               <div className="rounded-xl border border-border p-4 flex items-center gap-3 bg-secondary/10">
                 <div className="h-10 w-10 rounded-lg bg-primary/10 text-primary grid place-items-center font-bold text-xs border border-primary/20">
                   QR
@@ -190,9 +299,11 @@ function PaymentsPage() {
             </section>
 
             {/* Quick FAQs */}
-            <section className="rounded-2xl bg-secondary/20 p-6 space-y-3 border border-border/55 text-xs text-muted-foreground">
-              <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Hỗ trợ thanh toán</h4>
-              <div className="space-y-2">
+            <section className="rounded-2xl bg-secondary/20 p-6 space-y-3 border border-border text-xs text-muted-foreground">
+              <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1">
+                <HelpCircle className="h-3.5 w-3.5 text-primary" /> Hỗ trợ thanh toán
+              </h4>
+              <div className="space-y-3 pt-1">
                 <div>
                   <h5 className="font-semibold text-foreground">Tiền cọc giữ chỗ có được bảo vệ không?</h5>
                   <p className="text-[11px] mt-0.5 leading-relaxed">Có, toàn bộ khoản cọc được giữ an toàn trên hệ thống Trovia Trust cho tới khi bạn hoàn thành việc nhận phòng.</p>
@@ -213,7 +324,6 @@ function PaymentsPage() {
       <AnimatePresence>
         {activePayInvoice && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            {/* Overlay backdrop */}
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -222,17 +332,15 @@ function PaymentsPage() {
               className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             />
             
-            {/* Modal Box */}
             <motion.div 
               initial={{ opacity: 0, scale: 0.95, y: 15 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 15 }}
               className="relative w-full max-w-sm bg-surface ring-1 ring-border rounded-3xl p-6 shadow-2xl z-10 border border-border text-center space-y-5"
             >
-              {/* Close Button */}
               <button 
                 onClick={() => setActivePayInvoice(null)}
-                className="absolute top-4 right-4 h-8 w-8 rounded-full bg-secondary hover:bg-border grid place-items-center transition"
+                className="absolute top-4 right-4 h-8 w-8 rounded-full bg-secondary hover:bg-border grid place-items-center transition cursor-pointer"
                 aria-label="Close"
               >
                 <X className="h-4 w-4 text-foreground" />
@@ -242,7 +350,7 @@ function PaymentsPage() {
                 <span className="text-[10px] font-bold tracking-widest text-primary uppercase bg-primary-soft/30 px-3 py-1 rounded-full border border-primary/20">VietQR Thanh toán nhanh</span>
               </div>
 
-              {/* Fake VietQR Code Generator */}
+              {/* VietQR Code Generator */}
               <div className="bg-white p-4 rounded-2xl inline-block shadow-inner border border-gray-100 mx-auto">
                 <div className="relative h-44 w-44 bg-gray-50 flex items-center justify-center border border-dashed border-gray-200 rounded-xl">
                   <QrCode className="h-28 w-28 text-foreground" />
@@ -254,7 +362,9 @@ function PaymentsPage() {
 
               <div className="space-y-1">
                 <h3 className="font-bold text-base text-foreground">{Number(activePayInvoice.amount).toLocaleString('vi-VN')} VND</h3>
-                <p className="text-xs text-muted-foreground">{typeLabels[activePayInvoice.type]} · {activePayInvoice.contract?.property?.title}</p>
+                <p className="text-xs text-muted-foreground">
+                  {(activePayInvoice as any).isBulk ? "Tổng thanh toán giữ chỗ" : typeLabels[activePayInvoice.type]}
+                </p>
               </div>
 
               <div className="text-[11px] text-muted-foreground leading-relaxed bg-secondary/40 p-3 rounded-xl border border-border/40 text-left space-y-1">
@@ -267,7 +377,24 @@ function PaymentsPage() {
               <div className="pt-2 space-y-2">
                 <Button 
                   disabled={payMutation.isPending}
-                  onClick={() => payMutation.mutate(activePayInvoice.id)}
+                  onClick={async () => {
+                    if ((activePayInvoice as any).isBulk) {
+                      const ids = (activePayInvoice as any).bulkIds || [];
+                      try {
+                        // Mark all bulk IDs as paid in parallel
+                        await Promise.all(ids.map((id: string) => PaymentService.markAsPaid(id)));
+                        toast.success("Kích hoạt hợp đồng thành công! Lịch lưu trú đã được thiết lập.");
+                        setActivePayInvoice(null);
+                        queryClient.invalidateQueries({ queryKey: ["payments"] });
+                        queryClient.invalidateQueries({ queryKey: ["contracts"] });
+                        queryClient.invalidateQueries({ queryKey: ["tenancies"] });
+                      } catch (err: any) {
+                        toast.error(err.response?.data?.message || "Thanh toán thất bại.");
+                      }
+                    } else {
+                      payMutation.mutate(activePayInvoice.id);
+                    }
+                  }}
                   className="w-full rounded-xl h-11 text-xs font-semibold shadow-[var(--shadow-glow)]"
                 >
                   {payMutation.isPending ? "Đang xác thực giao dịch..." : "Xác nhận đã chuyển khoản"}

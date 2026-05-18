@@ -25,6 +25,18 @@ export class SavedPropertiesController {
     private readonly savedPropertiesService: SavedPropertiesService,
   ) {}
 
+  @Get('count')
+  @ApiOperation({ summary: 'Get the number of saved property listings' })
+  async count(@GetUser('id') tenantId: string) {
+    return this.savedPropertiesService.count(tenantId);
+  }
+
+  @Get('recommendations')
+  @ApiOperation({ summary: 'Get property recommendations based on saved behavior' })
+  async getRecommendations(@GetUser('id') tenantId: string) {
+    return this.savedPropertiesService.getRecommendations(tenantId);
+  }
+
   @Post(':propertyId')
   @ApiOperation({ summary: 'Save a rental property listing to your favorites' })
   @ApiResponse({ status: 201, description: 'Property saved successfully' })

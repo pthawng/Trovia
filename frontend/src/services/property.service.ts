@@ -30,11 +30,15 @@ export interface Room {
   propertyId: string;
   title: string;
   description: string | null;
-  price: string; // Decimal returned as string
+  price: number;
   area: number;
-  deposit: string;
+  deposit: number;
   capacity: number;
   isAvailable: boolean;
+  roomNumber?: string | null;
+  floor?: number | null;
+  status?: string | null;
+  genderRestriction?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -143,6 +147,16 @@ export const PropertyService = {
 
   delete: async (id: string): Promise<{ message: string }> => {
     const response = await api.delete(`/properties/${id}`);
+    return response.data?.data || response.data;
+  },
+
+  publish: async (id: string): Promise<Property> => {
+    const response = await api.post(`/properties/${id}/publish`);
+    return response.data?.data || response.data;
+  },
+
+  getAmenities: async (): Promise<Amenity[]> => {
+    const response = await api.get("/properties/amenities");
     return response.data?.data || response.data;
   },
 };

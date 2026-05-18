@@ -13,6 +13,8 @@ export interface MaintenanceRequest {
   images: string[];
   priority: MaintenancePriority;
   status: MaintenanceStatus;
+  assignedTo?: string | null;
+  comment?: string | null;
   createdAt: string;
   updatedAt: string;
   property: {
@@ -58,6 +60,14 @@ export const MaintenanceService = {
 
   updateStatus: async (id: string, status: MaintenanceStatus): Promise<MaintenanceRequest> => {
     const response = await api.patch(`/maintenance/${id}/status`, { status });
+    return response.data?.data || response.data;
+  },
+
+  updateDetails: async (
+    id: string,
+    data: { status?: MaintenanceStatus; assignedTo?: string; comment?: string }
+  ): Promise<MaintenanceRequest> => {
+    const response = await api.patch(`/maintenance/${id}`, data);
     return response.data?.data || response.data;
   },
 };

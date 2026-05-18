@@ -5,9 +5,11 @@ import { Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async () => {
-    const token = typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
-    if (!token) {
-      throw redirect({ to: "/login" });
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("accessToken");
+      if (!token) {
+        throw redirect({ to: "/login" });
+      }
     }
   },
   component: AuthenticatedLayout,

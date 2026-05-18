@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ListingService, type SearchListingsFilters } from "@/services/listing.service";
 import { BookingRequestService } from "@/services/booking-request.service";
+import { SavedPropertyService } from "@/services/saved-property.service";
 import type { PropertyType } from "@/services/property.service";
 import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
@@ -52,8 +53,13 @@ function Explore() {
   const [moveInDate, setMoveInDate] = useState("");
   const [bookingNote, setBookingNote] = useState("");
   
-  // Saved properties state (Client-side mock for instant toggling, can sync with DB)
-  const [savedPropertyIds, setSavedPropertyIds] = useState<string[]>(["1", "3"]);
+  // Fetch real saved properties for the user
+  const { data: savedList = [] } = useQuery({
+    queryKey: ["savedProperties"],
+    queryFn: () => SavedPropertyService.getSavedListings(),
+  });
+
+  const savedPropertyIds = useMemo(() => savedList.map((p) => p.id), [savedList]);
 
   const activeChipFilter = filterChips.find((c) => c.label === activeChip)?.filter || {};
 
@@ -74,6 +80,72 @@ function Explore() {
   });
 
   const listings = data?.listings || [];
+
+  // Toggle Save Listing optimistic mutation
+  const toggleSaveMutation = useMutation({
+    mutationFn: async ({ id, isCurrentlySaved }: { id: string; isCurrentlySaved: boolean }) => {
+      if (isCurrentlySaved) {
+        return SavedPropertyService.unsave(id);
+      } else {
+        return SavedPropertyService.save(id);
+      }
+    },
+    onMutate: async ({ id, isCurrentlySaved }) => {
+      // Cancel outstanding queries so they don't overwrite our optimistic update
+      await queryClient.cancelQueries({ queryKey: ["savedProperties"] });
+      await queryClient.cancelQueries({ queryKey: ["savedCount"] });
+
+      // Snapshot the previous values
+      const previousSaved = queryClient.getQueryData<any[]>(["savedProperties"]) || [];
+      const previousCount = queryClient.getQueryData<{ count: number }>(["savedCount"]) || { count: 0 };
+
+      // Optimistically update
+      if (isCurrentlySaved) {
+        queryClient.setQueryData(
+          ["savedProperties"],
+          previousSaved.filter((p) => p.id !== id)
+        );
+        queryClient.setQueryData(["savedCount"], { count: Math.max(0, previousCount.count - 1) });
+      } else {
+        // Find property in search list to append to saved properties
+        const found = listings.find((p) => p.id === id);
+        if (found) {
+          queryClient.setQueryData(["savedProperties"], [...previousSaved, found]);
+        }
+        queryClient.setQueryData(["savedCount"], { count: previousCount.count + 1 });
+      }
+
+      return { previousSaved, previousCount };
+    },
+    onError: (err, variables, context) => {
+      // Rollback cache state
+      if (context) {
+        queryClient.setQueryData(["savedProperties"], context.previousSaved);
+        queryClient.setQueryData(["savedCount"], context.previousCount);
+      }
+      toast.error("Failed to update save status.");
+    },
+    onSuccess: (data, variables) => {
+      if (variables.isCurrentlySaved) {
+        toast.success("Removed from saved list");
+      } else {
+        toast.success("Saved to your favorites!");
+      }
+    },
+    onSettled: () => {
+      // Sync in-flight queries
+      queryClient.invalidateQueries({ queryKey: ["savedProperties"] });
+      queryClient.invalidateQueries({ queryKey: ["savedCount"] });
+      queryClient.invalidateQueries({ queryKey: ["savedRecommendations"] });
+    },
+  });
+
+  const handleToggleSave = (e: React.MouseEvent, id: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const isCurrentlySaved = savedPropertyIds.includes(id);
+    toggleSaveMutation.mutate({ id, isCurrentlySaved });
+  };
 
   // Submit rental application mutation
   const bookingMutation = useMutation({
@@ -110,19 +182,6 @@ function Explore() {
     
     setAppliedFilters(newFilters);
     toast.success("Applied search parameters!");
-  };
-
-  // Toggle Save Listing
-  const handleToggleSave = (e: React.MouseEvent, id: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (savedPropertyIds.includes(id)) {
-      setSavedPropertyIds((prev) => prev.filter((pId) => pId !== id));
-      toast.success("Removed from saved list");
-    } else {
-      setSavedPropertyIds((prev) => [...prev, id]);
-      toast.success("Saved to your favorites!");
-    }
   };
 
   // Handle booking form submission

@@ -27,6 +27,13 @@ import { Route as AuthenticatedAppContractsRouteImport } from './routes/_authent
 import { Route as AuthenticatedAppBecomeLandlordRouteImport } from './routes/_authenticated/app.become-landlord'
 import { Route as AuthenticatedAppTenantDashboardRouteImport } from './routes/_authenticated/app.tenant.dashboard'
 import { Route as AuthenticatedAppPropertyIdRouteImport } from './routes/_authenticated/app.property.$id'
+import { Route as AuthenticatedAppLandlordPropertiesRouteImport } from './routes/_authenticated/app.landlord.properties'
+import { Route as AuthenticatedAppLandlordOnboardingRouteImport } from './routes/_authenticated/app.landlord.onboarding'
+import { Route as AuthenticatedAppContractsIdRouteImport } from './routes/_authenticated/app.contracts.$id'
+import { Route as AuthenticatedAppLandlordUnitsIdRouteImport } from './routes/_authenticated/app.landlord.units.$id'
+import { Route as AuthenticatedAppLandlordPropertiesNewRouteImport } from './routes/_authenticated/app.landlord.properties.new'
+import { Route as AuthenticatedAppLandlordPropertiesIdRouteImport } from './routes/_authenticated/app.landlord.properties.$id'
+import { Route as AuthenticatedAppLandlordPropertiesIdUnitsRouteImport } from './routes/_authenticated/app.landlord.properties.$id.units'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
@@ -125,6 +132,48 @@ const AuthenticatedAppPropertyIdRoute =
     path: '/app/property/$id',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedAppLandlordPropertiesRoute =
+  AuthenticatedAppLandlordPropertiesRouteImport.update({
+    id: '/properties',
+    path: '/properties',
+    getParentRoute: () => AuthenticatedAppLandlordRoute,
+  } as any)
+const AuthenticatedAppLandlordOnboardingRoute =
+  AuthenticatedAppLandlordOnboardingRouteImport.update({
+    id: '/onboarding',
+    path: '/onboarding',
+    getParentRoute: () => AuthenticatedAppLandlordRoute,
+  } as any)
+const AuthenticatedAppContractsIdRoute =
+  AuthenticatedAppContractsIdRouteImport.update({
+    id: '/$id',
+    path: '/$id',
+    getParentRoute: () => AuthenticatedAppContractsRoute,
+  } as any)
+const AuthenticatedAppLandlordUnitsIdRoute =
+  AuthenticatedAppLandlordUnitsIdRouteImport.update({
+    id: '/units/$id',
+    path: '/units/$id',
+    getParentRoute: () => AuthenticatedAppLandlordRoute,
+  } as any)
+const AuthenticatedAppLandlordPropertiesNewRoute =
+  AuthenticatedAppLandlordPropertiesNewRouteImport.update({
+    id: '/new',
+    path: '/new',
+    getParentRoute: () => AuthenticatedAppLandlordPropertiesRoute,
+  } as any)
+const AuthenticatedAppLandlordPropertiesIdRoute =
+  AuthenticatedAppLandlordPropertiesIdRouteImport.update({
+    id: '/$id',
+    path: '/$id',
+    getParentRoute: () => AuthenticatedAppLandlordPropertiesRoute,
+  } as any)
+const AuthenticatedAppLandlordPropertiesIdUnitsRoute =
+  AuthenticatedAppLandlordPropertiesIdUnitsRouteImport.update({
+    id: '/units',
+    path: '/units',
+    getParentRoute: () => AuthenticatedAppLandlordPropertiesIdRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -133,17 +182,24 @@ export interface FileRoutesByFullPath {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/app/become-landlord': typeof AuthenticatedAppBecomeLandlordRoute
-  '/app/contracts': typeof AuthenticatedAppContractsRoute
+  '/app/contracts': typeof AuthenticatedAppContractsRouteWithChildren
   '/app/explore': typeof AuthenticatedAppExploreRoute
-  '/app/landlord': typeof AuthenticatedAppLandlordRoute
+  '/app/landlord': typeof AuthenticatedAppLandlordRouteWithChildren
   '/app/messages': typeof AuthenticatedAppMessagesRoute
   '/app/payments': typeof AuthenticatedAppPaymentsRoute
   '/app/profile': typeof AuthenticatedAppProfileRoute
   '/app/requests': typeof AuthenticatedAppRequestsRoute
   '/app/saved': typeof AuthenticatedAppSavedRoute
   '/app/': typeof AuthenticatedAppIndexRoute
+  '/app/contracts/$id': typeof AuthenticatedAppContractsIdRoute
+  '/app/landlord/onboarding': typeof AuthenticatedAppLandlordOnboardingRoute
+  '/app/landlord/properties': typeof AuthenticatedAppLandlordPropertiesRouteWithChildren
   '/app/property/$id': typeof AuthenticatedAppPropertyIdRoute
   '/app/tenant/dashboard': typeof AuthenticatedAppTenantDashboardRoute
+  '/app/landlord/properties/$id': typeof AuthenticatedAppLandlordPropertiesIdRouteWithChildren
+  '/app/landlord/properties/new': typeof AuthenticatedAppLandlordPropertiesNewRoute
+  '/app/landlord/units/$id': typeof AuthenticatedAppLandlordUnitsIdRoute
+  '/app/landlord/properties/$id/units': typeof AuthenticatedAppLandlordPropertiesIdUnitsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -152,17 +208,24 @@ export interface FileRoutesByTo {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/app/become-landlord': typeof AuthenticatedAppBecomeLandlordRoute
-  '/app/contracts': typeof AuthenticatedAppContractsRoute
+  '/app/contracts': typeof AuthenticatedAppContractsRouteWithChildren
   '/app/explore': typeof AuthenticatedAppExploreRoute
-  '/app/landlord': typeof AuthenticatedAppLandlordRoute
+  '/app/landlord': typeof AuthenticatedAppLandlordRouteWithChildren
   '/app/messages': typeof AuthenticatedAppMessagesRoute
   '/app/payments': typeof AuthenticatedAppPaymentsRoute
   '/app/profile': typeof AuthenticatedAppProfileRoute
   '/app/requests': typeof AuthenticatedAppRequestsRoute
   '/app/saved': typeof AuthenticatedAppSavedRoute
   '/app': typeof AuthenticatedAppIndexRoute
+  '/app/contracts/$id': typeof AuthenticatedAppContractsIdRoute
+  '/app/landlord/onboarding': typeof AuthenticatedAppLandlordOnboardingRoute
+  '/app/landlord/properties': typeof AuthenticatedAppLandlordPropertiesRouteWithChildren
   '/app/property/$id': typeof AuthenticatedAppPropertyIdRoute
   '/app/tenant/dashboard': typeof AuthenticatedAppTenantDashboardRoute
+  '/app/landlord/properties/$id': typeof AuthenticatedAppLandlordPropertiesIdRouteWithChildren
+  '/app/landlord/properties/new': typeof AuthenticatedAppLandlordPropertiesNewRoute
+  '/app/landlord/units/$id': typeof AuthenticatedAppLandlordUnitsIdRoute
+  '/app/landlord/properties/$id/units': typeof AuthenticatedAppLandlordPropertiesIdUnitsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -173,17 +236,24 @@ export interface FileRoutesById {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/app/become-landlord': typeof AuthenticatedAppBecomeLandlordRoute
-  '/_authenticated/app/contracts': typeof AuthenticatedAppContractsRoute
+  '/_authenticated/app/contracts': typeof AuthenticatedAppContractsRouteWithChildren
   '/_authenticated/app/explore': typeof AuthenticatedAppExploreRoute
-  '/_authenticated/app/landlord': typeof AuthenticatedAppLandlordRoute
+  '/_authenticated/app/landlord': typeof AuthenticatedAppLandlordRouteWithChildren
   '/_authenticated/app/messages': typeof AuthenticatedAppMessagesRoute
   '/_authenticated/app/payments': typeof AuthenticatedAppPaymentsRoute
   '/_authenticated/app/profile': typeof AuthenticatedAppProfileRoute
   '/_authenticated/app/requests': typeof AuthenticatedAppRequestsRoute
   '/_authenticated/app/saved': typeof AuthenticatedAppSavedRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
+  '/_authenticated/app/contracts/$id': typeof AuthenticatedAppContractsIdRoute
+  '/_authenticated/app/landlord/onboarding': typeof AuthenticatedAppLandlordOnboardingRoute
+  '/_authenticated/app/landlord/properties': typeof AuthenticatedAppLandlordPropertiesRouteWithChildren
   '/_authenticated/app/property/$id': typeof AuthenticatedAppPropertyIdRoute
   '/_authenticated/app/tenant/dashboard': typeof AuthenticatedAppTenantDashboardRoute
+  '/_authenticated/app/landlord/properties/$id': typeof AuthenticatedAppLandlordPropertiesIdRouteWithChildren
+  '/_authenticated/app/landlord/properties/new': typeof AuthenticatedAppLandlordPropertiesNewRoute
+  '/_authenticated/app/landlord/units/$id': typeof AuthenticatedAppLandlordUnitsIdRoute
+  '/_authenticated/app/landlord/properties/$id/units': typeof AuthenticatedAppLandlordPropertiesIdUnitsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -203,8 +273,15 @@ export interface FileRouteTypes {
     | '/app/requests'
     | '/app/saved'
     | '/app/'
+    | '/app/contracts/$id'
+    | '/app/landlord/onboarding'
+    | '/app/landlord/properties'
     | '/app/property/$id'
     | '/app/tenant/dashboard'
+    | '/app/landlord/properties/$id'
+    | '/app/landlord/properties/new'
+    | '/app/landlord/units/$id'
+    | '/app/landlord/properties/$id/units'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -222,8 +299,15 @@ export interface FileRouteTypes {
     | '/app/requests'
     | '/app/saved'
     | '/app'
+    | '/app/contracts/$id'
+    | '/app/landlord/onboarding'
+    | '/app/landlord/properties'
     | '/app/property/$id'
     | '/app/tenant/dashboard'
+    | '/app/landlord/properties/$id'
+    | '/app/landlord/properties/new'
+    | '/app/landlord/units/$id'
+    | '/app/landlord/properties/$id/units'
   id:
     | '__root__'
     | '/'
@@ -242,8 +326,15 @@ export interface FileRouteTypes {
     | '/_authenticated/app/requests'
     | '/_authenticated/app/saved'
     | '/_authenticated/app/'
+    | '/_authenticated/app/contracts/$id'
+    | '/_authenticated/app/landlord/onboarding'
+    | '/_authenticated/app/landlord/properties'
     | '/_authenticated/app/property/$id'
     | '/_authenticated/app/tenant/dashboard'
+    | '/_authenticated/app/landlord/properties/$id'
+    | '/_authenticated/app/landlord/properties/new'
+    | '/_authenticated/app/landlord/units/$id'
+    | '/_authenticated/app/landlord/properties/$id/units'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -383,14 +474,130 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppPropertyIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/app/landlord/properties': {
+      id: '/_authenticated/app/landlord/properties'
+      path: '/properties'
+      fullPath: '/app/landlord/properties'
+      preLoaderRoute: typeof AuthenticatedAppLandlordPropertiesRouteImport
+      parentRoute: typeof AuthenticatedAppLandlordRoute
+    }
+    '/_authenticated/app/landlord/onboarding': {
+      id: '/_authenticated/app/landlord/onboarding'
+      path: '/onboarding'
+      fullPath: '/app/landlord/onboarding'
+      preLoaderRoute: typeof AuthenticatedAppLandlordOnboardingRouteImport
+      parentRoute: typeof AuthenticatedAppLandlordRoute
+    }
+    '/_authenticated/app/contracts/$id': {
+      id: '/_authenticated/app/contracts/$id'
+      path: '/$id'
+      fullPath: '/app/contracts/$id'
+      preLoaderRoute: typeof AuthenticatedAppContractsIdRouteImport
+      parentRoute: typeof AuthenticatedAppContractsRoute
+    }
+    '/_authenticated/app/landlord/units/$id': {
+      id: '/_authenticated/app/landlord/units/$id'
+      path: '/units/$id'
+      fullPath: '/app/landlord/units/$id'
+      preLoaderRoute: typeof AuthenticatedAppLandlordUnitsIdRouteImport
+      parentRoute: typeof AuthenticatedAppLandlordRoute
+    }
+    '/_authenticated/app/landlord/properties/new': {
+      id: '/_authenticated/app/landlord/properties/new'
+      path: '/new'
+      fullPath: '/app/landlord/properties/new'
+      preLoaderRoute: typeof AuthenticatedAppLandlordPropertiesNewRouteImport
+      parentRoute: typeof AuthenticatedAppLandlordPropertiesRoute
+    }
+    '/_authenticated/app/landlord/properties/$id': {
+      id: '/_authenticated/app/landlord/properties/$id'
+      path: '/$id'
+      fullPath: '/app/landlord/properties/$id'
+      preLoaderRoute: typeof AuthenticatedAppLandlordPropertiesIdRouteImport
+      parentRoute: typeof AuthenticatedAppLandlordPropertiesRoute
+    }
+    '/_authenticated/app/landlord/properties/$id/units': {
+      id: '/_authenticated/app/landlord/properties/$id/units'
+      path: '/units'
+      fullPath: '/app/landlord/properties/$id/units'
+      preLoaderRoute: typeof AuthenticatedAppLandlordPropertiesIdUnitsRouteImport
+      parentRoute: typeof AuthenticatedAppLandlordPropertiesIdRoute
+    }
   }
 }
 
+interface AuthenticatedAppContractsRouteChildren {
+  AuthenticatedAppContractsIdRoute: typeof AuthenticatedAppContractsIdRoute
+}
+
+const AuthenticatedAppContractsRouteChildren: AuthenticatedAppContractsRouteChildren =
+  {
+    AuthenticatedAppContractsIdRoute: AuthenticatedAppContractsIdRoute,
+  }
+
+const AuthenticatedAppContractsRouteWithChildren =
+  AuthenticatedAppContractsRoute._addFileChildren(
+    AuthenticatedAppContractsRouteChildren,
+  )
+
+interface AuthenticatedAppLandlordPropertiesIdRouteChildren {
+  AuthenticatedAppLandlordPropertiesIdUnitsRoute: typeof AuthenticatedAppLandlordPropertiesIdUnitsRoute
+}
+
+const AuthenticatedAppLandlordPropertiesIdRouteChildren: AuthenticatedAppLandlordPropertiesIdRouteChildren =
+  {
+    AuthenticatedAppLandlordPropertiesIdUnitsRoute:
+      AuthenticatedAppLandlordPropertiesIdUnitsRoute,
+  }
+
+const AuthenticatedAppLandlordPropertiesIdRouteWithChildren =
+  AuthenticatedAppLandlordPropertiesIdRoute._addFileChildren(
+    AuthenticatedAppLandlordPropertiesIdRouteChildren,
+  )
+
+interface AuthenticatedAppLandlordPropertiesRouteChildren {
+  AuthenticatedAppLandlordPropertiesIdRoute: typeof AuthenticatedAppLandlordPropertiesIdRouteWithChildren
+  AuthenticatedAppLandlordPropertiesNewRoute: typeof AuthenticatedAppLandlordPropertiesNewRoute
+}
+
+const AuthenticatedAppLandlordPropertiesRouteChildren: AuthenticatedAppLandlordPropertiesRouteChildren =
+  {
+    AuthenticatedAppLandlordPropertiesIdRoute:
+      AuthenticatedAppLandlordPropertiesIdRouteWithChildren,
+    AuthenticatedAppLandlordPropertiesNewRoute:
+      AuthenticatedAppLandlordPropertiesNewRoute,
+  }
+
+const AuthenticatedAppLandlordPropertiesRouteWithChildren =
+  AuthenticatedAppLandlordPropertiesRoute._addFileChildren(
+    AuthenticatedAppLandlordPropertiesRouteChildren,
+  )
+
+interface AuthenticatedAppLandlordRouteChildren {
+  AuthenticatedAppLandlordOnboardingRoute: typeof AuthenticatedAppLandlordOnboardingRoute
+  AuthenticatedAppLandlordPropertiesRoute: typeof AuthenticatedAppLandlordPropertiesRouteWithChildren
+  AuthenticatedAppLandlordUnitsIdRoute: typeof AuthenticatedAppLandlordUnitsIdRoute
+}
+
+const AuthenticatedAppLandlordRouteChildren: AuthenticatedAppLandlordRouteChildren =
+  {
+    AuthenticatedAppLandlordOnboardingRoute:
+      AuthenticatedAppLandlordOnboardingRoute,
+    AuthenticatedAppLandlordPropertiesRoute:
+      AuthenticatedAppLandlordPropertiesRouteWithChildren,
+    AuthenticatedAppLandlordUnitsIdRoute: AuthenticatedAppLandlordUnitsIdRoute,
+  }
+
+const AuthenticatedAppLandlordRouteWithChildren =
+  AuthenticatedAppLandlordRoute._addFileChildren(
+    AuthenticatedAppLandlordRouteChildren,
+  )
+
 interface AuthenticatedRouteChildren {
   AuthenticatedAppBecomeLandlordRoute: typeof AuthenticatedAppBecomeLandlordRoute
-  AuthenticatedAppContractsRoute: typeof AuthenticatedAppContractsRoute
+  AuthenticatedAppContractsRoute: typeof AuthenticatedAppContractsRouteWithChildren
   AuthenticatedAppExploreRoute: typeof AuthenticatedAppExploreRoute
-  AuthenticatedAppLandlordRoute: typeof AuthenticatedAppLandlordRoute
+  AuthenticatedAppLandlordRoute: typeof AuthenticatedAppLandlordRouteWithChildren
   AuthenticatedAppMessagesRoute: typeof AuthenticatedAppMessagesRoute
   AuthenticatedAppPaymentsRoute: typeof AuthenticatedAppPaymentsRoute
   AuthenticatedAppProfileRoute: typeof AuthenticatedAppProfileRoute
@@ -403,9 +610,9 @@ interface AuthenticatedRouteChildren {
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAppBecomeLandlordRoute: AuthenticatedAppBecomeLandlordRoute,
-  AuthenticatedAppContractsRoute: AuthenticatedAppContractsRoute,
+  AuthenticatedAppContractsRoute: AuthenticatedAppContractsRouteWithChildren,
   AuthenticatedAppExploreRoute: AuthenticatedAppExploreRoute,
-  AuthenticatedAppLandlordRoute: AuthenticatedAppLandlordRoute,
+  AuthenticatedAppLandlordRoute: AuthenticatedAppLandlordRouteWithChildren,
   AuthenticatedAppMessagesRoute: AuthenticatedAppMessagesRoute,
   AuthenticatedAppPaymentsRoute: AuthenticatedAppPaymentsRoute,
   AuthenticatedAppProfileRoute: AuthenticatedAppProfileRoute,

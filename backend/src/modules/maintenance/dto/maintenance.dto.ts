@@ -37,3 +37,20 @@ export class UpdateMaintenanceStatusDto {
   @IsEnum(MaintenanceStatus)
   status: MaintenanceStatus;
 }
+
+export class UpdateMaintenanceDto {
+  @ApiProperty({ enum: MaintenanceStatus, example: MaintenanceStatus.IN_PROGRESS, required: false })
+  @IsEnum(MaintenanceStatus)
+  @IsOptional()
+  status?: MaintenanceStatus;
+
+  @ApiProperty({ example: 'Nguyễn Văn A - Thợ Điện', required: false })
+  @IsString()
+  @IsOptional()
+  assignedTo?: string;
+
+  @ApiProperty({ example: 'Đã gọi thợ đến sửa vào chiều mai.', required: false })
+  @IsString()
+  @IsOptional()
+  comment?: string;
+}

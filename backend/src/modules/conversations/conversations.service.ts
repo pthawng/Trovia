@@ -17,6 +17,31 @@ export class ConversationsService {
     private readonly gateway: ConversationGateway,
   ) {}
 
+  async findOrCreateGeneralConversation(tenantId: string, landlordId: string, propertyId?: string) {
+    const existing = await this.prisma.conversation.findFirst({
+      where: {
+        tenantId,
+        landlordId,
+        propertyId: propertyId || undefined,
+        contextType: 'GENERAL',
+      },
+    });
+
+    if (existing) {
+      return existing;
+    }
+
+    return this.prisma.conversation.create({
+      data: {
+        tenantId,
+        landlordId,
+        propertyId: propertyId || undefined,
+        contextType: 'GENERAL',
+        status: 'OPEN',
+      },
+    });
+  }
+
   async findAllForUser(userId: string) {
     const conversations = await this.prisma.conversation.findMany({
       where: {

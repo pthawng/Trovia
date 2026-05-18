@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsEmail, IsOptional } from 'class-validator';
+import { IsString, IsEmail, IsOptional, IsInt, Min, Max } from 'class-validator';
 
 export class StartOnboardingDto {
   @ApiProperty({
@@ -69,4 +69,77 @@ export class UpdateLandlordDto {
   @IsString()
   @IsOptional()
   businessPhone?: string;
+
+  @ApiProperty({ example: 'Chủ nhà Phương Thảo', required: false })
+  @IsString()
+  @IsOptional()
+  publicName?: string;
+
+  @ApiProperty({ example: 'support@trovia.vn', required: false })
+  @IsOptional()
+  supportEmail?: string;
+
+  @ApiProperty({ example: '0988776655', required: false })
+  @IsString()
+  @IsOptional()
+  contactPhone?: string;
+
+  @ApiProperty({ example: 'https://example.com/logo.jpg', required: false })
+  @IsString()
+  @IsOptional()
+  logoUrl?: string;
+
+  @ApiProperty({ example: 'Vietcombank', required: false })
+  @IsString()
+  @IsOptional()
+  bankName?: string;
+
+  @ApiProperty({ example: '1029384756', required: false })
+  @IsString()
+  @IsOptional()
+  bankAccountNumber?: string;
+
+  @ApiProperty({ example: 'NGUYEN VAN THAO', required: false })
+  @IsString()
+  @IsOptional()
+  bankAccountHolder?: string;
+
+  @ApiProperty({ example: 'Chuyển khoản tiền phòng {room}', required: false })
+  @IsString()
+  @IsOptional()
+  vietQrNoteTemplate?: string;
+
+  @ApiProperty({ example: 2, required: false })
+  @IsInt()
+  @Min(0)
+  @Max(12)
+  @IsOptional()
+  defaultDepositMonths?: number;
+
+  @ApiProperty({ example: 12, required: false })
+  @IsInt()
+  @Min(1)
+  @Max(60)
+  @IsOptional()
+  defaultContractDurationMonths?: number;
+
+  @ApiProperty({ example: 5, required: false })
+  @IsInt()
+  @Min(1)
+  @Max(31)
+  @IsOptional()
+  defaultPaymentDueDay?: number;
+
+  @ApiProperty({ example: 'Không làm ồn sau 22h, giữ gìn vệ sinh chung...', required: false })
+  @IsString()
+  @IsOptional()
+  defaultHouseRules?: string;
+
+  @ApiProperty({ example: { newRequest: true, message: true }, required: false })
+  @IsOptional()
+  notificationPreferences?: any;
+
+  @ApiProperty({ example: { autoPublish: false, defaultStatus: 'DRAFT' }, required: false })
+  @IsOptional()
+  publishingPreferences?: any;
 }

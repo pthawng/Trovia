@@ -12,6 +12,7 @@ import { MaintenanceService } from './maintenance.service';
 import {
   CreateMaintenanceDto,
   UpdateMaintenanceStatusDto,
+  UpdateMaintenanceDto,
 } from './dto/maintenance.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -71,5 +72,20 @@ export class MaintenanceController {
     @Body() dto: UpdateMaintenanceStatusDto,
   ) {
     return this.maintenanceService.updateStatus(id, userId, dto.status);
+  }
+
+  @Patch('maintenance/:id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary:
+      'Update maintenance details including assignee, comments, and status (Landlord owner or Tenant requester only)',
+  })
+  async update(
+    @Param('id') id: string,
+    @GetUser('id') userId: string,
+    @Body() dto: UpdateMaintenanceDto,
+  ) {
+    return this.maintenanceService.update(id, userId, dto);
   }
 }

@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -36,5 +36,27 @@ export class TenanciesController {
   })
   async findLandlordTenancies(@GetUser('id') landlordId: string) {
     return this.tenanciesService.findAllForLandlord(landlordId);
+  }
+
+  @Get('tenancies/:id')
+  @ApiOperation({ summary: 'Get single tenancy details' })
+  async findOne(@Param('id') id: string, @GetUser('id') userId: string) {
+    return this.tenanciesService.findOne(id, userId);
+  }
+
+  @Post('tenancies/:id/request-move-out')
+  @UseGuards(RolesGuard)
+  @Roles(AppRole.TENANT)
+  @ApiOperation({ summary: 'Tenant requests to move out' })
+  async requestMoveOut(@Param('id') id: string, @GetUser('id') tenantId: string) {
+    return this.tenanciesService.requestMoveOut(id, tenantId);
+  }
+
+  @Post('tenancies/:id/approve-move-out')
+  @UseGuards(RolesGuard)
+  @Roles(AppRole.LANDLORD)
+  @ApiOperation({ summary: 'Landlord approves tenant move out request' })
+  async approveMoveOut(@Param('id') id: string, @GetUser('id') landlordId: string) {
+    return this.tenanciesService.approveMoveOut(id, landlordId);
   }
 }

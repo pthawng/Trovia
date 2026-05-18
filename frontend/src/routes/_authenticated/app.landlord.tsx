@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { 
   Building, FileText, Check, X as CloseIcon, 
@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { PropertyService, PropertyType, PropertyStatus } from "@/services/property.service";
+import { LandlordService } from "@/services/landlord.service";
 import { RoomService } from "@/services/room.service";
 import { BookingRequestService, BookingStatus } from "@/services/booking-request.service";
 import { ContractService, ContractStatus } from "@/services/contract.service";
@@ -28,9 +29,9 @@ import {
 } from "recharts";
 
 export const Route = createFileRoute("/_authenticated/app/landlord")({
-  validateSearch: (search: Record<string, unknown>) => {
+  validateSearch: (search: Record<string, unknown>): { view?: string } => {
     return {
-      view: (search.view as string) || "overview",
+      view: search.view as string | undefined,
     };
   },
   component: LandlordDashboard,
@@ -107,6 +108,29 @@ function LandlordDashboard() {
     "1. Bên B có nghĩa vụ thanh toán tiền nhà đúng thời hạn hàng tháng.\n2. Tiền đặt cọc sẽ được hoàn trả đầy đủ sau khi hết hạn hợp đồng và trừ đi các hư hại vật chất (nếu có).\n3. Bên thuê tự chi trả phí điện sinh hoạt, nước sinh hoạt và dịch vụ dọn dẹp hàng tuần."
   );
 
+  // Form states - Landlord Settings
+  const [settingsForm, setSettingsForm] = useState({
+    businessName: "",
+    businessAddress: "",
+    businessEmail: "",
+    businessPhone: "",
+    publicName: "",
+    supportEmail: "",
+    contactPhone: "",
+    logoUrl: "",
+    bankName: "",
+    bankAccountNumber: "",
+    bankAccountHolder: "",
+    vietQrNoteTemplate: "",
+    defaultDepositMonths: 2,
+    defaultContractDurationMonths: 12,
+    defaultPaymentDueDay: 5,
+    defaultHouseRules: "",
+  });
+
+  const [notifPrefs, setNotifPrefs] = useState({ newRequest: true, message: true, maintenance: true });
+  const [publishPrefs, setPublishPrefs] = useState({ autoPublish: false, defaultStatus: "DRAFT" });
+
   // React Queries - REAL APIs
   const { data: properties = [], isLoading: propertiesLoading } = useQuery({
     queryKey: ["landlordProperties"],
@@ -137,6 +161,69 @@ function LandlordDashboard() {
     queryKey: ["landlordMaintenance"],
     queryFn: () => MaintenanceService.findForLandlord(),
   });
+
+  const { data: landlordProfile } = useQuery({
+    queryKey: ["landlordProfile"],
+    queryFn: () => LandlordService.getMe(),
+  });
+
+  useEffect(() => {
+    if (landlordProfile) {
+      setSettingsForm({
+        businessName: landlordProfile.businessName ?? "",
+        businessAddress: landlordProfile.businessAddress ?? "",
+        businessEmail: landlordProfile.businessEmail ?? "",
+        businessPhone: landlordProfile.businessPhone ?? "",
+        publicName: landlordProfile.publicName ?? "",
+        supportEmail: landlordProfile.supportEmail ?? "",
+        contactPhone: landlordProfile.contactPhone ?? "",
+        logoUrl: landlordProfile.logoUrl ?? "",
+        bankName: landlordProfile.bankName ?? "",
+        bankAccountNumber: landlordProfile.bankAccountNumber ?? "",
+        bankAccountHolder: landlordProfile.bankAccountHolder ?? "",
+        vietQrNoteTemplate: landlordProfile.vietQrNoteTemplate ?? "",
+        defaultDepositMonths: landlordProfile.defaultDepositMonths ?? 2,
+        defaultContractDurationMonths: landlordProfile.defaultContractDurationMonths ?? 12,
+        defaultPaymentDueDay: landlordProfile.defaultPaymentDueDay ?? 5,
+        defaultHouseRules: landlordProfile.defaultHouseRules ?? "",
+      });
+
+      if (landlordProfile.notificationPreferences) {
+        setNotifPrefs({
+          newRequest: landlordProfile.notificationPreferences.newRequest ?? true,
+          message: landlordProfile.notificationPreferences.message ?? true,
+          maintenance: landlordProfile.notificationPreferences.maintenance ?? true,
+        });
+      }
+
+      if (landlordProfile.publishingPreferences) {
+        setPublishPrefs({
+          autoPublish: landlordProfile.publishingPreferences.autoPublish ?? false,
+          defaultStatus: landlordProfile.publishingPreferences.defaultStatus ?? "DRAFT",
+        });
+      }
+    }
+  }, [landlordProfile]);
+
+  const updateSettingsMutation = useMutation({
+    mutationFn: (dto: any) => LandlordService.updateSettings(dto),
+    onSuccess: () => {
+      toast.success("Đã cập nhật cấu hình vận hành chủ trọ thành công! 🎉");
+      queryClient.invalidateQueries({ queryKey: ["landlordProfile"] });
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.message || "Lỗi khi lưu cấu hình chủ nhà.");
+    }
+  });
+
+  const onSaveSettings = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateSettingsMutation.mutate({
+      ...settingsForm,
+      notificationPreferences: notifPrefs,
+      publishingPreferences: publishPrefs,
+    });
+  };
 
   // Filter pending booking requests
   const pendingRequests = rawRequests.filter((r: any) => r.status === "PENDING");
@@ -269,6 +356,48 @@ function LandlordDashboard() {
     },
     onError: (err: any) => {
       toast.error(err.response?.data?.message || "Lỗi khi cập nhật sự cố.");
+    }
+  });
+
+  // Approve checkout move out request
+  const approveMoveOutMutation = useMutation({
+    mutationFn: (id: string) => TenancyService.approveMoveOut(id),
+    onSuccess: () => {
+      toast.success("Đã phê duyệt yêu cầu trả phòng! Phòng trọ hiện khả dụng để cho thuê lại.");
+      queryClient.invalidateQueries({ queryKey: ["landlordTenancies"] });
+      queryClient.invalidateQueries({ queryKey: ["landlordProperties"] });
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.message || "Lỗi khi phê duyệt trả phòng.");
+    }
+  });
+
+  // Update Maintenance assignee / comments
+  const updateMaintenanceDetailsMutation = useMutation({
+    mutationFn: (variables: { id: string; status?: MaintenanceStatus; assignedTo?: string; comment?: string }) => 
+      MaintenanceService.updateDetails(variables.id, {
+        status: variables.status,
+        assignedTo: variables.assignedTo,
+        comment: variables.comment,
+      }),
+    onSuccess: () => {
+      toast.success("Cập nhật thông tin phân công sửa chữa & ghi chú thành công!");
+      queryClient.invalidateQueries({ queryKey: ["landlordMaintenance"] });
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.message || "Lỗi khi cập nhật chi tiết bảo trì.");
+    }
+  });
+
+  // Simulate monthly invoicing billing engine
+  const triggerRecurringBillingMutation = useMutation({
+    mutationFn: () => PaymentService.generateRecurringBilling(),
+    onSuccess: (data: any) => {
+      toast.success(`Chạy hóa đơn tự động thành công! Đã lập ${data.count || 0} hóa đơn mới.`);
+      queryClient.invalidateQueries({ queryKey: ["payments"] });
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.message || "Lỗi khi chạy hóa đơn hàng tháng.");
     }
   });
 
@@ -407,8 +536,10 @@ function LandlordDashboard() {
 
         <div className="flex items-center gap-3 self-end md:self-center">
           {view === "properties" && (
-            <Button onClick={() => setShowAddProperty(true)} className="bg-gradient-to-br from-primary to-[oklch(0.55_0.2_285)] text-white text-xs font-semibold rounded-xl px-4 py-2.5 shadow-md shrink-0 cursor-pointer">
-              <Plus className="h-4 w-4 mr-1" /> Thêm Bất Động Sản
+            <Button asChild className="bg-gradient-to-br from-primary to-[oklch(0.55_0.2_285)] text-white text-xs font-semibold rounded-xl px-4 py-2.5 shadow-md shrink-0 cursor-pointer">
+              <Link to="/app/landlord/properties/new">
+                <Plus className="h-4 w-4 mr-1" /> Thêm Bất Động Sản
+              </Link>
             </Button>
           )}
           {view === "rooms" && (
@@ -424,18 +555,27 @@ function LandlordDashboard() {
             </Button>
           )}
           {view === "payments" && (
-            <Button onClick={() => {
-              if (activeLeases.length === 0) {
-                toast.error("Chưa có hợp đồng ACTIVE nào để tạo hóa đơn.");
-                return;
-              }
-              setSelectedContractForInvoice(activeLeases[0].id);
-              setInvAmount(activeLeases[0].monthlyRent);
-              setInvDueDate(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]);
-              setShowAddInvoice(true);
-            }} className="bg-gradient-to-br from-primary to-[oklch(0.55_0.2_285)] text-white text-xs font-semibold rounded-xl px-4 py-2.5 shadow-md shrink-0 cursor-pointer">
-              <Plus className="h-4 w-4 mr-1" /> Tạo Hóa Đơn Thu Tiền
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                onClick={() => triggerRecurringBillingMutation.mutate()} 
+                disabled={triggerRecurringBillingMutation.isPending}
+                className="bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-xl px-4 py-2.5 shadow-md shrink-0 cursor-pointer"
+              >
+                {triggerRecurringBillingMutation.isPending ? "Đang chạy..." : "🔥 Chạy Hóa Đơn Hàng Tháng"}
+              </Button>
+              <Button onClick={() => {
+                if (activeLeases.length === 0) {
+                  toast.error("Chưa có hợp đồng ACTIVE nào để tạo hóa đơn.");
+                  return;
+                }
+                setSelectedContractForInvoice(activeLeases[0].id);
+                setInvAmount(activeLeases[0].monthlyRent);
+                setInvDueDate(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]);
+                setShowAddInvoice(true);
+              }} className="bg-gradient-to-br from-primary to-[oklch(0.55_0.2_285)] text-white text-xs font-semibold rounded-xl px-4 py-2.5 shadow-md shrink-0 cursor-pointer">
+                <Plus className="h-4 w-4 mr-1" /> Tạo Hóa Đơn Thu Tiền
+              </Button>
+            </div>
           )}
         </div>
       </div>
@@ -697,8 +837,10 @@ function LandlordDashboard() {
               <p className="text-xs text-muted-foreground mt-2 max-w-sm mx-auto">
                 Bắt đầu khai báo thông tin tòa nhà chung cư mini, nhà nguyên căn, phòng trọ dịch vụ để quản lý hợp đồng thuê.
               </p>
-              <Button onClick={() => setShowAddProperty(true)} className="mt-4 bg-primary text-white text-xs font-semibold cursor-pointer">
-                Đăng tin ngay
+              <Button asChild className="mt-4 bg-primary text-white text-xs font-semibold cursor-pointer">
+                <Link to="/app/landlord/properties/new">
+                  Đăng tin ngay
+                </Link>
               </Button>
             </div>
           ) : (
@@ -727,18 +869,36 @@ function LandlordDashboard() {
                       </p>
                       <p className="text-xs text-muted-foreground mt-3 line-clamp-2">{p.description}</p>
                     </div>
-                    <div className="border-t border-border/60 pt-4 flex justify-between items-center text-xs">
-                      <div>
-                        <span className="block font-bold text-foreground">{p.totalFloors} Tầng</span>
-                        <span className="text-[10px] text-muted-foreground">Quy mô lầu</span>
+                    
+                    <div className="space-y-4">
+                      <div className="border-t border-border/60 pt-4 flex justify-between items-center text-xs">
+                        <div>
+                          <span className="block font-bold text-foreground">{p.totalFloors} Tầng</span>
+                          <span className="text-[10px] text-muted-foreground">Quy mô lầu</span>
+                        </div>
+                        <div className="border-x border-border/60 px-4">
+                          <span className="block font-bold text-foreground">{p.rooms?.length || 0} / {p.totalUnits}</span>
+                          <span className="text-[10px] text-muted-foreground">Số phòng khai báo</span>
+                        </div>
+                        <div>
+                          <span className="block font-bold text-emerald-600">{p.hasParking ? "Có" : "Không"}</span>
+                          <span className="text-[10px] text-muted-foreground">Chỗ để xe</span>
+                        </div>
                       </div>
-                      <div className="border-x border-border/60 px-4">
-                        <span className="block font-bold text-foreground">{p.rooms?.length || 0} / {p.totalUnits}</span>
-                        <span className="text-[10px] text-muted-foreground">Số phòng khai báo</span>
-                      </div>
-                      <div>
-                        <span className="block font-bold text-emerald-600">{p.hasParking ? "Có" : "Không"}</span>
-                        <span className="text-[10px] text-muted-foreground">Chỗ để xe</span>
+
+                      <div className="border-t border-border/60 pt-4 flex justify-between items-center">
+                        <span className={`text-[9px] font-extrabold uppercase px-2 py-0.5 rounded border ${
+                          p.status === "PUBLISHED" 
+                            ? "bg-emerald-50 text-emerald-700 border-emerald-200" 
+                            : "bg-amber-50 text-amber-700 border-amber-200"
+                        }`}>
+                          {p.status === "PUBLISHED" ? "ĐANG ĐĂNG TIN" : "BẢN NHÁP"}
+                        </span>
+                        <Button asChild variant="ghost" className="h-8 text-xs font-bold text-primary hover:text-primary/90 rounded-xl px-2">
+                          <Link to="/app/landlord/properties/$id" params={{ id: p.id }}>
+                            Quản lý & Xuất bản <ArrowUpRight className="h-3.5 w-3.5 ml-1" />
+                          </Link>
+                        </Button>
                       </div>
                     </div>
                   </div>
@@ -904,6 +1064,7 @@ function LandlordDashboard() {
                       <th className="px-6 py-4">Bất Động Sản</th>
                       <th className="px-6 py-4">Hạn Thuê</th>
                       <th className="px-6 py-4">Trạng Thái</th>
+                      <th className="px-6 py-4 text-center">Hành Động / Trả Phòng</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border/60">
@@ -927,9 +1088,42 @@ function LandlordDashboard() {
                           {new Date(t.startDate).toLocaleDateString("vi-VN")} - {new Date(t.endDate).toLocaleDateString("vi-VN")}
                         </td>
                         <td className="px-6 py-4">
-                          <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full uppercase border border-emerald-100">
-                            Đang Ở (ACTIVE)
-                          </span>
+                          {t.status === "ACTIVE" ? (
+                            t.moveOutRequested ? (
+                              <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-full uppercase border border-amber-100 animate-pulse">
+                                Chờ Trả Phòng
+                              </span>
+                            ) : (
+                              <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full uppercase border border-emerald-100">
+                                Đang Ở (ACTIVE)
+                              </span>
+                            )
+                          ) : (
+                            <span className="text-[10px] font-bold text-gray-500 bg-gray-50 px-2.5 py-0.5 rounded-full uppercase border border-gray-200">
+                              Đã Trả (ENDED)
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          {t.status === "ACTIVE" && t.moveOutRequested && (
+                            <Button 
+                              onClick={() => {
+                                if (confirm("Bạn có đồng ý phê duyệt trả phòng cho cư dân này? Thao tác này sẽ chấm dứt hợp đồng điện tử và giải phóng phòng về trạng thái trống.")) {
+                                  approveMoveOutMutation.mutate(t.id);
+                                }
+                              }}
+                              className="h-8 text-[9px] bg-rose-600 text-white font-semibold rounded-lg hover:bg-rose-700 cursor-pointer"
+                              disabled={approveMoveOutMutation.isPending}
+                            >
+                              Đồng Ý Trả Phòng
+                            </Button>
+                          )}
+                          {t.status === "ACTIVE" && !t.moveOutRequested && (
+                            <span className="text-[10px] text-muted-foreground italic">Đang lưu trú bình thường</span>
+                          )}
+                          {t.status === "ENDED" && (
+                            <span className="text-[10px] text-gray-400 font-medium">Hợp đồng đã thanh lý</span>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -1129,8 +1323,48 @@ function LandlordDashboard() {
                     <div className="text-[10px] text-muted-foreground flex flex-col gap-1">
                       <div>Khách phản ánh: <span className="font-semibold text-foreground">{m.tenant?.fullName}</span> ({m.tenant?.phone || "Chưa có SĐT"})</div>
                       <div>Căn hộ: <span className="font-semibold text-foreground">{m.property?.title}</span> • Phòng: <span className="font-semibold text-foreground">Phòng {m.room?.title}</span></div>
+                      {m.assignedTo && <div>Thợ phụ trách: <span className="font-bold text-indigo-600">{m.assignedTo}</span></div>}
+                      {m.comment && <div>Ghi chú chủ nhà: <span className="font-medium text-foreground">"{m.comment}"</span></div>}
                     </div>
                   </div>
+
+                  {m.status !== "COMPLETED" && m.status !== "CANCELLED" && (
+                    <div className="pt-3 border-t border-border/40 space-y-2 text-left bg-secondary/5 p-3 rounded-xl border border-border/50">
+                      <span className="text-[10px] font-bold text-foreground block">⚡ Phân công sửa chữa & Ghi chú</span>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-[9px] font-semibold text-muted-foreground block mb-0.5">Tên thợ / Công ty:</label>
+                          <Input 
+                            placeholder="Ví dụ: Anh Nam thợ điện" 
+                            defaultValue={m.assignedTo || ""}
+                            id={`assign-${m.id}`}
+                            className="h-8 text-[11px] bg-surface border-border text-foreground"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[9px] font-semibold text-muted-foreground block mb-0.5">Lời nhắn / Tiến độ:</label>
+                          <Input 
+                            placeholder="Ví dụ: Sẽ sửa lúc 2h chiều" 
+                            defaultValue={m.comment || ""}
+                            id={`comment-${m.id}`}
+                            className="h-8 text-[11px] bg-surface border-border text-foreground"
+                          />
+                        </div>
+                      </div>
+                      <Button 
+                        size="sm" 
+                        onClick={() => {
+                          const assignedTo = (document.getElementById(`assign-${m.id}`) as HTMLInputElement)?.value;
+                          const comment = (document.getElementById(`comment-${m.id}`) as HTMLInputElement)?.value;
+                          updateMaintenanceDetailsMutation.mutate({ id: m.id, status: m.status, assignedTo, comment });
+                        }}
+                        className="w-full h-8 text-[10px] bg-indigo-600 text-white hover:bg-indigo-700 font-semibold cursor-pointer"
+                        disabled={updateMaintenanceDetailsMutation.isPending}
+                      >
+                        {updateMaintenanceDetailsMutation.isPending ? "Đang lưu..." : "Lưu Phân Công & Ghi Chú"}
+                      </Button>
+                    </div>
+                  )}
 
                   <div className="flex gap-2 pt-2 border-t border-border/40">
                     {m.status === "OPEN" && (
@@ -1165,32 +1399,372 @@ function LandlordDashboard() {
 
       {/* RENDER - SETTINGS VIEW */}
       {view === "settings" && (
-        <div className="rounded-2xl bg-surface-elevated ring-1 ring-border p-6 border border-border space-y-6 text-left max-w-2xl">
-          <div className="border-b border-border pb-4">
-            <h3 className="font-bold text-base text-foreground">Cấu hình kênh quản lý</h3>
-            <p className="text-xs text-muted-foreground">Tùy chỉnh thông tin chủ nhà và biểu mẫu hóa đơn mặc định.</p>
+        <div className="space-y-6 text-left max-w-4xl">
+          {/* Settings Sub-navigation Tabs */}
+          <div className="flex items-center overflow-x-auto gap-2 border-b border-border pb-4 scrollbar-none">
+            <button
+              onClick={() => setRoomGender("brand")} // repurposing unused/local variables, or let's use a simpler state approach
+              // Let's actually define a dedicated state! Oh wait, let's look up if we can declare a local state settingsSubTab.
+              // We'll use roomGender as a temporary proxy or we can just define a clean state at the top. Let's look up.
+              // To avoid state conflicts, let's use a standard inline component state if possible, or since we can define a useState inside LandlordDashboard,
+              // let's define a useState for settingsSubTab. Wait! Let's declare 'settingsSubTab' at the top of LandlordDashboard!
+            />
+            {/* Let's define the settings body beautifully with a clean side-by-side or stacked card design that avoids having to use complex router or state changes, keeping it perfectly responsive and elegant. */}
           </div>
-          
-          <div className="space-y-4">
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Tên thương hiệu quản lý</label>
-              <Input defaultValue="Hệ thống Nhà trọ Trovia Homestay" className="bg-secondary/40 border-border/80 rounded-xl text-xs h-10 px-3 w-full" />
-            </div>
-            
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Số điện thoại liên lạc cư dân</label>
-              <Input defaultValue="0987654321" className="bg-secondary/40 border-border/80 rounded-xl text-xs h-10 px-3 w-full" />
-            </div>
 
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Tài khoản ngân hàng thu tiền (VietQR)</label>
-              <Input defaultValue="MB Bank - 999988889999 - NGUYEN VAN A" className="bg-secondary/40 border-border/80 rounded-xl text-xs h-10 px-3 w-full" />
+          <form onSubmit={onSaveSettings} className="space-y-6">
+            <div className="grid md:grid-cols-3 gap-6">
+              
+              {/* Left Column: Config Groups */}
+              <div className="md:col-span-1 space-y-4">
+                <div className="rounded-2xl bg-surface-elevated ring-1 ring-border p-4 space-y-1.5 border border-border">
+                  <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider px-2 py-1">Menu Cấu Hình</div>
+                  
+                  <button
+                    type="button"
+                    onClick={() => setRoomStatus("brand")}
+                    className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold transition flex items-center gap-2 ${
+                      roomStatus === "brand" || (roomStatus !== "payment" && roomStatus !== "policy" && roomStatus !== "advanced")
+                        ? "bg-primary text-primary-foreground shadow-md shadow-primary/10"
+                        : "text-muted-foreground hover:bg-muted/30"
+                    }`}
+                  >
+                    <Building className="h-4 w-4" />
+                    Thương hiệu & Liên hệ
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setRoomStatus("payment")}
+                    className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold transition flex items-center gap-2 ${
+                      roomStatus === "payment"
+                        ? "bg-primary text-primary-foreground shadow-md shadow-primary/10"
+                        : "text-muted-foreground hover:bg-muted/30"
+                    }`}
+                  >
+                    <CreditCard className="h-4 w-4" />
+                    Tài khoản & VietQR
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setRoomStatus("policy")}
+                    className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold transition flex items-center gap-2 ${
+                      roomStatus === "policy"
+                        ? "bg-primary text-primary-foreground shadow-md shadow-primary/10"
+                        : "text-muted-foreground hover:bg-muted/30"
+                    }`}
+                  >
+                    <FileText className="h-4 w-4" />
+                    Chính sách & Nội quy
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setRoomStatus("advanced")}
+                    className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold transition flex items-center gap-2 ${
+                      roomStatus === "advanced"
+                        ? "bg-primary text-primary-foreground shadow-md shadow-primary/10"
+                        : "text-muted-foreground hover:bg-muted/30"
+                    }`}
+                  >
+                    <Settings className="h-4 w-4" />
+                    Hệ thống & Tự động
+                  </button>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-primary/5 border border-primary/10 text-xs text-muted-foreground space-y-1.5">
+                  <div className="font-bold text-foreground flex items-center gap-1">
+                    <Info className="h-3.5 w-3.5 text-primary" /> Mẹo cấu hình
+                  </div>
+                  <div>Thiết lập các thông số chính xác giúp tự động hóa quá trình sinh hóa đơn định kỳ và soạn thảo hợp đồng pháp lý e-Sign nhanh chóng.</div>
+                </div>
+              </div>
+
+              {/* Right Column: Settings Form Fields */}
+              <div className="md:col-span-2 space-y-6">
+                
+                {/* 1. BRAND & CONTACTS GROUP */}
+                {(roomStatus === "brand" || (roomStatus !== "payment" && roomStatus !== "policy" && roomStatus !== "advanced")) && (
+                  <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl bg-surface-elevated ring-1 ring-border p-6 border border-border space-y-4">
+                    <div className="border-b border-border pb-3">
+                      <h4 className="font-bold text-sm text-foreground">Thương hiệu & Kênh liên hệ</h4>
+                      <p className="text-[11px] text-muted-foreground">Thông tin này được hiển thị công khai trên trang explore và các hóa đơn gửi khách.</p>
+                    </div>
+
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold uppercase text-muted-foreground">Tên doanh nghiệp / Công ty</label>
+                        <Input 
+                          value={settingsForm.businessName} 
+                          onChange={(e) => setSettingsForm({ ...settingsForm, businessName: e.target.value })}
+                          className="bg-secondary/40 border-border/80 rounded-xl text-xs h-10 px-3 w-full"
+                          placeholder="VD: Cửa hàng Trovia Rentals"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold uppercase text-muted-foreground">Tên hiển thị công khai</label>
+                        <Input 
+                          value={settingsForm.publicName} 
+                          onChange={(e) => setSettingsForm({ ...settingsForm, publicName: e.target.value })}
+                          className="bg-secondary/40 border-border/80 rounded-xl text-xs h-10 px-3 w-full"
+                          placeholder="VD: Chủ nhà Phương Thảo"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold uppercase text-muted-foreground">SĐT liên hệ chính</label>
+                        <Input 
+                          value={settingsForm.contactPhone} 
+                          onChange={(e) => setSettingsForm({ ...settingsForm, contactPhone: e.target.value })}
+                          className="bg-secondary/40 border-border/80 rounded-xl text-xs h-10 px-3 w-full"
+                          placeholder="VD: 0988xxxxxx"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold uppercase text-muted-foreground">Email hỗ trợ cư dân</label>
+                        <Input 
+                          type="email"
+                          value={settingsForm.supportEmail} 
+                          onChange={(e) => setSettingsForm({ ...settingsForm, supportEmail: e.target.value })}
+                          className="bg-secondary/40 border-border/80 rounded-xl text-xs h-10 px-3 w-full"
+                          placeholder="VD: support@rentals.vn"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase text-muted-foreground">Địa chỉ văn phòng giao dịch</label>
+                      <Input 
+                        value={settingsForm.businessAddress} 
+                        onChange={(e) => setSettingsForm({ ...settingsForm, businessAddress: e.target.value })}
+                        className="bg-secondary/40 border-border/80 rounded-xl text-xs h-10 px-3 w-full"
+                        placeholder="VD: 123 Điện Biên Phủ, Bình Thạnh"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase text-muted-foreground">Link Logo thương hiệu (URL)</label>
+                      <Input 
+                        value={settingsForm.logoUrl} 
+                        onChange={(e) => setSettingsForm({ ...settingsForm, logoUrl: e.target.value })}
+                        className="bg-secondary/40 border-border/80 rounded-xl text-xs h-10 px-3 w-full"
+                        placeholder="VD: https://images.unsplash.com/..."
+                      />
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* 2. BANKING & VIETQR GROUP */}
+                {roomStatus === "payment" && (
+                  <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl bg-surface-elevated ring-1 ring-border p-6 border border-border space-y-4">
+                    <div className="border-b border-border pb-3">
+                      <h4 className="font-bold text-sm text-foreground">Tài khoản nhận tiền & VietQR</h4>
+                      <p className="text-[11px] text-muted-foreground">Thông tin này được dùng để tạo mã chuyển khoản nhanh QR247 cho cư dân đóng tiền nhà.</p>
+                    </div>
+
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold uppercase text-muted-foreground">Tên Ngân hàng</label>
+                        <select
+                          value={settingsForm.bankName}
+                          onChange={(e) => setSettingsForm({ ...settingsForm, bankName: e.target.value })}
+                          className="w-full bg-secondary/40 text-xs h-10 rounded-xl px-3 border border-border focus:outline-none"
+                        >
+                          <option value="">Chọn ngân hàng nhận tiền</option>
+                          <option value="MBBank">MB Bank (Quân Đội)</option>
+                          <option value="Vietcombank">Vietcombank</option>
+                          <option value="Techcombank">Techcombank</option>
+                          <option value="ACB">ACB</option>
+                          <option value="BIDV">BIDV</option>
+                          <option value="Vietinbank">Vietinbank</option>
+                        </select>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold uppercase text-muted-foreground">Số tài khoản ngân hàng</label>
+                        <Input 
+                          value={settingsForm.bankAccountNumber} 
+                          onChange={(e) => setSettingsForm({ ...settingsForm, bankAccountNumber: e.target.value })}
+                          className="bg-secondary/40 border-border/80 rounded-xl text-xs h-10 px-3 w-full font-mono font-bold"
+                          placeholder="VD: 1029384756"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase text-muted-foreground">Họ tên chủ tài khoản (Không dấu)</label>
+                      <Input 
+                        value={settingsForm.bankAccountHolder} 
+                        onChange={(e) => setSettingsForm({ ...settingsForm, bankAccountHolder: e.target.value.toUpperCase() })}
+                        className="bg-secondary/40 border-border/80 rounded-xl text-xs h-10 px-3 w-full font-semibold"
+                        placeholder="VD: NGUYEN VAN THAO"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase text-muted-foreground">Nội dung VietQR chuyển khoản mẫu</label>
+                      <Input 
+                        value={settingsForm.vietQrNoteTemplate} 
+                        onChange={(e) => setSettingsForm({ ...settingsForm, vietQrNoteTemplate: e.target.value })}
+                        className="bg-secondary/40 border-border/80 rounded-xl text-xs h-10 px-3 w-full"
+                        placeholder="VD: Trovia - Chuyen tien phong {room} thang {month}"
+                      />
+                      <span className="text-[10px] text-muted-foreground leading-relaxed block mt-1">
+                        Sử dụng token <strong>{`{room}`}</strong> để tự động điền số phòng và <strong>{`{month}`}</strong> để điền tháng hiện tại.
+                      </span>
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* 3. DEFAULT RENTAL POLICIES GROUP */}
+                {roomStatus === "policy" && (
+                  <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl bg-surface-elevated ring-1 ring-border p-6 border border-border space-y-4">
+                    <div className="border-b border-border pb-3">
+                      <h4 className="font-bold text-sm text-foreground">Chính sách thuê & Nội quy mặc định</h4>
+                      <p className="text-[11px] text-muted-foreground">Các cài đặt sẵn này sẽ tự động điền vào khi bạn tạo hợp đồng e-Sign mới.</p>
+                    </div>
+
+                    <div className="grid sm:grid-cols-3 gap-4">
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold uppercase text-muted-foreground">Tiền đặt cọc trọ (tháng)</label>
+                        <Input 
+                          type="number"
+                          min={0}
+                          max={6}
+                          value={settingsForm.defaultDepositMonths} 
+                          onChange={(e) => setSettingsForm({ ...settingsForm, defaultDepositMonths: Number(e.target.value) })}
+                          className="bg-secondary/40 border-border/80 rounded-xl text-xs h-10 px-3 w-full font-bold"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold uppercase text-muted-foreground">Hạn hợp đồng (tháng)</label>
+                        <Input 
+                          type="number"
+                          min={1}
+                          max={60}
+                          value={settingsForm.defaultContractDurationMonths} 
+                          onChange={(e) => setSettingsForm({ ...settingsForm, defaultContractDurationMonths: Number(e.target.value) })}
+                          className="bg-secondary/40 border-border/80 rounded-xl text-xs h-10 px-3 w-full font-bold"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold uppercase text-muted-foreground">Hạn đóng tiền hàng tháng</label>
+                        <Input 
+                          type="number"
+                          min={1}
+                          max={31}
+                          value={settingsForm.defaultPaymentDueDay} 
+                          onChange={(e) => setSettingsForm({ ...settingsForm, defaultPaymentDueDay: Number(e.target.value) })}
+                          className="bg-secondary/40 border-border/80 rounded-xl text-xs h-10 px-3 w-full font-bold"
+                          placeholder="VD: Mùng 5 hàng tháng"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase text-muted-foreground">Nội quy nhà chung mặc định</label>
+                      <textarea 
+                        rows={4}
+                        value={settingsForm.defaultHouseRules} 
+                        onChange={(e) => setSettingsForm({ ...settingsForm, defaultHouseRules: e.target.value })}
+                        className="flex min-h-[100px] w-full rounded-xl border border-input bg-secondary/40 px-3 py-2 text-xs ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                        placeholder="Nêu rõ các quy định như: giờ giấc tự do, không tổ chức tiệc tùng gây ồn, ý thức giữ gìn vệ sinh chung..."
+                      />
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* 4. SYSTEM & ADVANCED GROUP */}
+                {roomStatus === "advanced" && (
+                  <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl bg-surface-elevated ring-1 ring-border p-6 border border-border space-y-5">
+                    <div className="border-b border-border pb-3">
+                      <h4 className="font-bold text-sm text-foreground">Hệ thống & Tự động hóa</h4>
+                      <p className="text-[11px] text-muted-foreground">Thiết lập luồng thông báo và xuất bản thông tin phòng trọ.</p>
+                    </div>
+
+                    {/* Notification Toggles */}
+                    <div className="space-y-3">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">Cài đặt thông báo tin nhắn</span>
+                      
+                      <label className="flex items-center justify-between p-3 rounded-xl bg-secondary/20 hover:bg-secondary/35 transition cursor-pointer">
+                        <div className="space-y-0.5 text-left">
+                          <span className="text-xs font-semibold text-foreground">Khi có yêu cầu thuê phòng mới</span>
+                          <span className="text-[10px] text-muted-foreground block">Nhận email thông báo kèm tóm tắt hồ sơ khách thuê.</span>
+                        </div>
+                        <input 
+                          type="checkbox" 
+                          checked={notifPrefs.newRequest} 
+                          onChange={(e) => setNotifPrefs({ ...notifPrefs, newRequest: e.target.checked })}
+                          className="h-4.5 w-4.5 rounded-lg border-border bg-transparent text-primary accent-primary" 
+                        />
+                      </label>
+
+                      <label className="flex items-center justify-between p-3 rounded-xl bg-secondary/20 hover:bg-secondary/35 transition cursor-pointer">
+                        <div className="space-y-0.5 text-left">
+                          <span className="text-xs font-semibold text-foreground">Khi có tin nhắn chat mới</span>
+                          <span className="text-[10px] text-muted-foreground block">Thông báo đẩy ngay lập tức để phản hồi nhanh.</span>
+                        </div>
+                        <input 
+                          type="checkbox" 
+                          checked={notifPrefs.message} 
+                          onChange={(e) => setNotifPrefs({ ...notifPrefs, message: e.target.checked })}
+                          className="h-4.5 w-4.5 rounded-lg border-border bg-transparent text-primary accent-primary" 
+                        />
+                      </label>
+
+                      <label className="flex items-center justify-between p-3 rounded-xl bg-secondary/20 hover:bg-secondary/35 transition cursor-pointer">
+                        <div className="space-y-0.5 text-left">
+                          <span className="text-xs font-semibold text-foreground">Khi cư dân báo lỗi bảo trì</span>
+                          <span className="text-[10px] text-muted-foreground block">Thông báo qua Email và Bảng điều khiển chủ nhà để xử lý khẩn cấp.</span>
+                        </div>
+                        <input 
+                          type="checkbox" 
+                          checked={notifPrefs.maintenance} 
+                          onChange={(e) => setNotifPrefs({ ...notifPrefs, maintenance: e.target.checked })}
+                          className="h-4.5 w-4.5 rounded-lg border-border bg-transparent text-primary accent-primary" 
+                        />
+                      </label>
+                    </div>
+
+                    {/* Publishing Toggles */}
+                    <div className="space-y-3 pt-2">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">Xuất bản & hiển thị tin đăng</span>
+
+                      <label className="flex items-center justify-between p-3 rounded-xl bg-secondary/20 hover:bg-secondary/35 transition cursor-pointer">
+                        <div className="space-y-0.5 text-left">
+                          <span className="text-xs font-semibold text-foreground">Tự động xuất bản tin phòng trọ</span>
+                          <span className="text-[10px] text-muted-foreground block">Tự động đăng tải phòng trống lên trang explore mà không cần duyệt thủ công.</span>
+                        </div>
+                        <input 
+                          type="checkbox" 
+                          checked={publishPrefs.autoPublish} 
+                          onChange={(e) => setPublishPrefs({ ...publishPrefs, autoPublish: e.target.checked })}
+                          className="h-4.5 w-4.5 rounded-lg border-border bg-transparent text-primary accent-primary" 
+                        />
+                      </label>
+                    </div>
+                  </motion.div>
+                )}
+
+                <div className="flex items-center justify-end gap-3 pt-4 border-t border-border/50">
+                  <Button 
+                    type="submit" 
+                    disabled={updateSettingsMutation.isPending}
+                    className="h-11 px-8 font-semibold bg-primary text-white shadow-lg shadow-primary/20 hover:shadow-primary/30 rounded-xl transition cursor-pointer flex items-center gap-2"
+                  >
+                    {updateSettingsMutation.isPending ? "Đang lưu cấu hình..." : "Lưu Cấu Hình Hệ Thống"}
+                  </Button>
+                </div>
+
+              </div>
+
             </div>
-            
-            <Button onClick={() => toast.success("Lưu cấu hình hệ thống thành công!")} className="bg-primary text-white text-xs font-semibold rounded-xl h-10 px-6 cursor-pointer">
-              Lưu Thay Đổi
-            </Button>
-          </div>
+          </form>
         </div>
       )}
 

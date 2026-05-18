@@ -94,4 +94,9 @@ export const ConversationService = {
   markRead: async (id: string): Promise<void> => {
     await api.patch(`/conversations/${id}/read`);
   },
+
+  findOrCreateGeneral: async (landlordId: string, propertyId?: string): Promise<Conversation> => {
+    const response = await api.post(`/conversations/general/${landlordId}`, { propertyId });
+    return response.data?.data || response.data;
+  },
 };

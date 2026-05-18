@@ -7,6 +7,16 @@ export interface User {
   avatarUrl: string | null;
   phone: string | null;
   city: string | null;
+  occupation?: string | null;
+  dateOfBirth?: string | null;
+  bio?: string | null;
+  preferredDistrict?: string | null;
+  budgetRange?: string | null;
+  moveInTimeline?: string | null;
+  renterType?: string | null;
+  budgetMin?: number | null;
+  budgetMax?: number | null;
+  expectedMoveInDate?: string | null;
   roles: string[];
   isEmailVerified: boolean;
   createdAt: string;

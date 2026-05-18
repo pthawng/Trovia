@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { 
   Send, Search, MessageSquare, Calendar, ShieldCheck, User as UserIcon, 
@@ -40,17 +40,22 @@ export function Messages() {
     queryFn: ConversationService.findAll,
   });
 
-  // Set active thread if not set
+  const locationState = useRouterState({ select: (s) => s.location });
+  const urlActiveId = (locationState.search as any)?.activeId;
+
+  // Set active thread if not set or specified by search params
   useEffect(() => {
-    if (conversations.length > 0 && !activeId) {
+    if (urlActiveId) {
+      setActiveId(urlActiveId);
+    } else if (conversations.length > 0 && !activeId) {
       setActiveId(conversations[0].id);
     }
-  }, [conversations, activeId]);
+  }, [conversations, activeId, urlActiveId]);
 
   // 3. Fetch messages for active conversation (No polling/refetch interval!)
   const { data: messages = [], isLoading: loadingMessages } = useQuery({
     queryKey: ["messages", activeId],
-    queryFn: () => (activeId ? ConversationService.findMessages(activeId, currentUser?.id || "") : Promise.resolve([])),
+    queryFn: () => (activeId ? ConversationService.findMessages(activeId) : Promise.resolve([])),
     enabled: !!activeId && !!currentUser,
   });
 
@@ -61,6 +66,7 @@ export function Messages() {
     sendMessage: socketSendMessage,
     markRead: socketMarkRead,
     isConnected,
+  // @ts-ignore
   } = useConversationSocket(activeId, currentUser?.id);
 
   // Scroll to bottom when messages load/change or when peer starts typing

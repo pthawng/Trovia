@@ -95,13 +95,57 @@ export class LandlordsService {
           dto.businessPhone !== undefined
             ? dto.businessPhone
             : profile.businessPhone,
+        publicName:
+          dto.publicName !== undefined ? dto.publicName : profile.publicName,
+        supportEmail:
+          dto.supportEmail !== undefined ? dto.supportEmail : profile.supportEmail,
+        contactPhone:
+          dto.contactPhone !== undefined ? dto.contactPhone : profile.contactPhone,
+        logoUrl:
+          dto.logoUrl !== undefined ? dto.logoUrl : profile.logoUrl,
+        bankName:
+          dto.bankName !== undefined ? dto.bankName : profile.bankName,
+        bankAccountNumber:
+          dto.bankAccountNumber !== undefined
+            ? dto.bankAccountNumber
+            : profile.bankAccountNumber,
+        bankAccountHolder:
+          dto.bankAccountHolder !== undefined
+            ? dto.bankAccountHolder
+            : profile.bankAccountHolder,
+        vietQrNoteTemplate:
+          dto.vietQrNoteTemplate !== undefined
+            ? dto.vietQrNoteTemplate
+            : profile.vietQrNoteTemplate,
+        defaultDepositMonths:
+          dto.defaultDepositMonths !== undefined
+            ? dto.defaultDepositMonths
+            : profile.defaultDepositMonths,
+        defaultContractDurationMonths:
+          dto.defaultContractDurationMonths !== undefined
+            ? dto.defaultContractDurationMonths
+            : profile.defaultContractDurationMonths,
+        defaultPaymentDueDay:
+          dto.defaultPaymentDueDay !== undefined
+            ? dto.defaultPaymentDueDay
+            : profile.defaultPaymentDueDay,
+        defaultHouseRules:
+          dto.defaultHouseRules !== undefined
+            ? dto.defaultHouseRules
+            : profile.defaultHouseRules,
+        notificationPreferences:
+          dto.notificationPreferences !== undefined
+            ? dto.notificationPreferences
+            : profile.notificationPreferences,
+        publishingPreferences:
+          dto.publishingPreferences !== undefined
+            ? dto.publishingPreferences
+            : profile.publishingPreferences,
       },
     });
   }
 
   async activate(userId: string, targetUserId?: string) {
-    // If targetUserId is provided, it must be performed by admin.
-    // If not, it self-activates for ease of testing in this sandbox app.
     const finalUserId = targetUserId || userId;
 
     const profile = await this.prisma.landlordProfile.findUnique({

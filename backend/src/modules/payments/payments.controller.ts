@@ -67,4 +67,12 @@ export class PaymentsController {
   async markPaid(@Param('id') id: string, @GetUser('id') userId: string) {
     return this.paymentsService.markPaid(id, userId);
   }
+
+  @Post('payments/generate-recurring')
+  @ApiOperation({
+    summary: 'Manually trigger recurring monthly rent invoice generation for all active contracts',
+  })
+  async generateRecurring() {
+    return this.paymentsService.generateMonthlyRentInvoices();
+  }
 }

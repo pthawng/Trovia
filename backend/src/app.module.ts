@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { ScheduleModule } from '@nestjs/schedule';
 import { ConfigModule } from './config/config.module';
 import { PrismaModule } from './database/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
@@ -21,12 +22,14 @@ import { PaymentsModule } from './modules/payments/payments.module';
 import { TenanciesModule } from './modules/tenancies/tenancies.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { MaintenanceModule } from './modules/maintenance/maintenance.module';
+import { ReviewsModule } from './modules/reviews/reviews.module';
 
 @Module({
   imports: [
     // Core Infrastructure
     ConfigModule,
     PrismaModule,
+    ScheduleModule.forRoot(),
 
     // Rate Limiting
     ThrottlerModule.forRoot([
@@ -56,6 +59,7 @@ import { MaintenanceModule } from './modules/maintenance/maintenance.module';
     TenanciesModule,
     NotificationsModule,
     MaintenanceModule,
+    ReviewsModule,
   ],
 })
 export class AppModule {}

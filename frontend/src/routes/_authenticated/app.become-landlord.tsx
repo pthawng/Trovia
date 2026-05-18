@@ -48,7 +48,7 @@ function BecomeLandlord() {
 
   useEffect(() => {
     if (user?.roles.includes("LANDLORD") && landlordProfile?.status === "ACTIVE") {
-      navigate({ to: "/app/landlord" });
+      navigate({ to: "/app/landlord" as any });
     }
   }, [user, landlordProfile, navigate]);
 
@@ -120,7 +120,7 @@ function BecomeLandlord() {
       await LandlordService.activate();
       await refreshProfile();
       toast.success("Landlord mode activated! Welcome to Trovia Host.");
-      navigate({ to: "/app/landlord" });
+      navigate({ to: "/app/landlord" as any });
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Failed to activate landlord mode.");
     } finally {

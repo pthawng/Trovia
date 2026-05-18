@@ -79,6 +79,12 @@ export class PropertiesController {
     return this.propertiesService.findAll({ landlordId });
   }
 
+  @Get('amenities')
+  @ApiOperation({ summary: 'List all available system amenities' })
+  async getAmenities() {
+    return this.propertiesService.getAmenities();
+  }
+
   @Get(':id')
   @ApiOperation({
     summary:
@@ -100,6 +106,18 @@ export class PropertiesController {
     @Body() dto: UpdatePropertyDto,
   ) {
     return this.propertiesService.update(id, landlordId, dto);
+  }
+
+  @Post(':id/publish')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(AppRole.LANDLORD)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Publish property listing (Owner Landlord only)' })
+  async publish(
+    @Param('id') id: string,
+    @GetUser('id') landlordId: string,
+  ) {
+    return this.propertiesService.publish(id, landlordId);
   }
 
   @Delete(':id')

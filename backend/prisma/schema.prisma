@@ -124,6 +124,17 @@ model User {
   updatedAt       DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
   deletedAt       DateTime?        @map("deleted_at") @db.Timestamptz
 
+  occupation        String?
+  dateOfBirth       DateTime?        @map("date_of_birth") @db.Date
+  bio               String?
+  preferredDistrict String?          @map("preferred_district")
+  budgetRange       String?          @map("budget_range")
+  moveInTimeline    String?          @map("move_in_timeline")
+  renterType        String?          @map("renter_type")
+  budgetMin         Int?             @map("budget_min")
+  budgetMax         Int?             @map("budget_max")
+  expectedMoveInDate DateTime?       @map("expected_move_in_date") @db.Date
+
   userRoles            UserRole[]
   landlordProfile      LandlordProfile?
   refreshTokens        RefreshToken[]
@@ -189,6 +200,20 @@ model LandlordProfile {
   activatedAt          DateTime?      @map("activated_at") @db.Timestamptz
   createdAt            DateTime       @default(now()) @map("created_at") @db.Timestamptz
   updatedAt            DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  publicName                     String?        @map("public_name")
+  supportEmail                   String?        @map("support_email")
+  contactPhone                   String?        @map("contact_phone")
+  logoUrl                        String?        @map("logo_url")
+  bankName                       String?        @map("bank_name")
+  bankAccountNumber              String?        @map("bank_account_number")
+  bankAccountHolder              String?        @map("bank_account_holder")
+  vietQrNoteTemplate             String?        @map("viet_qr_note_template")
+  defaultDepositMonths           Int?           @map("default_deposit_months")
+  defaultContractDurationMonths  Int?           @map("default_contract_duration_months")
+  defaultPaymentDueDay           Int?           @map("default_payment_due_day")
+  defaultHouseRules              String?        @map("default_house_rules")
+  notificationPreferences        Json?          @map("notification_preferences")
+  publishingPreferences          Json?          @map("publishing_preferences")
 
   user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   properties Property[]
@@ -465,23 +490,25 @@ model Payment {
 }
 
 model Tenancy {
-  id         String        @id @default(uuid()) @db.Uuid
-  contractId String        @map("contract_id") @db.Uuid
-  tenantId   String        @map("tenant_id") @db.Uuid
-  landlordId String        @map("landlord_id") @db.Uuid
-  propertyId String        @map("property_id") @db.Uuid
-  roomId     String        @map("room_id") @db.Uuid
-  status     TenancyStatus @default(ACTIVE)
-  startedAt  DateTime      @map("started_at") @db.Timestamptz
-  endedAt    DateTime?     @map("ended_at") @db.Timestamptz
-  createdAt  DateTime      @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt  DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  id               String        @id @default(uuid()) @db.Uuid
+  contractId       String        @map("contract_id") @db.Uuid
+  tenantId         String        @map("tenant_id") @db.Uuid
+  landlordId       String        @map("landlord_id") @db.Uuid
+  propertyId       String        @map("property_id") @db.Uuid
+  roomId           String        @map("room_id") @db.Uuid
+  status           TenancyStatus @default(ACTIVE)
+  startedAt        DateTime      @map("started_at") @db.Timestamptz
+  endedAt          DateTime?     @map("ended_at") @db.Timestamptz
+  moveOutRequested Boolean       @default(false) @map("move_out_requested")
+  createdAt        DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
 
   contract   Contract      @relation(fields: [contractId], references: [id], onDelete: Cascade)
   tenant     User          @relation("TenantTenancies", fields: [tenantId], references: [id], onDelete: Cascade)
   landlord   User          @relation("LandlordTenancies", fields: [landlordId], references: [id], onDelete: Cascade)
   property   Property      @relation(fields: [propertyId], references: [id], onDelete: Cascade)
   room       Room          @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  reviews    Review[]
 
   @@map("tenancies")
 }
@@ -510,6 +537,8 @@ model SavedProperty {
   property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
 
   @@id([tenantId, propertyId])
+  @@index([tenantId])
+  @@index([propertyId])
   @@map("saved_properties")
 }
 
@@ -566,6 +595,8 @@ model MaintenanceRequest {
   images      String[]            @default([])
   priority    MaintenancePriority @default(MEDIUM)
   status      MaintenanceStatus   @default(OPEN)
+  assignedTo  String?             @map("assigned_to")
+  comment     String?             @map("comment")
   createdAt   DateTime            @default(now()) @map("created_at") @db.Timestamptz
   updatedAt   DateTime            @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
 
@@ -574,4 +605,19 @@ model MaintenanceRequest {
   room        Room?               @relation("RoomMaintenance", fields: [roomId], references: [id], onDelete: Cascade)
 
   @@map("maintenance_requests")
+}
+
+model Review {
+  id          String    @id @default(uuid()) @db.Uuid
+  tenancyId   String    @map("tenancy_id") @db.Uuid
+  reviewerId  String    @map("reviewer_id") @db.Uuid
+  revieweeId  String    @map("reviewee_id") @db.Uuid
+  rating      Int       // 1 to 5 stars
+  comment     String
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  tenancy     Tenancy   @relation(fields: [tenancyId], references: [id], onDelete: Cascade)
+
+  @@map("reviews")
 }

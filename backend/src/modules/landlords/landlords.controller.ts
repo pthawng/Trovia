@@ -51,6 +51,15 @@ export class LandlordsController {
     return this.landlordsService.updateMe(userId, dto);
   }
 
+  @Patch('settings')
+  @ApiOperation({ summary: 'Update your landlord business settings' })
+  async updateSettings(
+    @GetUser('id') userId: string,
+    @Body() dto: UpdateLandlordDto,
+  ) {
+    return this.landlordsService.updateMe(userId, dto);
+  }
+
   @Post('activate')
   @ApiOperation({
     summary: 'Verify/Activate landlord capability (Self-led or Admin-led)',

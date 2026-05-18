@@ -6,6 +6,16 @@ export interface UpdateUserDto {
   avatarUrl?: string;
   phone?: string;
   city?: string;
+  occupation?: string;
+  dateOfBirth?: string;
+  bio?: string;
+  preferredDistrict?: string;
+  budgetRange?: string;
+  moveInTimeline?: string;
+  renterType?: string;
+  budgetMin?: number;
+  budgetMax?: number;
+  expectedMoveInDate?: string;
 }
 
 export const UserService = {

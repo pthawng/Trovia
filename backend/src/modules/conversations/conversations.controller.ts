@@ -25,6 +25,16 @@ import { GetUser } from '../../common/decorators/get-user.decorator';
 export class ConversationsController {
   constructor(private readonly conversationsService: ConversationsService) {}
 
+  @Post('general/:landlordId')
+  @ApiOperation({ summary: 'Find or create a general conversation with a landlord' })
+  async findOrCreateGeneral(
+    @GetUser('id') tenantId: string,
+    @Param('landlordId') landlordId: string,
+    @Body('propertyId') propertyId?: string,
+  ) {
+    return this.conversationsService.findOrCreateGeneralConversation(tenantId, landlordId, propertyId);
+  }
+
   @Get()
   @ApiOperation({ summary: 'Get all conversations for the authenticated user' })
   @ApiResponse({ status: 200, description: 'List of conversations' })

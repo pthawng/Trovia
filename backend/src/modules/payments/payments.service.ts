@@ -4,6 +4,7 @@ import {
   BadRequestException,
   ForbiddenException,
 } from '@nestjs/common';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '../../database/prisma.service';
 import { CreatePaymentDto } from './dto/payment.dto';
 import { PaymentStatus, ContractStatus, TenancyStatus } from '@prisma/client';
@@ -271,5 +272,132 @@ export class PaymentsService {
 
       return { payment: updatedPayment, contractActivated, tenancy };
     });
+  }
+
+  async generateMonthlyRentInvoices() {
+    const activeContracts = await this.prisma.contract.findMany({
+      where: { status: ContractStatus.ACTIVE },
+      include: { property: true },
+    });
+
+    const createdInvoices: any[] = [];
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+
+    for (const contract of activeContracts) {
+      // Prevent duplicates: Check if a MONTHLY_RENT invoice already exists for the current month
+      const existingInvoice = await this.prisma.payment.findFirst({
+        where: {
+          contractId: contract.id,
+          type: 'MONTHLY_RENT',
+          dueDate: {
+            gte: startOfMonth,
+            lte: endOfMonth,
+          },
+        },
+      });
+
+      if (existingInvoice) {
+        continue;
+      }
+
+      // Calculate due date: 5th of current month. If passed, set 5 days from now
+      const dueDate = new Date(now.getFullYear(), now.getMonth(), 5);
+      if (dueDate < now) {
+        dueDate.setDate(now.getDate() + 5);
+      }
+
+      const newPayment = await this.prisma.payment.create({
+        data: {
+          contractId: contract.id,
+          tenantId: contract.tenantId,
+          landlordId: contract.landlordId,
+          amount: contract.monthlyRent,
+          type: 'MONTHLY_RENT',
+          status: PaymentStatus.PENDING,
+          dueDate,
+        },
+      });
+
+      // Create notification for Tenant
+      await this.prisma.notification.create({
+        data: {
+          userId: contract.tenantId,
+          type: 'NEW_INVOICE',
+          title: 'Hóa đơn tiền thuê nhà mới 📄',
+          body: `Hóa đơn tiền thuê nhà tháng này cho căn hộ tại ${contract.property.title} đã được tạo. Vui lòng thanh toán trước ngày ${dueDate.toLocaleDateString('vi-VN')}.`,
+          metadata: JSON.stringify({ paymentId: newPayment.id }),
+        },
+      });
+
+      createdInvoices.push(newPayment);
+    }
+
+    return {
+      processedContracts: activeContracts.length,
+      generatedCount: createdInvoices.length,
+      invoices: createdInvoices,
+    };
+  }
+
+  @Cron(CronExpression.EVERY_1ST_DAY_OF_MONTH_AT_MIDNIGHT)
+  async handleMonthlyRentInvoicesCron() {
+    console.log('[Cron] Automated Monthly Rent Invoicing started...');
+    const result = await this.generateMonthlyRentInvoices();
+    console.log(`[Cron] Automated Monthly Rent Invoicing finished. Billed: ${result.generatedCount} invoices.`);
+  }
+
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  async handleContractRenewalRemindersCron() {
+    console.log('[Cron] Automated Contract Renewal scanning started...');
+    const now = new Date();
+    const thirtyDaysFromNow = new Date();
+    thirtyDaysFromNow.setDate(now.getDate() + 30);
+
+    const startOfTarget = new Date(thirtyDaysFromNow.getFullYear(), thirtyDaysFromNow.getMonth(), thirtyDaysFromNow.getDate(), 0, 0, 0, 0);
+    const endOfTarget = new Date(thirtyDaysFromNow.getFullYear(), thirtyDaysFromNow.getMonth(), thirtyDaysFromNow.getDate(), 23, 59, 59, 999);
+
+    const expiringContracts = await this.prisma.contract.findMany({
+      where: {
+        status: ContractStatus.ACTIVE,
+        endDate: {
+          gte: startOfTarget,
+          lte: endOfTarget,
+        },
+      },
+      include: { property: true },
+    });
+
+    let sentCount = 0;
+    for (const contract of expiringContracts) {
+      const existingReminder = await this.prisma.notification.findFirst({
+        where: {
+          userId: contract.tenantId,
+          type: 'CONTRACT_RENEWAL_REMINDER',
+          body: { contains: contract.id },
+        },
+      });
+
+      if (existingReminder) {
+        continue;
+      }
+
+      await this.prisma.notification.create({
+        data: {
+          userId: contract.tenantId,
+          type: 'CONTRACT_RENEWAL_REMINDER',
+          title: 'Hợp đồng thuê sắp hết hạn ⚠️',
+          body: `Hợp đồng thuê căn hộ tại ${contract.property.title} của bạn sẽ hết hạn trong vòng 30 ngày (ngày ${contract.endDate.toLocaleDateString('vi-VN')}). Mã hợp đồng: ${contract.id}.`,
+          metadata: JSON.stringify({
+            contractId: contract.id,
+            endDate: contract.endDate,
+            actions: ['RENEW', 'TERMINATE'],
+          }),
+        },
+      });
+      sentCount++;
+    }
+    console.log(`[Cron] Automated Contract Renewal scanning finished. Alerts sent: ${sentCount}`);
   }
 }

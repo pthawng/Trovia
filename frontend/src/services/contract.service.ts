@@ -82,19 +82,19 @@ export const ContractService = {
   },
 
   sendToTenant: async (id: string): Promise<Contract> => {
-    const response = await api.patch(`/contracts/${id}/send`);
+    const response = await api.post(`/contracts/${id}/send`);
     const data = response.data?.data || response.data;
     return mapContract(data);
   },
 
   acceptContract: async (id: string): Promise<Contract> => {
-    const response = await api.patch(`/contracts/${id}/accept`);
+    const response = await api.post(`/contracts/${id}/accept`);
     const data = response.data?.data || response.data;
     return mapContract(data);
   },
 
   rejectContract: async (id: string): Promise<Contract> => {
-    const response = await api.patch(`/contracts/${id}/reject`);
+    const response = await api.post(`/contracts/${id}/reject`);
     const data = response.data?.data || response.data;
     return mapContract(data);
   },

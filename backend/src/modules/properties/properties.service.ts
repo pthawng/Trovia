@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { CreatePropertyDto, UpdatePropertyDto } from './dto/property.dto';
@@ -218,6 +219,88 @@ export class PropertiesService {
       include: {
         images: true,
         rooms: true,
+      },
+    });
+  }
+
+  async getAmenities() {
+    return this.prisma.amenity.findMany({
+      orderBy: { name: 'asc' },
+    });
+  }
+
+  async publish(id: string, landlordId: string) {
+    // 1. Check if landlord is active
+    await this.rolesService.checkLandlordActive(landlordId);
+
+    // 2. Fetch property with its child elements
+    const property = await this.prisma.property.findUnique({
+      where: { id },
+      include: {
+        rooms: true,
+        images: true,
+        propertyAmenities: true,
+      },
+    });
+
+    if (!property || property.deletedAt) {
+      throw new NotFoundException('Property not found');
+    }
+
+    // 3. Ownership check
+    if (property.landlordId !== landlordId) {
+      throw new ForbiddenException(
+        'Access denied. You are not the owner of this property.',
+      );
+    }
+
+    // 4. Required address, city, district
+    if (!property.address || !property.city || !property.district) {
+      throw new BadRequestException(
+        'Property must have required address, city, and district before publishing.',
+      );
+    }
+
+    // 5. Must have at least 1 image
+    if (property.images.length === 0) {
+      throw new BadRequestException(
+        'Property must have at least one image before publishing.',
+      );
+    }
+
+    // 6. Must have at least 1 amenity
+    if (property.propertyAmenities.length === 0) {
+      throw new BadRequestException(
+        'Property must have at least one amenity before publishing.',
+      );
+    }
+
+    // 7. Must have at least 1 room, and at least one available room
+    if (property.rooms.length === 0) {
+      throw new BadRequestException(
+        'Property must have at least one room/unit before publishing.',
+      );
+    }
+
+    const hasAvailableRoom = property.rooms.some(
+      (r) => r.isAvailable && r.status === 'AVAILABLE',
+    );
+    if (!hasAvailableRoom) {
+      throw new BadRequestException(
+        'Property must have at least one available room/unit before publishing.',
+      );
+    }
+
+    // 8. Update property status to PUBLISHED
+    return this.prisma.property.update({
+      where: { id },
+      data: { status: PropertyStatus.PUBLISHED },
+      include: {
+        images: true,
+        rooms: true,
+        propertyAmenities: {
+          include: { amenity: true },
+        },
       },
     });
   }

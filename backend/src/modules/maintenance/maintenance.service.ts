@@ -136,4 +136,66 @@ export class MaintenanceService {
       },
     });
   }
+
+  async update(id: string, userId: string, dto: any) {
+    const request = await this.prisma.maintenanceRequest.findUnique({
+      where: { id },
+      include: { property: true },
+    });
+
+    if (!request) {
+      throw new NotFoundException('Maintenance request not found');
+    }
+
+    const isLandlord = request.property.landlordId === userId;
+    const isTenant = request.tenantId === userId;
+
+    if (!isLandlord && !isTenant) {
+      throw new ForbiddenException('Access denied. You do not own this maintenance request.');
+    }
+
+    const updatedData: any = {};
+    if (dto.status !== undefined) {
+      if (isTenant && dto.status !== MaintenanceStatus.CANCELLED) {
+        throw new ForbiddenException('Tenant can only cancel their own maintenance request.');
+      }
+      updatedData.status = dto.status;
+    }
+    if (dto.assignedTo !== undefined) {
+      if (!isLandlord) throw new ForbiddenException('Only landlord can assign personnel.');
+      updatedData.assignedTo = dto.assignedTo;
+    }
+    if (dto.comment !== undefined) {
+      if (!isLandlord) throw new ForbiddenException('Only landlord can add notes/comments.');
+      updatedData.comment = dto.comment;
+    }
+
+    const updated = await this.prisma.maintenanceRequest.update({
+      where: { id },
+      data: updatedData,
+      include: {
+        property: true,
+        room: true,
+        tenant: {
+          select: { id: true, fullName: true, avatarUrl: true, phone: true },
+        },
+      },
+    });
+
+    // Notify the other user
+    const notifyUserId = isLandlord ? request.tenantId : request.property.landlordId;
+    await this.prisma.notification.create({
+      data: {
+        userId: notifyUserId,
+        type: 'MAINTENANCE_UPDATE',
+        title: `Yêu cầu sửa chữa: ${request.title}`,
+        body: isLandlord
+          ? `Chủ nhà đã cập nhật yêu cầu của bạn: ${dto.status || request.status}. ${dto.comment ? `Ghi chú: ${dto.comment}` : ''}`
+          : `Người thuê đã cập nhật yêu cầu: ${dto.status || request.status}.`,
+        metadata: JSON.stringify({ requestId: id }),
+      },
+    });
+
+    return updated;
+  }
 }

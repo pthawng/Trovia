@@ -61,4 +61,9 @@ export const PaymentService = {
     const response = await api.post(`/payments/${id}/pay`);
     return response.data?.data || response.data;
   },
+
+  generateRecurringBilling: async (): Promise<{ count: number; invoices: any[] }> => {
+    const response = await api.post("/payments/generate-recurring");
+    return response.data?.data || response.data;
+  },
 };

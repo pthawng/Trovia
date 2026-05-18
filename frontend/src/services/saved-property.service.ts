@@ -16,4 +16,14 @@ export const SavedPropertyService = {
     const response = await api.get("/saved-properties");
     return response.data?.data || response.data;
   },
+
+  getCount: async (): Promise<{ count: number }> => {
+    const response = await api.get("/saved-properties/count");
+    return response.data?.data || response.data;
+  },
+
+  getRecommendations: async (): Promise<Property[]> => {
+    const response = await api.get("/saved-properties/recommendations");
+    return response.data?.data || response.data;
+  },
 };
