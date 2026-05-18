@@ -1,32 +1,106 @@
-# Logs
-logs
+# ==============================================================================
+# Trovia Home Hub - Production-Grade Monorepo .gitignore
+# Cohesive rules for NestJS, Prisma, React, Vite, Bun & Wrangler
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# Dependency Directories
+# ------------------------------------------------------------------------------
+node_modules/
+jspm_packages/
+web_modules/
+.npm/
+.yarn/
+.pnpm-store/
+
+# ------------------------------------------------------------------------------
+# Build & Output Artifacts
+# ------------------------------------------------------------------------------
+dist/
+dist-ssr/
+build/
+out/
+.output/
+.vinxi/
+.tanstack/
+.nitro/
+.wrangler/
+.parcel-cache/
+.eslintcache
+.cache/
+
+# ------------------------------------------------------------------------------
+# Environment Variables & Secrets (CRITICAL SECURITY)
+# ------------------------------------------------------------------------------
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.example.local
+.env.backup
+.env*.local
+*.env
+.dev.vars
+
+# ------------------------------------------------------------------------------
+# Database (Prisma, SQLite, PostgreSQL backups)
+# ------------------------------------------------------------------------------
+*.db
+*.db-journal
+*.sqlite
+*.sqlite-journal
+*.sql
+*.dump
+prisma/migrations/**/*.sql
+
+# ------------------------------------------------------------------------------
+# Diagnostic Logs & Audits
+# ------------------------------------------------------------------------------
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+package-lock.json.log
+coverage/
+.nyc_output/
 
-node_modules
-dist
-dist-ssr
-.output
-.vinxi
-.tanstack/**
-.nitro
-*.local
+# ------------------------------------------------------------------------------
+# Operating System Specific
+# ------------------------------------------------------------------------------
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+desktop.ini
+$RECYCLE.BIN/
 
-# Wrangler / Cloudflare
-.wrangler/
-.dev.vars
-
-# Editor directories and files
+# ------------------------------------------------------------------------------
+# IDEs & Editor Configuration
+# ------------------------------------------------------------------------------
 .vscode/*
 !.vscode/extensions.json
-.idea
-.DS_Store
+!.vscode/launch.json
+.idea/
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+*.swo
+*.swp
+*.orig
+.project
+.classpath
+.settings/
+
+# ------------------------------------------------------------------------------
+# Docker and Local Containers
+# ------------------------------------------------------------------------------
+.docker/
+docker-compose.override.yml

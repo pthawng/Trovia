@@ -1,0 +1,51 @@
+# ==============================================================================
+# Trovia Frontend - React, Vite, Bun & Wrangler Local .gitignore
+# ==============================================================================
+
+# Compiled output
+/dist
+/dist-ssr
+/.output
+/.nitro
+/.vinxi
+/.tanstack
+
+# Dependencies
+/node_modules
+
+# Environment files
+.env
+.env.production
+.env.development
+.env.test
+.env.local
+.env.*.local
+*.env
+.dev.vars
+
+# Cloudflare / Wrangler
+.wrangler/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Diagnostic/Coverage
+/coverage
+.nyc_output
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

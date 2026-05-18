@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: trovia-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: trovia
+      POSTGRES_PASSWORD: trovia_password
+      POSTGRES_DB: trovia_db
+    volumes:
+      - trovia_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U trovia -d trovia_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  trovia_postgres_data:

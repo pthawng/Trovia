@@ -1,0 +1,554 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AppRole {
+  TENANT
+  LANDLORD
+  ADMIN
+}
+
+enum LandlordStatus {
+  NOT_STARTED
+  PENDING_VERIFICATION
+  ACTIVE
+  SUSPENDED
+}
+
+enum PropertyType {
+  BOARDING_HOUSE
+  APARTMENT
+  HOUSE
+  STUDIO
+  DORMITORY
+}
+
+enum PropertyStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum RentalRequestStatus {
+  PENDING
+  IN_DISCUSSION
+  ACCEPTED
+  REJECTED
+  CANCELLED
+}
+
+enum ConversationStatus {
+  OPEN
+  CLOSED
+  ARCHIVED
+}
+
+enum MessageType {
+  TEXT
+  SYSTEM
+  APPOINTMENT
+  CONTRACT
+  PAYMENT
+}
+
+enum ViewingAppointmentStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+enum ContractStatus {
+  DRAFT
+  SENT
+  ACCEPTED
+  REJECTED
+  ACTIVE
+  TERMINATED
+}
+
+enum PaymentType {
+  DEPOSIT
+  FIRST_MONTH_RENT
+  MONTHLY_RENT
+  SERVICE_FEE
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum TenancyStatus {
+  ACTIVE
+  ENDED
+  CANCELLED
+}
+
+model User {
+  id              String           @id @default(uuid()) @db.Uuid
+  email           String           @unique
+  passwordHash    String           @map("password_hash")
+  fullName        String?          @map("full_name")
+  avatarUrl       String?          @map("avatar_url")
+  phone           String?
+  city            String?
+  isEmailVerified Boolean          @default(false) @map("is_email_verified")
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  deletedAt       DateTime?        @map("deleted_at") @db.Timestamptz
+
+  userRoles            UserRole[]
+  landlordProfile      LandlordProfile?
+  refreshTokens        RefreshToken[]
+  savedProperties      SavedProperty[]
+  auditLogs            AuditLog[]
+  
+  // Relations for Rental Lifecycle
+  tenantRequests       RentalRequest[]      @relation("TenantRequests")
+  landlordRequests     RentalRequest[]      @relation("LandlordRequests")
+  tenantConversations  Conversation[]       @relation("TenantConversations")
+  landlordConversations Conversation[]     @relation("LandlordConversations")
+  messagesSent         Message[]
+  tenantAppointments   ViewingAppointment[] @relation("TenantAppointments")
+  landlordAppointments ViewingAppointment[] @relation("LandlordAppointments")
+  tenantContracts      Contract[]           @relation("TenantContracts")
+  landlordContracts    Contract[]           @relation("LandlordContracts")
+  tenantPayments       Payment[]            @relation("TenantPayments")
+  landlordPayments     Payment[]            @relation("LandlordPayments")
+  tenantTenancies      Tenancy[]            @relation("TenantTenancies")
+  landlordTenancies    Tenancy[]            @relation("LandlordTenancies")
+  notifications        Notification[]
+  maintenanceRequests  MaintenanceRequest[] @relation("TenantMaintenance")
+
+  @@index([email])
+  @@map("users")
+}
+
+model Role {
+  id        String     @id @default(uuid()) @db.Uuid
+  name      AppRole    @unique
+  createdAt DateTime   @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime   @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  userRoles UserRole[]
+
+  @@map("roles")
+}
+
+model UserRole {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  roleId    String   @map("role_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+  @@map("user_roles")
+}
+
+model LandlordProfile {
+  userId               String         @id @map("user_id") @db.Uuid
+  status               LandlordStatus @default(NOT_STARTED)
+  businessName         String?        @map("business_name")
+  businessAddress      String?        @map("business_address")
+  businessEmail        String?        @map("business_email")
+  businessPhone        String?        @map("business_phone")
+  identityCardNumber   String?        @map("identity_card_number")
+  identityCardFrontUrl String?        @map("identity_card_front_url")
+  identityCardBackUrl  String?        @map("identity_card_back_url")
+  identityVerifiedAt   DateTime?      @map("identity_verified_at") @db.Timestamptz
+  activatedAt          DateTime?      @map("activated_at") @db.Timestamptz
+  createdAt            DateTime       @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt            DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  properties Property[]
+
+  @@map("landlord_profiles")
+}
+
+model Property {
+  id          String         @id @default(uuid()) @db.Uuid
+  landlordId  String         @map("landlord_id") @db.Uuid
+  title       String
+  description String
+  address     String
+  city        String
+  district    String
+  ward        String
+  latitude    Float?
+  longitude   Float?
+  type        PropertyType
+  status      PropertyStatus @default(DRAFT)
+  createdAt   DateTime       @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  deletedAt   DateTime?      @map("deleted_at") @db.Timestamptz
+
+  landlord         LandlordProfile   @relation(fields: [landlordId], references: [userId], onDelete: Cascade)
+  rooms            Room[]
+  images           PropertyImage[]
+  propertyAmenities PropertyAmenity[]
+  savedByTenants   SavedProperty[]
+
+  // Relations for Rental Lifecycle
+  rentalRequests      RentalRequest[]
+  conversations       Conversation[]
+  viewingAppointments ViewingAppointment[]
+  contracts           Contract[]
+  tenancies           Tenancy[]
+  maintenanceRequests MaintenanceRequest[] @relation("PropertyMaintenance")
+
+  totalFloors         Int                 @default(1) @map("total_floors")
+  totalUnits          Int                 @default(1) @map("total_units")
+  hasParking          Boolean             @default(true) @map("has_parking")
+  utilities           String?
+  rules               String?
+
+  @@index([city, district])
+  @@index([type])
+  @@index([status])
+  @@map("properties")
+}
+
+model Room {
+  id          String   @id @default(uuid()) @db.Uuid
+  propertyId  String   @map("property_id") @db.Uuid
+  title       String
+  description String?
+  price       Decimal  @db.Decimal(12, 2)
+  area        Float
+  deposit     Decimal  @db.Decimal(12, 2)
+  capacity    Int      @default(1)
+  isAvailable Boolean  @default(true) @map("is_available")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  property        Property         @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  roomAmenities   RoomAmenity[]
+
+  // Relations for Rental Lifecycle
+  rentalRequests      RentalRequest[]
+  contracts           Contract[]
+  tenancies           Tenancy[]
+  maintenanceRequests MaintenanceRequest[] @relation("RoomMaintenance")
+
+  roomNumber          String?             @map("room_number")
+  floor               Int?
+  genderRestriction   String?             @map("gender_restriction")
+  status              String              @default("AVAILABLE")
+
+  @@index([propertyId])
+  @@map("rooms")
+}
+
+model PropertyImage {
+  id         String   @id @default(uuid()) @db.Uuid
+  propertyId String   @map("property_id") @db.Uuid
+  url        String
+  order      Int      @default(0)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@map("property_images")
+}
+
+model Amenity {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String   @unique
+  description String?
+  icon        String?
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  propertyAmenities PropertyAmenity[]
+  roomAmenities     RoomAmenity[]
+
+  @@map("amenities")
+}
+
+model PropertyAmenity {
+  propertyId String @map("property_id") @db.Uuid
+  amenityId  String @map("amenity_id") @db.Uuid
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  amenity  Amenity  @relation(fields: [amenityId], references: [id], onDelete: Cascade)
+
+  @@id([propertyId, amenityId])
+  @@map("property_amenities")
+}
+
+model RoomAmenity {
+  roomId    String @map("room_id") @db.Uuid
+  amenityId String @map("amenity_id") @db.Uuid
+
+  room    Room    @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  amenity Amenity @relation(fields: [amenityId], references: [id], onDelete: Cascade)
+
+  @@id([roomId, amenityId])
+  @@map("room_amenities")
+}
+
+model RentalRequest {
+  id                  String              @id @default(uuid()) @db.Uuid
+  tenantId            String              @map("tenant_id") @db.Uuid
+  landlordId          String              @map("landlord_id") @db.Uuid
+  propertyId          String              @map("property_id") @db.Uuid
+  roomId              String?             @map("room_id") @db.Uuid
+  moveInDate          DateTime            @map("move_in_date") @db.Timestamptz
+  rentalDurationMonths Int                 @map("rental_duration_months")
+  message             String?
+  phone               String?
+  status              RentalRequestStatus @default(PENDING)
+  createdAt           DateTime            @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt           DateTime            @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  tenant              User                @relation("TenantRequests", fields: [tenantId], references: [id], onDelete: Cascade)
+  landlord            User                @relation("LandlordRequests", fields: [landlordId], references: [id], onDelete: Cascade)
+  property            Property            @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  room                Room?               @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  conversations       Conversation[]
+  viewingAppointments ViewingAppointment[]
+  contracts           Contract[]
+
+  @@map("rental_requests")
+}
+
+model Conversation {
+  id              String             @id @default(uuid()) @db.Uuid
+  rentalRequestId String?            @map("rental_request_id") @db.Uuid
+  propertyId      String?            @map("property_id") @db.Uuid
+  tenantId        String             @map("tenant_id") @db.Uuid
+  landlordId      String             @map("landlord_id") @db.Uuid
+  status          ConversationStatus @default(OPEN)
+  createdAt       DateTime           @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime           @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  rentalRequest   RentalRequest?     @relation(fields: [rentalRequestId], references: [id], onDelete: SetNull)
+  property        Property?          @relation(fields: [propertyId], references: [id], onDelete: SetNull)
+  tenant          User               @relation("TenantConversations", fields: [tenantId], references: [id], onDelete: Cascade)
+  landlord        User               @relation("LandlordConversations", fields: [landlordId], references: [id], onDelete: Cascade)
+  messages        Message[]
+  viewingAppointments ViewingAppointment[]
+  contracts       Contract[]
+
+  @@map("conversations")
+}
+
+model Message {
+  id             String      @id @default(uuid()) @db.Uuid
+  conversationId String      @map("conversation_id") @db.Uuid
+  senderId       String      @map("sender_id") @db.Uuid
+  type           MessageType @default(TEXT)
+  content        String
+  metadata       Json?
+  readAt         DateTime?   @map("read_at") @db.Timestamptz
+  createdAt      DateTime    @default(now()) @map("created_at") @db.Timestamptz
+
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@map("messages")
+}
+
+model ViewingAppointment {
+  id              String                   @id @default(uuid()) @db.Uuid
+  conversationId  String                   @map("conversation_id") @db.Uuid
+  rentalRequestId String                   @map("rental_request_id") @db.Uuid
+  propertyId      String                   @map("property_id") @db.Uuid
+  tenantId        String                   @map("tenant_id") @db.Uuid
+  landlordId      String                   @map("landlord_id") @db.Uuid
+  scheduledAt     DateTime                 @map("scheduled_at") @db.Timestamptz
+  location        String
+  note            String?
+  status          ViewingAppointmentStatus @default(PENDING)
+  createdAt       DateTime                 @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime                 @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  conversation   Conversation             @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  rentalRequest  RentalRequest            @relation(fields: [rentalRequestId], references: [id], onDelete: Cascade)
+  property       Property                 @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  tenant         User                     @relation("TenantAppointments", fields: [tenantId], references: [id], onDelete: Cascade)
+  landlord       User                     @relation("LandlordAppointments", fields: [landlordId], references: [id], onDelete: Cascade)
+
+  @@map("viewing_appointments")
+}
+
+model Contract {
+  id              String         @id @default(uuid()) @db.Uuid
+  rentalRequestId String         @map("rental_request_id") @db.Uuid
+  conversationId  String         @map("conversation_id") @db.Uuid
+  tenantId        String         @map("tenant_id") @db.Uuid
+  landlordId      String         @map("landlord_id") @db.Uuid
+  propertyId      String         @map("property_id") @db.Uuid
+  roomId          String         @map("room_id") @db.Uuid
+  status          ContractStatus @default(DRAFT)
+  monthlyRent     Decimal        @map("monthly_rent") @db.Decimal(12, 2)
+  depositAmount   Decimal        @map("deposit_amount") @db.Decimal(12, 2)
+  durationMonths  Int            @map("duration_months")
+  startDate       DateTime       @map("start_date") @db.Timestamptz
+  endDate         DateTime       @map("end_date") @db.Timestamptz
+  terms           String
+  sentAt          DateTime?      @map("sent_at") @db.Timestamptz
+  acceptedAt      DateTime?      @map("accepted_at") @db.Timestamptz
+  activatedAt     DateTime?      @map("activated_at") @db.Timestamptz
+  createdAt       DateTime       @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  rentalRequest   RentalRequest  @relation(fields: [rentalRequestId], references: [id], onDelete: Cascade)
+  conversation    Conversation   @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  tenant          User           @relation("TenantContracts", fields: [tenantId], references: [id], onDelete: Cascade)
+  landlord        User           @relation("LandlordContracts", fields: [landlordId], references: [id], onDelete: Cascade)
+  property        Property       @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  room            Room           @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  payments        Payment[]
+  tenancies       Tenancy[]
+
+  @@map("contracts")
+}
+
+model Payment {
+  id                     String        @id @default(uuid()) @db.Uuid
+  contractId             String        @map("contract_id") @db.Uuid
+  tenantId               String        @map("tenant_id") @db.Uuid
+  landlordId             String        @map("landlord_id") @db.Uuid
+  amount                 Decimal       @db.Decimal(12, 2)
+  type                   PaymentType
+  status                 PaymentStatus @default(PENDING)
+  dueDate                DateTime      @map("due_date") @db.Timestamptz
+  paidAt                 DateTime?     @map("paid_at") @db.Timestamptz
+  provider               String        @default("MANUAL")
+  providerTransactionId  String?       @map("provider_transaction_id")
+  createdAt              DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt              DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  contract               Contract      @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  tenant                 User          @relation("TenantPayments", fields: [tenantId], references: [id], onDelete: Cascade)
+  landlord               User          @relation("LandlordPayments", fields: [landlordId], references: [id], onDelete: Cascade)
+
+  @@map("payments")
+}
+
+model Tenancy {
+  id         String        @id @default(uuid()) @db.Uuid
+  contractId String        @map("contract_id") @db.Uuid
+  tenantId   String        @map("tenant_id") @db.Uuid
+  landlordId String        @map("landlord_id") @db.Uuid
+  propertyId String        @map("property_id") @db.Uuid
+  roomId     String        @map("room_id") @db.Uuid
+  status     TenancyStatus @default(ACTIVE)
+  startedAt  DateTime      @map("started_at") @db.Timestamptz
+  endedAt    DateTime?     @map("ended_at") @db.Timestamptz
+  createdAt  DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt  DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  contract   Contract      @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  tenant     User          @relation("TenantTenancies", fields: [tenantId], references: [id], onDelete: Cascade)
+  landlord   User          @relation("LandlordTenancies", fields: [landlordId], references: [id], onDelete: Cascade)
+  property   Property      @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  room       Room          @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@map("tenancies")
+}
+
+model Notification {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  type      String
+  title     String
+  body      String
+  readAt    DateTime? @map("read_at") @db.Timestamptz
+  metadata  Json?
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+model SavedProperty {
+  tenantId   String   @map("tenant_id") @db.Uuid
+  propertyId String   @map("property_id") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  tenant   User     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@id([tenantId, propertyId])
+  @@map("saved_properties")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  token     String   @unique
+  isRevoked Boolean  @default(false) @map("is_revoked")
+  expiresAt DateTime @map("expires_at") @db.Timestamptz
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String?  @map("user_id") @db.Uuid
+  action     String
+  resource   String
+  resourceId String?  @map("resource_id")
+  ipAddress  String?  @map("ip_address")
+  userAgent  String?  @map("user_agent")
+  details    Json?
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("audit_logs")
+}
+
+enum MaintenancePriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum MaintenanceStatus {
+  OPEN
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+model MaintenanceRequest {
+  id          String              @id @default(uuid()) @db.Uuid
+  tenantId    String              @map("tenant_id") @db.Uuid
+  propertyId  String              @map("property_id") @db.Uuid
+  roomId      String?             @map("room_id") @db.Uuid
+  title       String
+  description String
+  images      String[]            @default([])
+  priority    MaintenancePriority @default(MEDIUM)
+  status      MaintenanceStatus   @default(OPEN)
+  createdAt   DateTime            @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime            @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  tenant      User                @relation("TenantMaintenance", fields: [tenantId], references: [id], onDelete: Cascade)
+  property    Property            @relation("PropertyMaintenance", fields: [propertyId], references: [id], onDelete: Cascade)
+  room        Room?               @relation("RoomMaintenance", fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@map("maintenance_requests")
+}
