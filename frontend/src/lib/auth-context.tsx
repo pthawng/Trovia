@@ -46,13 +46,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         setLandlordProfile(null);
       }
-    } catch (err) {
-      // Token is invalid or expired, clear it
-      if (typeof window !== "undefined") {
-        localStorage.removeItem("accessToken");
+    } catch (err: any) {
+      // Only clear token and force logout if the server explicitly returned 401 Unauthorized.
+      // For network connection errors or server 5xx reboots, preserve credentials.
+      if (err.response?.status === 401) {
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("accessToken");
+        }
+        setUser(null);
+        setLandlordProfile(null);
+      } else {
+        console.warn("Preserving access token during temporary connection glitch:", err);
       }
-      setUser(null);
-      setLandlordProfile(null);
     } finally {
       setLoading(false);
     }

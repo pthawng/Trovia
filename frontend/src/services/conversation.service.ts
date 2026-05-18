@@ -4,7 +4,8 @@ export interface Message {
   id: string;
   conversationId: string;
   senderId: string;
-  type: "TEXT" | "SYSTEM" | "APPOINTMENT" | "CONTRACT" | "PAYMENT";
+  senderRoleContext: "TENANT" | "LANDLORD" | "SYSTEM";
+  type: "TEXT" | "SYSTEM" | "APPOINTMENT" | "CONTRACT" | "PAYMENT" | "IMAGE" | "FILE";
   content: string;
   metadata: any | null;
   readAt: string | null;
@@ -17,20 +18,31 @@ export interface Conversation {
   rentalRequestId: string;
   tenantId: string;
   landlordId: string;
+  contextType: "RENTAL_REQUEST" | "ACTIVE_TENANCY" | "MAINTENANCE" | "SUPPORT" | "GENERAL";
+  status: "OPEN" | "CLOSED" | "ARCHIVED";
+  lastMessageAt: string;
   createdAt: string;
   updatedAt: string;
-  property: {
+  property?: {
     id: string;
     title: string;
     images: Array<{ url: string }>;
     address: string;
     city: string;
-  };
+  } | null;
+  room?: {
+    id: string;
+    title: string;
+    floor: number | null;
+    roomNumber: string | null;
+    price: string | number;
+  } | null;
   rentalRequest?: {
+    id: string;
     status: string;
     moveInDate: string;
     rentalDurationMonths: number;
-  };
+  } | null;
   tenant: {
     id: string;
     fullName: string;
@@ -50,6 +62,11 @@ export const ConversationService = {
     return response.data?.data || response.data;
   },
 
+  getUnreadCount: async (): Promise<{ count: number }> => {
+    const response = await api.get("/conversations/unread-count");
+    return response.data?.data || response.data;
+  },
+
   findOne: async (id: string): Promise<Conversation> => {
     const response = await api.get(`/conversations/${id}`);
     return response.data?.data || response.data;
@@ -60,7 +77,12 @@ export const ConversationService = {
     return response.data?.data || response.data;
   },
 
-  sendMessage: async (id: string, content: string, type: "TEXT" | "SYSTEM" | "APPOINTMENT" | "CONTRACT" | "PAYMENT" = "TEXT", metadata?: any): Promise<Message> => {
+  sendMessage: async (
+    id: string,
+    content: string,
+    type: "TEXT" | "SYSTEM" | "APPOINTMENT" | "CONTRACT" | "PAYMENT" | "IMAGE" | "FILE" = "TEXT",
+    metadata?: any
+  ): Promise<Message> => {
     const response = await api.post(`/conversations/${id}/messages`, {
       content,
       type,
@@ -70,6 +92,6 @@ export const ConversationService = {
   },
 
   markRead: async (id: string): Promise<void> => {
-    await api.post(`/conversations/${id}/read`);
+    await api.patch(`/conversations/${id}/read`);
   },
 };

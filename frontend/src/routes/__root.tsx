@@ -5,6 +5,7 @@ import {
 } from "@tanstack/react-router";
 import { AuthProvider } from "@/lib/auth-context";
 import { ThemeProvider } from "@/lib/theme-context";
+import { SocketProvider } from "@/lib/socket.provider";
 import { Toaster } from "@/components/ui/sonner";
 import "@/lib/i18n";
 import appCss from "../styles.css?url";
@@ -71,8 +72,10 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <AuthProvider>
-          <Outlet />
-          <Toaster />
+          <SocketProvider>
+            <Outlet />
+            <Toaster />
+          </SocketProvider>
         </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>

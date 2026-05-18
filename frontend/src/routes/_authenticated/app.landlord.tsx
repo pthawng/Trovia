@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "motion/react";
+import { Messages } from "./app.messages";
 import { 
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, 
   CartesianGrid, Tooltip, BarChart, Bar, Cell
@@ -187,12 +188,20 @@ function LandlordDashboard() {
       terms: string;
     }) => {
       await BookingRequestService.updateStatus(variables.requestId, "ACCEPTED");
+      const start = new Date(variables.startDate);
+      const end = new Date(variables.endDate);
+      const durationMonths = Math.max(
+        1,
+        (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth())
+      );
+
       const contract = await ContractService.createDraft({
         rentalRequestId: variables.requestId,
         startDate: variables.startDate,
         endDate: variables.endDate,
         monthlyRent: variables.monthlyRent,
-        deposit: variables.deposit,
+        depositAmount: variables.deposit,
+        durationMonths,
         terms: variables.terms,
       });
       await ContractService.sendToTenant(contract.id);
@@ -375,6 +384,7 @@ function LandlordDashboard() {
             {view === "properties" && "Quản Lý Bất Động Sản"}
             {view === "rooms" && "Quản Lý Căn Hộ / Phòng"}
             {view === "requests" && "Hồ Sơ Yêu Cầu Thuê"}
+            {view === "messages" && "Hộp Thư Tin Nhắn"}
             {view === "tenants" && "Hồ Sơ Khách Thuê Phòng"}
             {view === "contracts" && "Hợp Đồng Thuê Nhà e-Sign"}
             {view === "payments" && "Sổ Hóa Đơn & Doanh Thu"}
@@ -386,6 +396,7 @@ function LandlordDashboard() {
             {view === "properties" && "Đăng ký bất động sản mới, thiết lập mô tả, nội quy, địa chỉ chính xác và quản lý hình ảnh."}
             {view === "rooms" && "Thiết lập chi tiết phòng bao gồm số phòng, diện tích, giá thuê, tầng lầu và giới tính hạn chế."}
             {view === "requests" && "Nhận hồ sơ xin thuê từ học sinh, sinh viên và lập hợp đồng pháp lý điện tử tức thì."}
+            {view === "messages" && "Trao đổi tin nhắn trực tiếp với người thuê nhà và các ứng viên đăng ký phòng."}
             {view === "tenants" && "Lưu trữ thông tin liên lạc của tất cả khách đang lưu trú tại các tòa nhà."}
             {view === "contracts" && "Tạo hợp đồng mẫu, kiểm tra chữ ký điện tử của hai bên và theo dõi hiệu lực."}
             {view === "payments" && "Lập phiếu báo thu tiền điện nước, tiền nhà hàng tháng và kiểm tra thanh toán thực tế."}
@@ -1142,6 +1153,13 @@ function LandlordDashboard() {
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* RENDER - MESSAGES VIEW */}
+      {view === "messages" && (
+        <div className="space-y-6">
+          <Messages />
         </div>
       )}
 

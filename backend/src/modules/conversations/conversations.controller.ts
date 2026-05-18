@@ -32,6 +32,13 @@ export class ConversationsController {
     return this.conversationsService.findAllForUser(userId);
   }
 
+  @Get('unread-count')
+  @ApiOperation({ summary: 'Get total unread messages count for all conversations' })
+  @ApiResponse({ status: 200, description: 'Unread messages count' })
+  async getUnreadCount(@GetUser('id') userId: string) {
+    return this.conversationsService.getUnreadCount(userId);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get conversation details' })
   @ApiResponse({ status: 200, description: 'Conversation details' })

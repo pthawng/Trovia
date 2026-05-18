@@ -1,5 +1,5 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { useState, type ReactNode } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Home, Compass, Heart, MessageSquare, FileText, User, Sparkles,
@@ -15,6 +15,8 @@ import {
 import { useAuth } from "@/lib/auth-context";
 import { useTheme } from "@/lib/theme-context";
 import { LanguageSwitcher } from "@/components/common/LanguageSwitcher";
+import { ConversationService } from "@/services/conversation.service";
+import { useSocket } from "@/hooks/useSocket";
 import { cn } from "@/lib/utils";
 
 type NavItem = { to: string; labelKey?: string; label?: string; view?: string; icon: any; exact?: boolean; badge?: number };
@@ -26,6 +28,38 @@ export function AppShell({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const path = useRouterState({ select: (s) => s.location.pathname });
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const { socket } = useSocket();
+
+  // Fetch initial unread count on mount/auth-state change
+  useEffect(() => {
+    if (!user) return;
+    const fetchUnread = async () => {
+      try {
+        const res = await ConversationService.getUnreadCount();
+        setUnreadCount(res.count);
+      } catch (err) {
+        console.error("Error fetching unread count:", err);
+      }
+    };
+    fetchUnread();
+  }, [user]);
+
+  // Real-time unread count socket updates
+  useEffect(() => {
+    if (!socket || !user) return;
+
+    const handleUnreadUpdate = (data: { userId: string; count: number }) => {
+      if (data.userId === user.id) {
+        setUnreadCount(data.count);
+      }
+    };
+
+    socket.on("unreadCountUpdated", handleUnreadUpdate);
+    return () => {
+      socket.off("unreadCountUpdated", handleUnreadUpdate);
+    };
+  }, [socket, user]);
 
   const initials = (user?.fullName || user?.email || "U").slice(0, 2).toUpperCase();
   const isLandlord = user?.roles?.includes("LANDLORD");
@@ -38,7 +72,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const tenantNav: NavItem[] = [
     { to: "/app/explore", labelKey: "nav.explore", icon: Compass },
     { to: "/app/saved", labelKey: "nav.saved", icon: Heart },
-    { to: "/app/messages", labelKey: "nav.messages", icon: MessageSquare, badge: 0 },
+    { to: "/app/messages", labelKey: "nav.messages", icon: MessageSquare, badge: unreadCount },
     { to: "/app/requests", labelKey: "nav.requests", icon: FileText },
     { to: "/app/contracts", labelKey: "nav.contracts", icon: FileText },
     { to: "/app/payments", labelKey: "nav.payments", icon: CreditCard },
@@ -50,6 +84,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     { to: "/app/landlord?view=properties", view: "properties", label: "Bất động sản", icon: Building },
     { to: "/app/landlord?view=rooms", view: "rooms", label: "Phòng / Căn hộ", icon: Home },
     { to: "/app/landlord?view=requests", view: "requests", label: "Yêu cầu thuê", icon: FileText },
+    { to: "/app/landlord?view=messages", view: "messages", label: "Tin nhắn", icon: MessageSquare, badge: unreadCount },
     { to: "/app/landlord?view=tenants", view: "tenants", label: "Người thuê", icon: User },
     { to: "/app/landlord?view=contracts", view: "contracts", label: "Hợp đồng", icon: FileText },
     { to: "/app/landlord?view=payments", view: "payments", label: "Thanh toán", icon: CreditCard },
@@ -220,7 +255,25 @@ export function AppShell({ children }: { children: ReactNode }) {
                 {theme === "dark" ? <Sun className="h-4.5 w-4.5 text-amber-500" /> : <Moon className="h-4.5 w-4.5" />}
               </Button>
 
-              <Button variant="ghost" size="icon" className="relative h-10 w-10 rounded-xl hover:bg-secondary" aria-label="Notifications">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => navigate({ to: inLandlordMode ? "/app/landlord?view=messages" as any : "/app/messages" as any })}
+                className="relative h-10 w-10 rounded-xl hover:bg-secondary cursor-pointer" 
+                aria-label="Messages"
+              >
+                <MessageSquare className="h-4.5 w-4.5 text-muted-foreground" />
+                {unreadCount > 0 && (
+                  <span className={cn(
+                    "absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-bold text-white shadow-sm animate-pulse",
+                    inLandlordMode ? "bg-amber-600" : "bg-primary"
+                  )}>
+                    {unreadCount}
+                  </span>
+                )}
+              </Button>
+
+              <Button variant="ghost" size="icon" className="relative h-10 w-10 rounded-xl hover:bg-secondary cursor-pointer" aria-label="Notifications">
                 <Bell className="h-4.5 w-4.5 text-muted-foreground" />
                 <span className="absolute top-2.5 right-2.5 h-2 w-2 rounded-full bg-primary ring-2 ring-background" />
               </Button>

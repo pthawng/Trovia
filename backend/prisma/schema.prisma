@@ -51,12 +51,28 @@ enum ConversationStatus {
   ARCHIVED
 }
 
+enum ConversationContextType {
+  RENTAL_REQUEST
+  ACTIVE_TENANCY
+  MAINTENANCE
+  SUPPORT
+  GENERAL
+}
+
+enum SenderRoleContext {
+  TENANT
+  LANDLORD
+  SYSTEM
+}
+
 enum MessageType {
   TEXT
   SYSTEM
-  APPOINTMENT
   CONTRACT
   PAYMENT
+  APPOINTMENT
+  IMAGE
+  FILE
 }
 
 enum ViewingAppointmentStatus {
@@ -244,6 +260,7 @@ model Room {
   contracts           Contract[]
   tenancies           Tenancy[]
   maintenanceRequests MaintenanceRequest[] @relation("RoomMaintenance")
+  conversations       Conversation[]
 
   roomNumber          String?             @map("room_number")
   floor               Int?
@@ -327,19 +344,23 @@ model RentalRequest {
 }
 
 model Conversation {
-  id              String             @id @default(uuid()) @db.Uuid
-  rentalRequestId String?            @map("rental_request_id") @db.Uuid
-  propertyId      String?            @map("property_id") @db.Uuid
-  tenantId        String             @map("tenant_id") @db.Uuid
-  landlordId      String             @map("landlord_id") @db.Uuid
-  status          ConversationStatus @default(OPEN)
-  createdAt       DateTime           @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt       DateTime           @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  id              String                  @id @default(uuid()) @db.Uuid
+  rentalRequestId String?                 @map("rental_request_id") @db.Uuid
+  propertyId      String?                 @map("property_id") @db.Uuid
+  roomId          String?                 @map("room_id") @db.Uuid
+  tenantId        String                  @map("tenant_id") @db.Uuid
+  landlordId      String                  @map("landlord_id") @db.Uuid
+  contextType     ConversationContextType @default(GENERAL) @map("context_type")
+  status          ConversationStatus      @default(OPEN)
+  lastMessageAt   DateTime                @default(now()) @map("last_message_at") @db.Timestamptz
+  createdAt       DateTime                @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime                @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
 
-  rentalRequest   RentalRequest?     @relation(fields: [rentalRequestId], references: [id], onDelete: SetNull)
-  property        Property?          @relation(fields: [propertyId], references: [id], onDelete: SetNull)
-  tenant          User               @relation("TenantConversations", fields: [tenantId], references: [id], onDelete: Cascade)
-  landlord        User               @relation("LandlordConversations", fields: [landlordId], references: [id], onDelete: Cascade)
+  rentalRequest   RentalRequest?          @relation(fields: [rentalRequestId], references: [id], onDelete: SetNull)
+  property        Property?               @relation(fields: [propertyId], references: [id], onDelete: SetNull)
+  room            Room?                   @relation(fields: [roomId], references: [id], onDelete: SetNull)
+  tenant          User                    @relation("TenantConversations", fields: [tenantId], references: [id], onDelete: Cascade)
+  landlord        User                    @relation("LandlordConversations", fields: [landlordId], references: [id], onDelete: Cascade)
   messages        Message[]
   viewingAppointments ViewingAppointment[]
   contracts       Contract[]
@@ -348,17 +369,19 @@ model Conversation {
 }
 
 model Message {
-  id             String      @id @default(uuid()) @db.Uuid
-  conversationId String      @map("conversation_id") @db.Uuid
-  senderId       String      @map("sender_id") @db.Uuid
-  type           MessageType @default(TEXT)
-  content        String
-  metadata       Json?
-  readAt         DateTime?   @map("read_at") @db.Timestamptz
-  createdAt      DateTime    @default(now()) @map("created_at") @db.Timestamptz
+  id                String            @id @default(uuid()) @db.Uuid
+  conversationId    String            @map("conversation_id") @db.Uuid
+  senderId          String            @map("sender_id") @db.Uuid
+  senderRoleContext SenderRoleContext @default(SYSTEM) @map("sender_role_context")
+  type              MessageType       @default(TEXT)
+  content           String
+  metadata          Json?
+  readAt            DateTime?         @map("read_at") @db.Timestamptz
+  createdAt         DateTime          @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
 
-  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  sender         User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  conversation      Conversation      @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender            User              @relation(fields: [senderId], references: [id], onDelete: Cascade)
 
   @@map("messages")
 }
