@@ -3,6 +3,7 @@ import {
   NotFoundException,
   BadRequestException,
   ForbiddenException,
+  Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import {
@@ -10,10 +11,16 @@ import {
   UpdateRentalRequestStatusDto,
 } from './dto/rental-request.dto';
 import { RentalRequestStatus } from '@prisma/client';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class RentalRequestsService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(RentalRequestsService.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mailService: MailService,
+  ) {}
 
   async create(tenantId: string, dto: CreateRentalRequestDto) {
     // 1. Fetch the property to find landlordId
@@ -61,7 +68,7 @@ export class RentalRequestsService {
     }
 
     // 5. Transaction: RentalRequest + Conversation + Message + Notification
-    return this.prisma.$transaction(async (tx) => {
+    const result = await this.prisma.$transaction(async (tx) => {
       // Create request
       const request = await tx.rentalRequest.create({
         data: {
@@ -79,7 +86,7 @@ export class RentalRequestsService {
           property: true,
           room: true,
           tenant: {
-            select: { fullName: true, email: true, phone: true },
+            select: { id: true, fullName: true, email: true, phone: true },
           },
         },
       });
@@ -99,13 +106,13 @@ export class RentalRequestsService {
       await tx.message.create({
         data: {
           conversationId: conversation.id,
-          senderId: tenantId, // Standard message creator for db constraint, but marked as SYSTEM
+          senderId: tenantId,
           type: 'SYSTEM',
           content: 'Yêu cầu thuê đã được gửi',
         },
       });
 
-      // Notify landlord
+      // Notify landlord (in-app)
       await tx.notification.create({
         data: {
           userId: property.landlordId,
@@ -121,6 +128,45 @@ export class RentalRequestsService {
 
       return { request, conversationId: conversation.id };
     });
+
+    // ── Post-transaction emails (fire-and-forget) ─────────────────────────
+    // Fetch landlord user for email
+    const landlordUser = await this.prisma.user.findUnique({
+      where: { id: property.landlordId },
+      select: { id: true, email: true, fullName: true },
+    });
+
+    const tenantUser = await this.prisma.user.findUnique({
+      where: { id: tenantId },
+      select: { id: true, email: true, fullName: true },
+    });
+
+    if (tenantUser) {
+      this.mailService
+        .sendRentalRequestSubmittedEmail(tenantUser, {
+          id: result.request.id,
+          propertyTitle: property.title,
+          roomTitle: result.request.room?.title ?? null,
+        })
+        .catch((err) =>
+          this.logger.error('[RentalRequests] sendRentalRequestSubmittedEmail', err),
+        );
+    }
+
+    if (landlordUser && tenantUser) {
+      this.mailService
+        .sendNewRentalRequestEmail(landlordUser, {
+          id: result.request.id,
+          propertyTitle: property.title,
+          tenantName: tenantUser.fullName || 'Người thuê',
+          moveInDate: result.request.moveInDate,
+        })
+        .catch((err) =>
+          this.logger.error('[RentalRequests] sendNewRentalRequestEmail', err),
+        );
+    }
+
+    return result;
   }
 
   async findAllForTenant(tenantId: string) {
@@ -170,7 +216,10 @@ export class RentalRequestsService {
   ) {
     const request = await this.prisma.rentalRequest.findUnique({
       where: { id },
-      include: { property: true },
+      include: {
+        property: true,
+        tenant: { select: { id: true, email: true, fullName: true } },
+      },
     });
 
     if (!request) {
@@ -197,8 +246,8 @@ export class RentalRequestsService {
       where: { rentalRequestId: id },
     });
 
-    return this.prisma.$transaction(async (tx) => {
-      const updatedRequest = await tx.rentalRequest.update({
+    const updatedRequest = await this.prisma.$transaction(async (tx) => {
+      const updated = await tx.rentalRequest.update({
         where: { id },
         data: { status: dto.status },
         include: { property: true },
@@ -226,7 +275,7 @@ export class RentalRequestsService {
         });
       }
 
-      // Notify other party
+      // Notify other party (in-app)
       const notifyUserId =
         dto.status === RentalRequestStatus.CANCELLED
           ? request.landlordId
@@ -252,7 +301,28 @@ export class RentalRequestsService {
         },
       });
 
-      return updatedRequest;
+      return updated;
     });
+
+    // ── Post-transaction email to tenant on status change (fire-and-forget) ─
+    const shouldEmailTenant = [
+      RentalRequestStatus.ACCEPTED,
+      RentalRequestStatus.REJECTED,
+      RentalRequestStatus.IN_DISCUSSION,
+    ].includes(dto.status as any);
+
+    if (shouldEmailTenant && request.tenant) {
+      this.mailService
+        .sendRentalRequestApprovedEmail(request.tenant, {
+          id,
+          propertyTitle: request.property.title,
+          status: dto.status as any,
+        })
+        .catch((err) =>
+          this.logger.error('[RentalRequests] sendRentalRequestApprovedEmail', err),
+        );
+    }
+
+    return updatedRequest;
   }
 }

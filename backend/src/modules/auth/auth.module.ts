@@ -2,10 +2,12 @@ import { Module, Global } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
+import { PrismaModule } from '../../database/prisma.module';
 
 @Global()
 @Module({
   imports: [
+    PrismaModule,
     JwtModule.register({
       global: true,
       secret:

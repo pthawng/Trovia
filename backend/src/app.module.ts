@@ -23,6 +23,7 @@ import { TenanciesModule } from './modules/tenancies/tenancies.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { MaintenanceModule } from './modules/maintenance/maintenance.module';
 import { ReviewsModule } from './modules/reviews/reviews.module';
+import { MailModule } from './modules/mail/mail.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { ReviewsModule } from './modules/reviews/reviews.module';
     ]),
 
     // Product Modules
+    MailModule,
     AuthModule,
     UsersModule,
     RolesModule,

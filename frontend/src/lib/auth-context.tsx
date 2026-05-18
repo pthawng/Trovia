@@ -155,7 +155,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.warn("Google authentication is disabled. Please register with email.");
     },
     resetPassword: async (email) => {
-      return { error: new Error("Reset password not implemented yet in backend.") };
+      try {
+        await AuthService.forgotPassword(email);
+        return { error: null };
+      } catch (err: any) {
+        return { error: err.response?.data?.message ? new Error(err.response.data.message) : err };
+      }
     },
   };
 

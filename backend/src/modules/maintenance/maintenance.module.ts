@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common';
 import { MaintenanceService } from './maintenance.service';
 import { MaintenanceController } from './maintenance.controller';
+import { PrismaModule } from '../../database/prisma.module';
 
 @Module({
+  imports: [PrismaModule],
   controllers: [MaintenanceController],
   providers: [MaintenanceService],
   exports: [MaintenanceService],

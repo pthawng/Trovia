@@ -2,25 +2,37 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { CreateMaintenanceDto } from './dto/maintenance.dto';
 import { MaintenanceStatus } from '@prisma/client';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class MaintenanceService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(MaintenanceService.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mailService: MailService,
+  ) {}
 
   async create(tenantId: string, dto: CreateMaintenanceDto) {
-    // 1. Verify property exists
     const property = await this.prisma.property.findUnique({
       where: { id: dto.propertyId },
+      include: {
+        landlord: {
+          include: {
+            user: { select: { id: true, email: true, fullName: true } },
+          },
+        },
+      },
     });
     if (!property) {
       throw new NotFoundException('Property not found');
     }
 
-    // 2. Optional: verify room belongs to property
     if (dto.roomId) {
       const room = await this.prisma.room.findUnique({
         where: { id: dto.roomId },
@@ -30,8 +42,12 @@ export class MaintenanceService {
       }
     }
 
-    // 3. Create maintenance request
-    return this.prisma.maintenanceRequest.create({
+    const tenantUser = await this.prisma.user.findUnique({
+      where: { id: tenantId },
+      select: { id: true, email: true, fullName: true },
+    });
+
+    const ticket = await this.prisma.maintenanceRequest.create({
       data: {
         tenantId,
         propertyId: dto.propertyId,
@@ -46,15 +62,28 @@ export class MaintenanceService {
         property: true,
         room: true,
         tenant: {
-          select: {
-            id: true,
-            fullName: true,
-            avatarUrl: true,
-            phone: true,
-          },
+          select: { id: true, fullName: true, avatarUrl: true, phone: true },
         },
       },
     });
+
+    // Email landlord: new maintenance request (fire-and-forget)
+    const landlordUser = property.landlord?.user;
+    if (landlordUser && tenantUser) {
+      this.mailService
+        .sendMaintenanceRequestEmail(landlordUser, {
+          id: ticket.id,
+          propertyTitle: property.title,
+          tenantName: tenantUser.fullName || 'Người thuê',
+          title: dto.title,
+          priority: dto.priority ?? 'MEDIUM',
+        })
+        .catch((err) =>
+          this.logger.error('[Maintenance] sendMaintenanceRequestEmail', err),
+        );
+    }
+
+    return ticket;
   }
 
   async findForLandlord(landlordId: string) {
@@ -100,16 +129,13 @@ export class MaintenanceService {
   async updateStatus(id: string, userId: string, status: MaintenanceStatus) {
     const request = await this.prisma.maintenanceRequest.findUnique({
       where: { id },
-      include: {
-        property: true,
-      },
+      include: { property: true },
     });
 
     if (!request) {
       throw new NotFoundException('Maintenance request not found');
     }
 
-    // Ownership check: must be either the landlord of the property or the tenant who made the request
     const isLandlord = request.property.landlordId === userId;
     const isTenant = request.tenantId === userId;
 
@@ -126,12 +152,7 @@ export class MaintenanceService {
         property: true,
         room: true,
         tenant: {
-          select: {
-            id: true,
-            fullName: true,
-            avatarUrl: true,
-            phone: true,
-          },
+          select: { id: true, fullName: true, avatarUrl: true, phone: true },
         },
       },
     });
@@ -140,7 +161,10 @@ export class MaintenanceService {
   async update(id: string, userId: string, dto: any) {
     const request = await this.prisma.maintenanceRequest.findUnique({
       where: { id },
-      include: { property: true },
+      include: {
+        property: true,
+        tenant: { select: { id: true, email: true, fullName: true } },
+      },
     });
 
     if (!request) {
@@ -151,22 +175,28 @@ export class MaintenanceService {
     const isTenant = request.tenantId === userId;
 
     if (!isLandlord && !isTenant) {
-      throw new ForbiddenException('Access denied. You do not own this maintenance request.');
+      throw new ForbiddenException(
+        'Access denied. You do not own this maintenance request.',
+      );
     }
 
     const updatedData: any = {};
     if (dto.status !== undefined) {
       if (isTenant && dto.status !== MaintenanceStatus.CANCELLED) {
-        throw new ForbiddenException('Tenant can only cancel their own maintenance request.');
+        throw new ForbiddenException(
+          'Tenant can only cancel their own maintenance request.',
+        );
       }
       updatedData.status = dto.status;
     }
     if (dto.assignedTo !== undefined) {
-      if (!isLandlord) throw new ForbiddenException('Only landlord can assign personnel.');
+      if (!isLandlord)
+        throw new ForbiddenException('Only landlord can assign personnel.');
       updatedData.assignedTo = dto.assignedTo;
     }
     if (dto.comment !== undefined) {
-      if (!isLandlord) throw new ForbiddenException('Only landlord can add notes/comments.');
+      if (!isLandlord)
+        throw new ForbiddenException('Only landlord can add notes/comments.');
       updatedData.comment = dto.comment;
     }
 
@@ -182,8 +212,10 @@ export class MaintenanceService {
       },
     });
 
-    // Notify the other user
-    const notifyUserId = isLandlord ? request.tenantId : request.property.landlordId;
+    // In-app notification
+    const notifyUserId = isLandlord
+      ? request.tenantId
+      : request.property.landlordId;
     await this.prisma.notification.create({
       data: {
         userId: notifyUserId,
@@ -195,6 +227,20 @@ export class MaintenanceService {
         metadata: JSON.stringify({ requestId: id }),
       },
     });
+
+    // Email tenant when landlord updates (fire-and-forget)
+    if (isLandlord && request.tenant) {
+      this.mailService
+        .sendMaintenanceUpdatedEmail(request.tenant, {
+          id,
+          title: request.title,
+          status: dto.status ?? request.status,
+          comment: dto.comment ?? null,
+        })
+        .catch((err) =>
+          this.logger.error('[Maintenance] sendMaintenanceUpdatedEmail', err),
+        );
+    }
 
     return updated;
   }

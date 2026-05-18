@@ -16,6 +16,13 @@ enum AppRole {
   ADMIN
 }
 
+enum EmailStatus {
+  PENDING
+  SENT
+  FAILED
+  SKIPPED
+}
+
 enum LandlordStatus {
   NOT_STARTED
   PENDING_VERIFICATION
@@ -119,7 +126,12 @@ model User {
   avatarUrl       String?          @map("avatar_url")
   phone           String?
   city            String?
-  isEmailVerified Boolean          @default(false) @map("is_email_verified")
+  isEmailVerified              Boolean   @default(false) @map("is_email_verified")
+  emailVerifiedAt              DateTime? @map("email_verified_at") @db.Timestamptz
+  emailVerificationToken       String?   @map("email_verification_token")       // hashed
+  emailVerificationExpiry      DateTime? @map("email_verification_expiry") @db.Timestamptz
+  passwordResetToken           String?   @map("password_reset_token")           // hashed
+  passwordResetExpiry          DateTime? @map("password_reset_expiry") @db.Timestamptz
   createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz
   updatedAt       DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
   deletedAt       DateTime?        @map("deleted_at") @db.Timestamptz
@@ -140,6 +152,8 @@ model User {
   refreshTokens        RefreshToken[]
   savedProperties      SavedProperty[]
   auditLogs            AuditLog[]
+  emailLogs            EmailLog[]
+  emailPreference      EmailPreference?
   
   // Relations for Rental Lifecycle
   tenantRequests       RentalRequest[]      @relation("TenantRequests")
@@ -620,4 +634,40 @@ model Review {
   tenancy     Tenancy   @relation(fields: [tenancyId], references: [id], onDelete: Cascade)
 
   @@map("reviews")
+}
+
+model EmailLog {
+  id                String      @id @default(uuid()) @db.Uuid
+  recipientEmail    String      @map("recipient_email")
+  recipientUserId   String?     @map("recipient_user_id") @db.Uuid
+  subject           String
+  templateKey       String      @map("template_key")
+  status            EmailStatus @default(PENDING)
+  providerMessageId String?     @map("provider_message_id")
+  errorMessage      String?     @map("error_message")
+  metadata          Json?
+  sentAt            DateTime?   @map("sent_at") @db.Timestamptz
+  createdAt         DateTime    @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime    @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  recipient         User?       @relation(fields: [recipientUserId], references: [id], onDelete: SetNull)
+
+  @@index([recipientEmail])
+  @@index([status])
+  @@index([templateKey])
+  @@map("email_logs")
+}
+
+model EmailPreference {
+  userId                  String  @id @map("user_id") @db.Uuid
+  authEmailsEnabled       Boolean @default(true)  @map("auth_emails_enabled")
+  rentalEmailsEnabled     Boolean @default(true)  @map("rental_emails_enabled")
+  contractEmailsEnabled   Boolean @default(true)  @map("contract_emails_enabled")
+  paymentEmailsEnabled    Boolean @default(true)  @map("payment_emails_enabled")
+  maintenanceEmailsEnabled Boolean @default(true) @map("maintenance_emails_enabled")
+  marketingEmailsEnabled  Boolean @default(false) @map("marketing_emails_enabled")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("email_preferences")
 }

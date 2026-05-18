@@ -3,14 +3,21 @@ import {
   NotFoundException,
   BadRequestException,
   ForbiddenException,
+  Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { CreateContractDto, UpdateContractDto } from './dto/contract.dto';
 import { ContractStatus, RentalRequestStatus } from '@prisma/client';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class ContractsService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(ContractsService.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mailService: MailService,
+  ) {}
 
   async create(landlordId: string, dto: CreateContractDto) {
     const request = await this.prisma.rentalRequest.findUnique({
@@ -21,14 +28,12 @@ export class ContractsService {
       throw new NotFoundException('Yêu cầu thuê không tồn tại.');
     }
 
-    // Rule 8: Landlord can create contract only after request is ACCEPTED
     if (request.status !== RentalRequestStatus.ACCEPTED) {
       throw new BadRequestException(
         'Bạn chỉ có thể tạo hợp đồng sau khi yêu cầu thuê đã được CHẤP NHẬN.',
       );
     }
 
-    // Rule 9: Only landlord property owner can create/send contract
     if (request.landlordId !== landlordId) {
       throw new ForbiddenException(
         'Bạn không sở hữu yêu cầu thuê này để tiến hành tạo hợp đồng.',
@@ -160,7 +165,10 @@ export class ContractsService {
   async sendContract(id: string, landlordId: string) {
     const contract = await this.prisma.contract.findUnique({
       where: { id },
-      include: { property: true },
+      include: {
+        property: true,
+        tenant: { select: { id: true, email: true, fullName: true } },
+      },
     });
 
     if (!contract) {
@@ -179,8 +187,8 @@ export class ContractsService {
       );
     }
 
-    return this.prisma.$transaction(async (tx) => {
-      const updated = await tx.contract.update({
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const u = await tx.contract.update({
         where: { id },
         data: {
           status: ContractStatus.SENT,
@@ -188,7 +196,6 @@ export class ContractsService {
         },
       });
 
-      // Send chat message representing the contract draft
       await tx.message.create({
         data: {
           conversationId: contract.conversationId,
@@ -205,7 +212,6 @@ export class ContractsService {
         },
       });
 
-      // Create notification for tenant
       await tx.notification.create({
         data: {
           userId: contract.tenantId,
@@ -219,21 +225,40 @@ export class ContractsService {
         },
       });
 
-      return updated;
+      return u;
     });
+
+    // Post-transaction: email tenant (fire-and-forget)
+    if (contract.tenant) {
+      this.mailService
+        .sendContractReceivedEmail(contract.tenant, {
+          id: contract.id,
+          propertyTitle: contract.property.title,
+          monthlyRent: Number(contract.monthlyRent),
+          durationMonths: contract.durationMonths,
+          startDate: contract.startDate,
+        })
+        .catch((err) =>
+          this.logger.error('[Contracts] sendContractReceivedEmail', err),
+        );
+    }
+
+    return updated;
   }
 
   async acceptContract(id: string, tenantId: string) {
     const contract = await this.prisma.contract.findUnique({
       where: { id },
-      include: { property: true },
+      include: {
+        property: true,
+        landlord: { select: { id: true, email: true, fullName: true } },
+      },
     });
 
     if (!contract) {
       throw new NotFoundException('Hợp đồng không tồn tại.');
     }
 
-    // Rule 10: Tenant can only accept contract assigned to them
     if (contract.tenantId !== tenantId) {
       throw new ForbiddenException(
         'Bạn không phải là người thuê được chỉ định để ký hợp đồng này.',
@@ -246,8 +271,13 @@ export class ContractsService {
       );
     }
 
-    // Rule 11: When tenant accepts contract
-    return this.prisma.$transaction(async (tx) => {
+    // Fetch tenant for email
+    const tenantUser = await this.prisma.user.findUnique({
+      where: { id: tenantId },
+      select: { id: true, email: true, fullName: true },
+    });
+
+    const result = await this.prisma.$transaction(async (tx) => {
       const updated = await tx.contract.update({
         where: { id },
         data: {
@@ -256,7 +286,6 @@ export class ContractsService {
         },
       });
 
-      // Create required deposit payment as PENDING
       const payment = await tx.payment.create({
         data: {
           contractId: contract.id,
@@ -265,11 +294,10 @@ export class ContractsService {
           amount: contract.depositAmount,
           type: 'DEPOSIT',
           status: 'PENDING',
-          dueDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // Due in 3 days
+          dueDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
         },
       });
 
-      // Add system message
       await tx.message.create({
         data: {
           conversationId: contract.conversationId,
@@ -284,7 +312,6 @@ export class ContractsService {
         },
       });
 
-      // Create notification for landlord
       await tx.notification.create({
         data: {
           userId: contract.landlordId,
@@ -300,6 +327,21 @@ export class ContractsService {
 
       return { contract: updated, payment };
     });
+
+    // Post-transaction: email landlord (fire-and-forget)
+    if (contract.landlord && tenantUser) {
+      this.mailService
+        .sendContractAcceptedEmail(contract.landlord, {
+          id: contract.id,
+          propertyTitle: contract.property.title,
+          tenantName: tenantUser.fullName || 'Người thuê',
+        })
+        .catch((err) =>
+          this.logger.error('[Contracts] sendContractAcceptedEmail', err),
+        );
+    }
+
+    return result;
   }
 
   async rejectContract(id: string, tenantId: string) {
@@ -332,7 +374,6 @@ export class ContractsService {
         },
       });
 
-      // Add system message in conversation
       await tx.message.create({
         data: {
           conversationId: contract.conversationId,
@@ -344,7 +385,6 @@ export class ContractsService {
         },
       });
 
-      // Notify landlord
       await tx.notification.create({
         data: {
           userId: contract.landlordId,

@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as VerifyEmailRouteImport } from './routes/verify-email'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as LoginRouteImport } from './routes/login'
@@ -35,6 +36,11 @@ import { Route as AuthenticatedAppLandlordPropertiesNewRouteImport } from './rou
 import { Route as AuthenticatedAppLandlordPropertiesIdRouteImport } from './routes/_authenticated/app.landlord.properties.$id'
 import { Route as AuthenticatedAppLandlordPropertiesIdUnitsRouteImport } from './routes/_authenticated/app.landlord.properties.$id.units'
 
+const VerifyEmailRoute = VerifyEmailRouteImport.update({
+  id: '/verify-email',
+  path: '/verify-email',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
@@ -181,6 +187,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/verify-email': typeof VerifyEmailRoute
   '/app/become-landlord': typeof AuthenticatedAppBecomeLandlordRoute
   '/app/contracts': typeof AuthenticatedAppContractsRouteWithChildren
   '/app/explore': typeof AuthenticatedAppExploreRoute
@@ -207,6 +214,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/verify-email': typeof VerifyEmailRoute
   '/app/become-landlord': typeof AuthenticatedAppBecomeLandlordRoute
   '/app/contracts': typeof AuthenticatedAppContractsRouteWithChildren
   '/app/explore': typeof AuthenticatedAppExploreRoute
@@ -235,6 +243,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/verify-email': typeof VerifyEmailRoute
   '/_authenticated/app/become-landlord': typeof AuthenticatedAppBecomeLandlordRoute
   '/_authenticated/app/contracts': typeof AuthenticatedAppContractsRouteWithChildren
   '/_authenticated/app/explore': typeof AuthenticatedAppExploreRoute
@@ -263,6 +272,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/reset-password'
+    | '/verify-email'
     | '/app/become-landlord'
     | '/app/contracts'
     | '/app/explore'
@@ -289,6 +299,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/reset-password'
+    | '/verify-email'
     | '/app/become-landlord'
     | '/app/contracts'
     | '/app/explore'
@@ -316,6 +327,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/reset-password'
+    | '/verify-email'
     | '/_authenticated/app/become-landlord'
     | '/_authenticated/app/contracts'
     | '/_authenticated/app/explore'
@@ -344,10 +356,18 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   RegisterRoute: typeof RegisterRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  VerifyEmailRoute: typeof VerifyEmailRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/verify-email': {
+      id: '/verify-email'
+      path: '/verify-email'
+      fullPath: '/verify-email'
+      preLoaderRoute: typeof VerifyEmailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/reset-password': {
       id: '/reset-password'
       path: '/reset-password'
@@ -634,6 +654,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  VerifyEmailRoute: VerifyEmailRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

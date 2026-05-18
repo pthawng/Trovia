@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdateEmailPreferencesDto } from './dto/update-preferences.dto';
 
 @Injectable()
 export class UsersService {
@@ -44,14 +45,14 @@ export class UsersService {
         preferredDistrict: dto.preferredDistrict !== undefined ? dto.preferredDistrict : user.preferredDistrict,
         budgetRange: dto.budgetRange !== undefined ? dto.budgetRange : user.budgetRange,
         moveInTimeline: dto.moveInTimeline !== undefined ? dto.moveInTimeline : user.moveInTimeline,
-        dateOfBirth: dto.dateOfBirth !== undefined 
-          ? (dto.dateOfBirth ? new Date(dto.dateOfBirth) : null) 
+        dateOfBirth: dto.dateOfBirth !== undefined
+          ? (dto.dateOfBirth ? new Date(dto.dateOfBirth) : null)
           : user.dateOfBirth,
         renterType: dto.renterType !== undefined ? dto.renterType : user.renterType,
         budgetMin: dto.budgetMin !== undefined ? (dto.budgetMin ? Number(dto.budgetMin) : null) : user.budgetMin,
         budgetMax: dto.budgetMax !== undefined ? (dto.budgetMax ? Number(dto.budgetMax) : null) : user.budgetMax,
-        expectedMoveInDate: dto.expectedMoveInDate !== undefined 
-          ? (dto.expectedMoveInDate ? new Date(dto.expectedMoveInDate) : null) 
+        expectedMoveInDate: dto.expectedMoveInDate !== undefined
+          ? (dto.expectedMoveInDate ? new Date(dto.expectedMoveInDate) : null)
           : user.expectedMoveInDate,
       },
       include: {
@@ -62,6 +63,38 @@ export class UsersService {
     });
 
     return this.sanitizeUser(updatedUser);
+  }
+
+  async getEmailPreferences(userId: string) {
+    let pref = await this.prisma.emailPreference.findUnique({
+      where: { userId },
+    });
+
+    if (!pref) {
+      // Auto-create with defaults on first access
+      pref = await this.prisma.emailPreference.create({
+        data: { userId },
+      });
+    }
+
+    return pref;
+  }
+
+  async updateEmailPreferences(userId: string, dto: UpdateEmailPreferencesDto) {
+    const data: Partial<typeof dto> = {};
+
+    if (dto.authEmailsEnabled !== undefined) data.authEmailsEnabled = dto.authEmailsEnabled;
+    if (dto.rentalEmailsEnabled !== undefined) data.rentalEmailsEnabled = dto.rentalEmailsEnabled;
+    if (dto.contractEmailsEnabled !== undefined) data.contractEmailsEnabled = dto.contractEmailsEnabled;
+    if (dto.paymentEmailsEnabled !== undefined) data.paymentEmailsEnabled = dto.paymentEmailsEnabled;
+    if (dto.maintenanceEmailsEnabled !== undefined) data.maintenanceEmailsEnabled = dto.maintenanceEmailsEnabled;
+    if (dto.marketingEmailsEnabled !== undefined) data.marketingEmailsEnabled = dto.marketingEmailsEnabled;
+
+    return this.prisma.emailPreference.upsert({
+      where: { userId },
+      update: data,
+      create: { userId, ...data },
+    });
   }
 
   private sanitizeUser(user: any) {

@@ -3,15 +3,22 @@ import {
   NotFoundException,
   BadRequestException,
   ForbiddenException,
+  Logger,
 } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '../../database/prisma.service';
 import { CreatePaymentDto } from './dto/payment.dto';
 import { PaymentStatus, ContractStatus, TenancyStatus } from '@prisma/client';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class PaymentsService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(PaymentsService.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mailService: MailService,
+  ) {}
 
   async createPaymentForContract(
     contractId: string,
@@ -20,6 +27,10 @@ export class PaymentsService {
   ) {
     const contract = await this.prisma.contract.findUnique({
       where: { id: contractId },
+      include: {
+        tenant: { select: { id: true, email: true, fullName: true } },
+        property: true,
+      },
     });
 
     if (!contract) {
@@ -32,7 +43,7 @@ export class PaymentsService {
       );
     }
 
-    return this.prisma.payment.create({
+    const payment = await this.prisma.payment.create({
       data: {
         contractId,
         tenantId: contract.tenantId,
@@ -43,6 +54,23 @@ export class PaymentsService {
         dueDate: new Date(dto.dueDate),
       },
     });
+
+    // Email tenant: new invoice (fire-and-forget)
+    if (contract.tenant) {
+      this.mailService
+        .sendPaymentInvoiceEmail(contract.tenant, {
+          id: payment.id,
+          propertyTitle: contract.property?.title ?? 'Bất động sản',
+          amount: Number(dto.amount),
+          type: dto.type,
+          dueDate: new Date(dto.dueDate),
+        })
+        .catch((err) =>
+          this.logger.error('[Payments] sendPaymentInvoiceEmail', err),
+        );
+    }
+
+    return payment;
   }
 
   async findAll(userId: string) {
@@ -102,6 +130,8 @@ export class PaymentsService {
             room: true,
           },
         },
+        tenant: { select: { id: true, email: true, fullName: true } },
+        landlord: { select: { id: true, email: true, fullName: true } },
       },
     });
 
@@ -119,9 +149,7 @@ export class PaymentsService {
       throw new BadRequestException('Hóa đơn này đã được thanh toán từ trước.');
     }
 
-    // Run transaction for Payment marking paid, Contract activation, Room occupancy status, and Tenancy creation
-    return this.prisma.$transaction(async (tx) => {
-      // 1. Fetch Room inside transaction to check occupancy & prevent double tenancy
+    const result = await this.prisma.$transaction(async (tx) => {
       const room = await tx.room.findUnique({
         where: { id: payment.contract.roomId },
       });
@@ -130,7 +158,6 @@ export class PaymentsService {
         throw new NotFoundException('Phòng trọ không tồn tại.');
       }
 
-      // State machine validation: Check if contract is in valid state for payment type
       if (payment.type === 'DEPOSIT') {
         if (payment.contract.status !== ContractStatus.ACCEPTED) {
           throw new BadRequestException(
@@ -145,7 +172,6 @@ export class PaymentsService {
         }
       }
 
-      // Rule 14: Prevent double tenancy for same occupied room
       if (
         (payment.type === 'DEPOSIT' || payment.type === 'FIRST_MONTH_RENT') &&
         !room.isAvailable
@@ -155,7 +181,6 @@ export class PaymentsService {
         );
       }
 
-      // 2. Mark Payment as PAID
       const updatedPayment = await tx.payment.update({
         where: { id },
         data: {
@@ -168,9 +193,7 @@ export class PaymentsService {
       let contractActivated = false;
       let tenancy: any = null;
 
-      // 3. If the payment is a DEPOSIT, activate contract, set room unavailable, create a Tenancy
       if (payment.type === 'DEPOSIT') {
-        // Activate Contract
         await tx.contract.update({
           where: { id: payment.contractId },
           data: {
@@ -180,15 +203,11 @@ export class PaymentsService {
         });
         contractActivated = true;
 
-        // Make Room Unavailable (Occupied)
         await tx.room.update({
           where: { id: payment.contract.roomId },
-          data: {
-            isAvailable: false,
-          },
+          data: { isAvailable: false },
         });
 
-        // Create Active Tenancy
         tenancy = await tx.tenancy.create({
           data: {
             contractId: payment.contractId,
@@ -201,7 +220,6 @@ export class PaymentsService {
           },
         });
 
-        // Log system message in conversation
         await tx.message.create({
           data: {
             conversationId: payment.contract.conversationId,
@@ -216,7 +234,6 @@ export class PaymentsService {
           },
         });
 
-        // Notify tenant
         await tx.notification.create({
           data: {
             userId: payment.tenantId,
@@ -230,7 +247,6 @@ export class PaymentsService {
           },
         });
 
-        // Notify landlord
         await tx.notification.create({
           data: {
             userId: payment.landlordId,
@@ -244,7 +260,6 @@ export class PaymentsService {
           },
         });
       } else {
-        // Just record generic payment system log
         await tx.message.create({
           data: {
             conversationId: payment.contract.conversationId,
@@ -258,7 +273,6 @@ export class PaymentsService {
           },
         });
 
-        // Notify tenant
         await tx.notification.create({
           data: {
             userId: payment.tenantId,
@@ -272,21 +286,57 @@ export class PaymentsService {
 
       return { payment: updatedPayment, contractActivated, tenancy };
     });
+
+    // ── Post-transaction emails (fire-and-forget) ──────────────────────────
+    const emailPayload = {
+      id: payment.id,
+      propertyTitle: payment.contract.property.title,
+      amount: Number(payment.amount),
+      type: payment.type,
+    };
+
+    if (payment.tenant) {
+      this.mailService
+        .sendPaymentPaidEmail(payment.tenant, emailPayload, 'tenant')
+        .catch((err) =>
+          this.logger.error('[Payments] sendPaymentPaidEmail (tenant)', err),
+        );
+    }
+
+    if (payment.landlord) {
+      this.mailService
+        .sendPaymentPaidEmail(payment.landlord, emailPayload, 'landlord')
+        .catch((err) =>
+          this.logger.error('[Payments] sendPaymentPaidEmail (landlord)', err),
+        );
+    }
+
+    return result;
   }
 
   async generateMonthlyRentInvoices() {
     const activeContracts = await this.prisma.contract.findMany({
       where: { status: ContractStatus.ACTIVE },
-      include: { property: true },
+      include: {
+        property: true,
+        tenant: { select: { id: true, email: true, fullName: true } },
+      },
     });
 
     const createdInvoices: any[] = [];
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+    const endOfMonth = new Date(
+      now.getFullYear(),
+      now.getMonth() + 1,
+      0,
+      23,
+      59,
+      59,
+      999,
+    );
 
     for (const contract of activeContracts) {
-      // Prevent duplicates: Check if a MONTHLY_RENT invoice already exists for the current month
       const existingInvoice = await this.prisma.payment.findFirst({
         where: {
           contractId: contract.id,
@@ -302,7 +352,6 @@ export class PaymentsService {
         continue;
       }
 
-      // Calculate due date: 5th of current month. If passed, set 5 days from now
       const dueDate = new Date(now.getFullYear(), now.getMonth(), 5);
       if (dueDate < now) {
         dueDate.setDate(now.getDate() + 5);
@@ -320,7 +369,6 @@ export class PaymentsService {
         },
       });
 
-      // Create notification for Tenant
       await this.prisma.notification.create({
         data: {
           userId: contract.tenantId,
@@ -330,6 +378,24 @@ export class PaymentsService {
           metadata: JSON.stringify({ paymentId: newPayment.id }),
         },
       });
+
+      // Email tenant: new invoice (fire-and-forget)
+      if (contract.tenant) {
+        this.mailService
+          .sendPaymentInvoiceEmail(contract.tenant, {
+            id: newPayment.id,
+            propertyTitle: contract.property.title,
+            amount: Number(contract.monthlyRent),
+            type: 'MONTHLY_RENT',
+            dueDate,
+          })
+          .catch((err) =>
+            this.logger.error(
+              '[Payments:Cron] sendPaymentInvoiceEmail',
+              err,
+            ),
+          );
+      }
 
       createdInvoices.push(newPayment);
     }
@@ -345,7 +411,9 @@ export class PaymentsService {
   async handleMonthlyRentInvoicesCron() {
     console.log('[Cron] Automated Monthly Rent Invoicing started...');
     const result = await this.generateMonthlyRentInvoices();
-    console.log(`[Cron] Automated Monthly Rent Invoicing finished. Billed: ${result.generatedCount} invoices.`);
+    console.log(
+      `[Cron] Automated Monthly Rent Invoicing finished. Billed: ${result.generatedCount} invoices.`,
+    );
   }
 
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
@@ -355,8 +423,24 @@ export class PaymentsService {
     const thirtyDaysFromNow = new Date();
     thirtyDaysFromNow.setDate(now.getDate() + 30);
 
-    const startOfTarget = new Date(thirtyDaysFromNow.getFullYear(), thirtyDaysFromNow.getMonth(), thirtyDaysFromNow.getDate(), 0, 0, 0, 0);
-    const endOfTarget = new Date(thirtyDaysFromNow.getFullYear(), thirtyDaysFromNow.getMonth(), thirtyDaysFromNow.getDate(), 23, 59, 59, 999);
+    const startOfTarget = new Date(
+      thirtyDaysFromNow.getFullYear(),
+      thirtyDaysFromNow.getMonth(),
+      thirtyDaysFromNow.getDate(),
+      0,
+      0,
+      0,
+      0,
+    );
+    const endOfTarget = new Date(
+      thirtyDaysFromNow.getFullYear(),
+      thirtyDaysFromNow.getMonth(),
+      thirtyDaysFromNow.getDate(),
+      23,
+      59,
+      59,
+      999,
+    );
 
     const expiringContracts = await this.prisma.contract.findMany({
       where: {
@@ -398,6 +482,8 @@ export class PaymentsService {
       });
       sentCount++;
     }
-    console.log(`[Cron] Automated Contract Renewal scanning finished. Alerts sent: ${sentCount}`);
+    console.log(
+      `[Cron] Automated Contract Renewal scanning finished. Alerts sent: ${sentCount}`,
+    );
   }
 }

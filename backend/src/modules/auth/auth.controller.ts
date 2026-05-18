@@ -5,9 +5,11 @@ import {
   Body,
   Req,
   Res,
+  Query,
   UseGuards,
   HttpStatus,
   HttpCode,
+  UnauthorizedException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -19,6 +21,11 @@ import * as express from 'express';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import {
+  ForgotPasswordDto,
+  ResetPasswordDto,
+  VerifyEmailDto,
+} from './dto/auth-requests.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { GetUser } from '../../common/decorators/get-user.decorator';
 
@@ -119,7 +126,54 @@ export class AuthController {
   async getMe(@GetUser('id') userId: string) {
     return this.authService.getMe(userId);
   }
-}
 
-// Custom exception helper for inline usage
-import { UnauthorizedException } from '@nestjs/common';
+  // ── Password Reset ──────────────────────────────────────────────────────
+
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Request a password reset email' })
+  @ApiResponse({
+    status: 200,
+    description: 'Generic response — does not reveal if email exists',
+  })
+  async forgotPassword(@Body() dto: ForgotPasswordDto) {
+    return this.authService.forgotPassword(dto);
+  }
+
+  @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Reset password using token from email' })
+  async resetPassword(
+    @Body() dto: ResetPasswordDto,
+    @Query('email') email: string,
+  ) {
+    if (!email) {
+      throw new UnauthorizedException('Email is required');
+    }
+    return this.authService.resetPassword(dto, email);
+  }
+
+  // ── Email Verification ──────────────────────────────────────────────────
+
+  @Post('verify-email')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Verify email using token from verification email' })
+  async verifyEmail(
+    @Body() dto: VerifyEmailDto,
+    @Query('email') email: string,
+  ) {
+    if (!email) {
+      throw new UnauthorizedException('Email is required');
+    }
+    return this.authService.verifyEmail(dto, email);
+  }
+
+  @Post('resend-verification')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Resend email verification link (authenticated)' })
+  async resendVerification(@GetUser('id') userId: string) {
+    return this.authService.resendVerification(userId);
+  }
+}

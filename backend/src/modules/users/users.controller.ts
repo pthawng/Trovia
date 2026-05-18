@@ -7,6 +7,7 @@ import {
 } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdateEmailPreferencesDto } from './dto/update-preferences.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { GetUser } from '../../common/decorators/get-user.decorator';
 
@@ -32,5 +33,22 @@ export class UsersController {
     @Body() dto: UpdateUserDto,
   ) {
     return this.usersService.updateProfile(userId, dto);
+  }
+
+  @Get('me/preferences')
+  @ApiOperation({ summary: 'Get email notification preferences' })
+  @ApiResponse({ status: 200, description: 'Preferences retrieved' })
+  async getPreferences(@GetUser('id') userId: string) {
+    return this.usersService.getEmailPreferences(userId);
+  }
+
+  @Patch('me/preferences')
+  @ApiOperation({ summary: 'Update email notification preferences' })
+  @ApiResponse({ status: 200, description: 'Preferences updated' })
+  async updatePreferences(
+    @GetUser('id') userId: string,
+    @Body() dto: UpdateEmailPreferencesDto,
+  ) {
+    return this.usersService.updateEmailPreferences(userId, dto);
   }
 }

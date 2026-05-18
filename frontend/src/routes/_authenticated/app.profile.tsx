@@ -26,13 +26,18 @@ import {
   Settings, 
   Sparkles,
   Info,
-  ArrowUpRight
+  ArrowUpRight,
+  Bell,
+  Mail,
+  FileText,
+  CreditCard,
+  Wrench
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
 export const Route = createFileRoute("/_authenticated/app/profile")({ component: Profile });
 
-type ProfileTab = "personal" | "rental" | "landlord" | "security";
+type ProfileTab = "personal" | "rental" | "landlord" | "security" | "notifications";
 
 function Profile() {
   const { refreshProfile } = useAuth();
@@ -47,6 +52,51 @@ function Profile() {
     queryKey: ["me"],
     queryFn: () => UserService.getProfile(),
   });
+
+  // Email Preferences State
+  const [emailPrefs, setEmailPrefs] = useState({
+    authEmailsEnabled: true,
+    rentalEmailsEnabled: true,
+    contractEmailsEnabled: true,
+    paymentEmailsEnabled: true,
+    maintenanceEmailsEnabled: true,
+    marketingEmailsEnabled: true,
+  });
+  const [prefsLoading, setPrefsLoading] = useState(false);
+  const [prefsSaving, setPrefsSaving] = useState(false);
+
+  useEffect(() => {
+    if (activeTab === "notifications") {
+      setPrefsLoading(true);
+      UserService.getEmailPreferences()
+        .then((prefs) => {
+          setEmailPrefs({
+            authEmailsEnabled: prefs.authEmailsEnabled ?? true,
+            rentalEmailsEnabled: prefs.rentalEmailsEnabled ?? true,
+            contractEmailsEnabled: prefs.contractEmailsEnabled ?? true,
+            paymentEmailsEnabled: prefs.paymentEmailsEnabled ?? true,
+            maintenanceEmailsEnabled: prefs.maintenanceEmailsEnabled ?? true,
+            marketingEmailsEnabled: prefs.marketingEmailsEnabled ?? true,
+          });
+        })
+        .catch(() => {
+          toast.error("Không thể tải cấu hình thông báo email.");
+        })
+        .finally(() => setPrefsLoading(false));
+    }
+  }, [activeTab]);
+
+  const savePrefs = async () => {
+    setPrefsSaving(true);
+    try {
+      await UserService.updateEmailPreferences(emailPrefs);
+      toast.success("Cập nhật tùy chọn thông báo email thành công! 🔔");
+    } catch {
+      toast.error("Không thể lưu tùy chọn thông báo email.");
+    } finally {
+      setPrefsSaving(false);
+    }
+  };
 
   const [form, setForm] = useState({
     fullName: "",
@@ -300,6 +350,18 @@ function Profile() {
           >
             <Shield className="h-4 w-4" />
             Bảo mật & Đăng nhập
+          </button>
+
+          <button
+            onClick={() => setActiveTab("notifications")}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+              activeTab === "notifications"
+                ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20 scale-102"
+                : "text-muted-foreground hover:bg-muted/30"
+            }`}
+          >
+            <Bell className="h-4 w-4" />
+            Thông báo Email
           </button>
         </div>
       </div>
@@ -620,10 +682,163 @@ function Profile() {
               </div>
             </motion.div>
           )}
+
+          {activeTab === "notifications" && (
+            <motion.div
+              key="notifications"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="space-y-6"
+            >
+              <div>
+                <h2 className="text-xl font-bold text-foreground">Cấu hình thông báo Email</h2>
+                <p className="text-sm text-muted-foreground mt-1">Trovia gửi email cho các hoạt động quan trọng liên quan đến tài khoản, hợp đồng và hóa đơn của bạn. Bạn có thể bật/tắt tùy ý.</p>
+              </div>
+
+              {prefsLoading ? (
+                <div className="space-y-3 py-6 animate-pulse">
+                  <div className="h-14 bg-muted/40 rounded-2xl" />
+                  <div className="h-14 bg-muted/40 rounded-2xl" />
+                  <div className="h-14 bg-muted/40 rounded-2xl" />
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {/* Preferences Checklist */}
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {/* Item 1: Auth */}
+                    <div className="flex items-start justify-between p-5 border border-border bg-secondary/10 rounded-2xl hover:bg-secondary/20 transition-all">
+                      <div className="flex gap-3.5 items-start">
+                        <div className="p-2 rounded-xl bg-primary/10 text-primary shrink-0">
+                          <Shield className="h-5 w-5" />
+                        </div>
+                        <div className="space-y-1">
+                          <div className="font-semibold text-sm text-foreground">Tài khoản & Đăng nhập</div>
+                          <div className="text-xs text-muted-foreground">Email chào mừng, xác minh tài khoản, đổi mật khẩu và bảo mật quan trọng.</div>
+                        </div>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={emailPrefs.authEmailsEnabled}
+                        onChange={(e) => setEmailPrefs({ ...emailPrefs, authEmailsEnabled: e.target.checked })}
+                        className="h-5 w-5 rounded border-input text-primary focus:ring-primary cursor-pointer shrink-0 mt-1"
+                      />
+                    </div>
+
+                    {/* Item 2: Rentals */}
+                    <div className="flex items-start justify-between p-5 border border-border bg-secondary/10 rounded-2xl hover:bg-secondary/20 transition-all">
+                      <div className="flex gap-3.5 items-start">
+                        <div className="p-2 rounded-xl bg-violet-500/10 text-violet-600 dark:text-violet-400 shrink-0">
+                          <Home className="h-5 w-5" />
+                        </div>
+                        <div className="space-y-1">
+                          <div className="font-semibold text-sm text-foreground">Yêu cầu thuê phòng</div>
+                          <div className="text-xs text-muted-foreground">Gửi yêu cầu thuê phòng mới, nhận thông báo chủ nhà phê duyệt hoặc từ chối.</div>
+                        </div>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={emailPrefs.rentalEmailsEnabled}
+                        onChange={(e) => setEmailPrefs({ ...emailPrefs, rentalEmailsEnabled: e.target.checked })}
+                        className="h-5 w-5 rounded border-input text-primary focus:ring-primary cursor-pointer shrink-0 mt-1"
+                      />
+                    </div>
+
+                    {/* Item 3: Contracts */}
+                    <div className="flex items-start justify-between p-5 border border-border bg-secondary/10 rounded-2xl hover:bg-secondary/20 transition-all">
+                      <div className="flex gap-3.5 items-start">
+                        <div className="p-2 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 shrink-0">
+                          <FileText className="h-5 w-5" />
+                        </div>
+                        <div className="space-y-1">
+                          <div className="font-semibold text-sm text-foreground">Hợp đồng điện tử</div>
+                          <div className="text-xs text-muted-foreground">Nhận hợp đồng thuê mới, thông báo đối tác đã chấp nhận và ký hợp đồng.</div>
+                        </div>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={emailPrefs.contractEmailsEnabled}
+                        onChange={(e) => setEmailPrefs({ ...emailPrefs, contractEmailsEnabled: e.target.checked })}
+                        className="h-5 w-5 rounded border-input text-primary focus:ring-primary cursor-pointer shrink-0 mt-1"
+                      />
+                    </div>
+
+                    {/* Item 4: Payments */}
+                    <div className="flex items-start justify-between p-5 border border-border bg-secondary/10 rounded-2xl hover:bg-secondary/20 transition-all">
+                      <div className="flex gap-3.5 items-start">
+                        <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shrink-0">
+                          <CreditCard className="h-5 w-5" />
+                        </div>
+                        <div className="space-y-1">
+                          <div className="font-semibold text-sm text-foreground">Hóa đơn & Thanh toán</div>
+                          <div className="text-xs text-muted-foreground">Hóa đơn tiền nhà hàng tháng, thông báo xác nhận thanh toán thành công.</div>
+                        </div>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={emailPrefs.paymentEmailsEnabled}
+                        onChange={(e) => setEmailPrefs({ ...emailPrefs, paymentEmailsEnabled: e.target.checked })}
+                        className="h-5 w-5 rounded border-input text-primary focus:ring-primary cursor-pointer shrink-0 mt-1"
+                      />
+                    </div>
+
+                    {/* Item 5: Maintenance */}
+                    <div className="flex items-start justify-between p-5 border border-border bg-secondary/10 rounded-2xl hover:bg-secondary/20 transition-all">
+                      <div className="flex gap-3.5 items-start">
+                        <div className="p-2 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 shrink-0">
+                          <Wrench className="h-5 w-5" />
+                        </div>
+                        <div className="space-y-1">
+                          <div className="font-semibold text-sm text-foreground">Bảo trì & Sự cố</div>
+                          <div className="text-xs text-muted-foreground">Cập nhật tiến độ sửa chữa, ý kiến ghi chú từ chủ nhà và người thuê phòng.</div>
+                        </div>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={emailPrefs.maintenanceEmailsEnabled}
+                        onChange={(e) => setEmailPrefs({ ...emailPrefs, maintenanceEmailsEnabled: e.target.checked })}
+                        className="h-5 w-5 rounded border-input text-primary focus:ring-primary cursor-pointer shrink-0 mt-1"
+                      />
+                    </div>
+
+                    {/* Item 6: Marketing */}
+                    <div className="flex items-start justify-between p-5 border border-border bg-secondary/10 rounded-2xl hover:bg-secondary/20 transition-all">
+                      <div className="flex gap-3.5 items-start">
+                        <div className="p-2 rounded-xl bg-pink-500/10 text-pink-600 dark:text-pink-400 shrink-0">
+                          <Mail className="h-5 w-5" />
+                        </div>
+                        <div className="space-y-1">
+                          <div className="font-semibold text-sm text-foreground">Gợi ý & Ưu đãi khám phá</div>
+                          <div className="text-xs text-muted-foreground">Tin tức thị trường, danh sách phòng gợi ý và ưu đãi hợp tác từ Trovia.</div>
+                        </div>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={emailPrefs.marketingEmailsEnabled}
+                        onChange={(e) => setEmailPrefs({ ...emailPrefs, marketingEmailsEnabled: e.target.checked })}
+                        className="h-5 w-5 rounded border-input text-primary focus:ring-primary cursor-pointer shrink-0 mt-1"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Save button inline for notification settings */}
+                  <div className="flex justify-end mt-6 pt-4 border-t border-border">
+                    <Button
+                      onClick={savePrefs}
+                      disabled={prefsSaving}
+                      className="h-11 px-8 rounded-xl font-medium shadow-lg shadow-primary/20"
+                    >
+                      {prefsSaving ? "Đang lưu cấu hình…" : "Lưu tùy chọn thông báo"}
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          )}
         </AnimatePresence>
 
         {/* Footer actions with dirty and saving states */}
-        {activeTab !== "landlord" && activeTab !== "security" && (
+        {activeTab !== "landlord" && activeTab !== "security" && activeTab !== "notifications" && (
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 border-t border-border pt-6">
             <div>
               {isDirty ? (
