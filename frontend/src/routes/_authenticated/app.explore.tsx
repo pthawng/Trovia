@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { 
   Grid3x3, List, Map, SlidersHorizontal, Search as SearchIcon, 
   MapPin, Bed, Bath, Maximize2, ShieldCheck, Heart, Star,
@@ -53,6 +53,54 @@ function Explore() {
   const [moveInDate, setMoveInDate] = useState("");
   const [bookingNote, setBookingNote] = useState("");
   
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const query = params.get("query");
+      const city = params.get("city");
+      const type = params.get("type");
+      const budgetMin = params.get("budgetMin");
+      const budgetMax = params.get("budgetMax");
+
+      const newFilters: SearchListingsFilters = {};
+      
+      if (city) {
+        setSearchLocation(city);
+        newFilters.city = city;
+      }
+      if (query) {
+        setSearchUniversity(query);
+      }
+      if (type && type !== "ALL") {
+        setSearchType(type);
+        newFilters.type = type as PropertyType;
+      }
+      
+      let parsedMin: number | undefined;
+      let parsedMax: number | undefined;
+      if (budgetMin) parsedMin = Number(budgetMin);
+      if (budgetMax) parsedMax = Number(budgetMax);
+
+      if (parsedMin !== undefined || parsedMax !== undefined) {
+        if (parsedMin !== undefined && parsedMax !== undefined) {
+          setSearchBudget(`${parsedMin}-${parsedMax}`);
+          newFilters.minPrice = parsedMin;
+          newFilters.maxPrice = parsedMax;
+        } else if (parsedMin !== undefined) {
+          setSearchBudget(`${parsedMin}-99999`);
+          newFilters.minPrice = parsedMin;
+        } else if (parsedMax !== undefined) {
+          setSearchBudget(`0-${parsedMax}`);
+          newFilters.maxPrice = parsedMax;
+        }
+      }
+      
+      if (Object.keys(newFilters).length > 0) {
+        setAppliedFilters(newFilters);
+      }
+    }
+  }, []);
+
   // Fetch real saved properties for the user
   const { data: savedList = [] } = useQuery({
     queryKey: ["savedProperties"],
