@@ -107,8 +107,8 @@ git clone https://github.com/pthawng/Trovia.git
 cd trovia-home-hub
 
 # Install dependencies for both tiers / Cài đặt thư viện cho cả hai lớp
-cd backend && npm install
-cd ../frontend && npm install
+cd backend && pnpm install
+cd ../frontend && pnpm install
 ```
 
 ### Step 2: Configuration / Bước 2: Thiết lập cấu hình
@@ -127,11 +127,11 @@ SMTP_FROM_NAME="Trovia Notification"
 ### Step 3: Database Migration & Run / Bước 3: Di cư CSDL & Khởi chạy
 ```bash
 # In backend / Tại thư mục backend
-npx prisma migrate dev
-npm run start:dev
+pnpm prisma migrate dev
+pnpm run start:dev
 
 # In frontend / Tại thư mục frontend
-npm run dev
+pnpm run dev
 ```
 Open [http://localhost:3000](http://localhost:3000) to view the application / Truy cập [http://localhost:3000](http://localhost:3000) để xem ứng dụng.
 
@@ -175,14 +175,16 @@ Deploy a standard `Dockerfile` inside both `backend` and `frontend` folders.
 ```dockerfile
 FROM node:20-alpine AS builder
 WORKDIR /app
-COPY package*.json ./
-RUN npm ci
+RUN npm install -g pnpm
+COPY package*.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
 COPY . .
-RUN npx prisma generate
-RUN npm run build
+RUN pnpm prisma generate
+RUN pnpm run build
 
 FROM node:20-alpine
 WORKDIR /app
+RUN npm install -g pnpm
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package*.json ./
