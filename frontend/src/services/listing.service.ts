@@ -13,6 +13,7 @@ export interface SearchListingsFilters {
   limit?: number;
   sortBy?: string;
   sortOrder?: "asc" | "desc";
+  status?: string;
 }
 
 export interface SearchListingsResponse {

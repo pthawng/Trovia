@@ -2,19 +2,19 @@ import { Star } from "lucide-react";
 
 const items = [
   {
-    quote: "I found my studio near RMIT in two days. The verification badge made me actually trust the listing.",
-    name: "Linh Nguyen",
-    role: "Student, RMIT",
+    quote: "Tôi đã tìm được căn hộ studio gần RMIT chỉ trong 2 ngày. Nhãn phòng trọ xác minh của Trovia giúp tôi hoàn toàn yên tâm khi xuống tiền.",
+    name: "Linh Nguyễn",
+    role: "Sinh viên, RMIT",
   },
   {
-    quote: "As a young professional I needed something fast and safe. Trovia's chat and contracts saved me a week.",
-    name: "Minh Tran",
-    role: "Product designer",
+    quote: "Là một nhân viên văn phòng bận rộn, tôi cần tìm phòng nhanh chóng và an toàn. Hệ thống hợp đồng điện tử của Trovia giúp tôi tiết kiệm cả tuần làm việc.",
+    name: "Minh Trần",
+    role: "Nhà thiết kế sản phẩm",
   },
   {
-    quote: "Managing six rooms used to mean spreadsheets. Now I open the dashboard once a week and I'm done.",
-    name: "Mr. Hoa",
-    role: "Landlord, District 10",
+    quote: "Trước đây tôi phải quản lý 6 phòng trọ bằng Excel rất phức tạp. Từ khi dùng bảng điều khiển của Trovia, tôi chỉ mất 10 phút mỗi tuần.",
+    name: "Chú Hoa",
+    role: "Chủ nhà, Quận 10",
   },
 ];
 
@@ -22,17 +22,17 @@ export function Testimonials() {
   return (
     <section className="py-24 sm:py-32 px-4 sm:px-6">
       <div className="mx-auto max-w-7xl">
-        <div className="max-w-2xl mb-14">
-          <div className="text-sm font-medium text-primary mb-3">Loved by both sides</div>
-          <h2 className="text-4xl sm:text-5xl font-semibold tracking-tight">
-            Stories from tenants and landlords.
+        <div className="max-w-2xl mb-14 text-left">
+          <div className="text-sm font-semibold text-primary mb-3 uppercase tracking-wider">Tin dùng bởi cả hai bên</div>
+          <h2 className="text-4xl sm:text-5xl font-semibold tracking-tight text-foreground">
+            Câu chuyện thực tế từ<br />người thuê và chủ nhà.
           </h2>
         </div>
         <div className="grid md:grid-cols-3 gap-5">
           {items.map((t) => (
             <figure
               key={t.name}
-              className="rounded-3xl bg-surface-elevated ring-1 ring-border p-7 shadow-card hover:shadow-[var(--shadow-elegant)] transition-shadow"
+              className="rounded-3xl bg-surface-elevated ring-1 ring-border p-7 shadow-card hover:shadow-[var(--shadow-elegant)] transition-shadow text-left"
             >
               <div className="flex gap-0.5 mb-4">
                 {Array.from({ length: 5 }).map((_, i) => (

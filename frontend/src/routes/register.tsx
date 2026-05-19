@@ -11,22 +11,28 @@ import { useAuth } from "@/lib/auth-context";
 import { Eye, EyeOff } from "lucide-react";
 
 export const Route = createFileRoute("/register")({
-  beforeLoad: async () => {
+  validateSearch: z.object({
+    redirect: z.string().optional(),
+  }),
+  beforeLoad: async ({ search }) => {
     const token = typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
-    if (token) throw redirect({ to: "/app/explore" });
+    if (token) {
+      throw redirect({ to: search.redirect || "/app/explore" });
+    }
   },
   component: RegisterPage,
 });
 
 const schema = z.object({
-  fullName: z.string().trim().min(2, "Please tell us your name").max(80),
-  email: z.string().email("Enter a valid email").max(255),
-  password: z.string().min(8, "At least 8 characters").max(72),
+  fullName: z.string().trim().min(2, "Vui lòng nhập đầy đủ họ và tên").max(80),
+  email: z.string().email("Vui lòng nhập email hợp lệ").max(255),
+  password: z.string().min(8, "Mật khẩu phải chứa ít nhất 8 ký tự").max(72),
 });
 
 function RegisterPage() {
   const { signUp } = useAuth();
   const navigate = useNavigate();
+  const { redirect } = Route.useSearch();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -36,44 +42,79 @@ function RegisterPage() {
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const parsed = schema.safeParse({ fullName, email, password });
-    if (!parsed.success) { toast.error(parsed.error.issues[0].message); return; }
+    if (!parsed.success) {
+      toast.error(parsed.error.issues[0].message);
+      return;
+    }
     setLoading(true);
     const { error } = await signUp(email, password, fullName);
     setLoading(false);
-    if (error) toast.error(error.message);
-    else { toast.success("Welcome to Trovia"); navigate({ to: "/app/explore" }); }
+    if (error) {
+      toast.error(error.message || "Không thể đăng ký tài khoản. Vui lòng thử lại.");
+    } else {
+      toast.success("Chào mừng bạn gia nhập Trovia!");
+      if (redirect) {
+        window.location.href = redirect;
+      } else {
+        navigate({ to: "/app/explore" });
+      }
+    }
   };
 
   return (
     <AuthLayout
-      title="Create your account"
-      subtitle="Join thousands finding trusted places to call home."
-      footer={<>Already have an account? <Link to="/login" className="text-primary font-medium hover:underline">Sign in</Link></>}
+      title="Tạo tài khoản mới"
+      subtitle="Tham gia cộng đồng kết nối phòng trọ & căn hộ thông minh hàng đầu."
+      footer={
+        <>
+          Đã có tài khoản?{" "}
+          <Link to="/login" search={{ redirect }} className="text-primary font-medium hover:underline">
+            Đăng nhập
+          </Link>
+        </>
+      }
     >
       <form onSubmit={onSubmit} className="space-y-4">
-        <GoogleButton label="Sign up with Google" />
+        <GoogleButton label="Đăng ký với Google" />
         <div className="flex items-center gap-3 text-xs text-muted-foreground">
-          <div className="h-px flex-1 bg-border" /> OR <div className="h-px flex-1 bg-border" />
+          <div className="h-px flex-1 bg-border" /> HOẶC <div className="h-px flex-1 bg-border" />
         </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="name">Full name</Label>
-          <Input id="name" className="h-11" value={fullName} onChange={(e) => setFullName(e.target.value)} required />
+        <div className="space-y-1.5 text-left">
+          <Label htmlFor="name">Họ và tên</Label>
+          <Input
+            id="name"
+            className="h-11"
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            required
+            placeholder="Nguyen Van A"
+          />
         </div>
-        <div className="space-y-1.5">
+        <div className="space-y-1.5 text-left">
           <Label htmlFor="email">Email</Label>
-          <Input id="email" type="email" autoComplete="email" className="h-11" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          <Input
+            id="email"
+            type="email"
+            autoComplete="email"
+            className="h-11"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            placeholder="nhap.email@example.com"
+          />
         </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="password">Password</Label>
+        <div className="space-y-1.5 text-left">
+          <Label htmlFor="password">Mật khẩu</Label>
           <div className="relative">
-            <Input 
-              id="password" 
-              type={showPassword ? "text" : "password"} 
-              autoComplete="new-password" 
-              className="h-11 pr-10" 
-              value={password} 
-              onChange={(e) => setPassword(e.target.value)} 
-              required 
+            <Input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              autoComplete="new-password"
+              className="h-11 pr-10"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              placeholder="••••••••"
             />
             <button
               type="button"
@@ -83,13 +124,13 @@ function RegisterPage() {
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
-          <p className="text-xs text-muted-foreground">At least 8 characters.</p>
+          <p className="text-[11px] text-muted-foreground">Mật khẩu tối thiểu 8 ký tự.</p>
         </div>
         <Button type="submit" disabled={loading} className="w-full h-11">
-          {loading ? "Creating account…" : "Create account"}
+          {loading ? "Đang tạo tài khoản..." : "Đăng ký tài khoản"}
         </Button>
-        <p className="text-xs text-muted-foreground text-center">
-          By continuing you agree to our Terms & Privacy.
+        <p className="text-[10px] text-muted-foreground text-center">
+          Bằng việc tiếp tục, bạn đồng ý với Điều khoản dịch vụ và Chính sách bảo mật của chúng tôi.
         </p>
       </form>
     </AuthLayout>

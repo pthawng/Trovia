@@ -4,11 +4,16 @@ import { useAuth } from "@/lib/auth-context";
 import { Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated")({
-  beforeLoad: async () => {
+  beforeLoad: async ({ location }) => {
     if (typeof window !== "undefined") {
       const token = localStorage.getItem("accessToken");
       if (!token) {
-        throw redirect({ to: "/login" });
+        throw redirect({
+          to: "/login",
+          search: {
+            redirect: location.href,
+          },
+        });
       }
     }
   },

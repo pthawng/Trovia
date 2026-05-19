@@ -11,21 +11,27 @@ import { useAuth } from "@/lib/auth-context";
 import { Eye, EyeOff } from "lucide-react";
 
 export const Route = createFileRoute("/login")({
-  beforeLoad: async () => {
+  validateSearch: z.object({
+    redirect: z.string().optional(),
+  }),
+  beforeLoad: async ({ search }) => {
     const token = typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
-    if (token) throw redirect({ to: "/app/explore" });
+    if (token) {
+      throw redirect({ to: search.redirect || "/app/explore" });
+    }
   },
   component: LoginPage,
 });
 
 const schema = z.object({
-  email: z.string().email("Enter a valid email").max(255),
-  password: z.string().min(6, "At least 6 characters").max(72),
+  email: z.string().email("Vui lòng nhập email hợp lệ").max(255),
+  password: z.string().min(6, "Mật khẩu phải chứa ít nhất 6 ký tự").max(72),
 });
 
 function LoginPage() {
   const { signIn } = useAuth();
   const navigate = useNavigate();
+  const { redirect } = Route.useSearch();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -34,14 +40,21 @@ function LoginPage() {
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const parsed = schema.safeParse({ email, password });
-    if (!parsed.success) { toast.error(parsed.error.issues[0].message); return; }
+    if (!parsed.success) {
+      toast.error(parsed.error.issues[0].message);
+      return;
+    }
     setLoading(true);
     const { error, user } = await signIn(email, password);
     setLoading(false);
-    if (error) toast.error(error.message);
-    else {
-      toast.success("Welcome back");
-      if (user?.roles?.includes("LANDLORD")) {
+    if (error) {
+      toast.error(error.message || "Tài khoản hoặc mật khẩu không chính xác.");
+    } else {
+      toast.success("Chào mừng bạn quay trở lại!");
+      if (redirect) {
+        // Redirect directly back to where the user was heading (e.g. explore page with search params)
+        window.location.href = redirect;
+      } else if (user?.roles?.includes("LANDLORD")) {
         navigate({ to: "/app/landlord", search: { view: "overview" } });
       } else {
         navigate({ to: "/app/explore" });
@@ -51,33 +64,52 @@ function LoginPage() {
 
   return (
     <AuthLayout
-      title="Welcome back"
-      subtitle="Sign in to keep exploring trusted places to stay."
-      footer={<>Don't have an account? <Link to="/register" className="text-primary font-medium hover:underline">Create one</Link></>}
+      title="Chào mừng quay trở lại"
+      subtitle="Đăng nhập để tiếp tục tìm kiếm và quản lý phòng trọ tiện nghi."
+      footer={
+        <>
+          Chưa có tài khoản?{" "}
+          <Link to="/register" search={{ redirect }} className="text-primary font-medium hover:underline">
+            Đăng ký ngay
+          </Link>
+        </>
+      }
     >
       <form onSubmit={onSubmit} className="space-y-4">
-        <GoogleButton />
+        <GoogleButton label="Tiếp tục với Google" />
         <div className="flex items-center gap-3 text-xs text-muted-foreground">
-          <div className="h-px flex-1 bg-border" /> OR <div className="h-px flex-1 bg-border" />
+          <div className="h-px flex-1 bg-border" /> HOẶC <div className="h-px flex-1 bg-border" />
         </div>
-        <div className="space-y-1.5">
+        <div className="space-y-1.5 text-left">
           <Label htmlFor="email">Email</Label>
-          <Input id="email" type="email" autoComplete="email" className="h-11" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          <Input
+            id="email"
+            type="email"
+            autoComplete="email"
+            className="h-11"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            placeholder="nhap.email@example.com"
+          />
         </div>
-        <div className="space-y-1.5">
+        <div className="space-y-1.5 text-left">
           <div className="flex items-center justify-between">
-            <Label htmlFor="password">Password</Label>
-            <Link to="/forgot-password" className="text-xs text-primary hover:underline">Forgot?</Link>
+            <Label htmlFor="password">Mật khẩu</Label>
+            <Link to="/forgot-password" className="text-xs text-primary hover:underline">
+              Quên mật khẩu?
+            </Link>
           </div>
           <div className="relative">
-            <Input 
-              id="password" 
-              type={showPassword ? "text" : "password"} 
-              autoComplete="current-password" 
-              className="h-11 pr-10" 
-              value={password} 
-              onChange={(e) => setPassword(e.target.value)} 
-              required 
+            <Input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              autoComplete="current-password"
+              className="h-11 pr-10"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              placeholder="••••••••"
             />
             <button
               type="button"
@@ -89,7 +121,7 @@ function LoginPage() {
           </div>
         </div>
         <Button type="submit" disabled={loading} className="w-full h-11">
-          {loading ? "Signing in…" : "Sign in"}
+          {loading ? "Đang đăng nhập..." : "Đăng nhập"}
         </Button>
       </form>
     </AuthLayout>

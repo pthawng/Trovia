@@ -16,7 +16,7 @@ const propertyTypeLabels: Record<string, string> = {
 export function Properties() {
   const { data, isLoading, error } = useQuery({
     queryKey: ["publicFeaturedListings"],
-    queryFn: () => ListingService.search({ limit: 6 }),
+    queryFn: () => ListingService.search({ limit: 6, status: "PUBLISHED" }),
     retry: 1,
     refetchOnWindowFocus: false,
   });

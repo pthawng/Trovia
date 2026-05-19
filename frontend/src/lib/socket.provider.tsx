@@ -28,13 +28,16 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
     const token = localStorage.getItem("accessToken");
     if (!token) return;
 
+    const socketUrl = import.meta.env.VITE_SOCKET_URL || "http://localhost:3001";
+
     // Connect to backend NestJS server using JWT authentication (Root namespace /)
-    const newSocket = io("http://localhost:3001", {
+    const newSocket = io(socketUrl, {
       auth: { token },
       query: { token },
       transports: ["websocket"],
       reconnectionAttempts: 10,
       reconnectionDelay: 2000,
+      withCredentials: true,
     });
 
     newSocket.on("connect", () => {
