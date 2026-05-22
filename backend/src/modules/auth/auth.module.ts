@@ -3,6 +3,8 @@ import { JwtModule } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { PrismaModule } from '../../database/prisma.module';
+import { OAuthService } from './oauth.service';
+import { GoogleProviderAdapter } from './google-provider.adapter';
 
 @Global()
 @Module({
@@ -17,7 +19,7 @@ import { PrismaModule } from '../../database/prisma.module';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService],
-  exports: [AuthService],
+  providers: [AuthService, OAuthService, GoogleProviderAdapter],
+  exports: [AuthService, OAuthService],
 })
 export class AuthModule {}

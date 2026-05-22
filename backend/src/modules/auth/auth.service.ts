@@ -16,8 +16,9 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import * as argon2 from 'argon2';
 import * as crypto from 'crypto';
-import { AppRole } from '@prisma/client';
+import { AppRole, OAuthProvider } from '@prisma/client';
 import { MailService } from '../mail/mail.service';
+import { OAuthProfile } from './google-provider.adapter';
 
 @Injectable()
 export class AuthService {
@@ -108,6 +109,12 @@ export class AuthService {
 
     if (!user) {
       throw new UnauthorizedException('Invalid email or password');
+    }
+
+    if (!user.passwordHash) {
+      throw new BadRequestException(
+        'Tài khoản này được đăng ký qua Google. Vui lòng sử dụng đăng nhập bằng Google.',
+      );
     }
 
     const isPasswordValid = await argon2.verify(
@@ -412,6 +419,130 @@ export class AuthService {
     });
 
     return { accessToken, refreshToken };
+  }
+
+  async loginOrRegisterOAuth(profile: OAuthProfile) {
+    return await this.prisma.$transaction(async (tx) => {
+      // 1. Check if OAuth account mapping exists
+      const existingOAuth = await tx.oAuthAccount.findUnique({
+        where: {
+          provider_providerAccountId: {
+            provider: OAuthProvider.GOOGLE,
+            providerAccountId: profile.id,
+          },
+        },
+        include: {
+          user: {
+            include: {
+              userRoles: {
+                include: { role: true },
+              },
+            },
+          },
+        },
+      });
+
+      if (existingOAuth) {
+        // Authenticate & generate tokens
+        return this.issueOAuthTokens(existingOAuth.user, tx);
+      }
+
+      // 2. Resolve email conflicts/race conditions
+      let user = await tx.user.findUnique({
+        where: { email: profile.email },
+        include: {
+          userRoles: {
+            include: { role: true },
+          },
+        },
+      });
+
+      if (!user) {
+        // Get or create default TENANT role
+        let tenantRole = await tx.role.findUnique({
+          where: { name: AppRole.TENANT },
+        });
+
+        if (!tenantRole) {
+          tenantRole = await tx.role.create({
+            data: { name: AppRole.TENANT },
+          });
+        }
+
+        try {
+          // Create new user inside transaction
+          user = await tx.user.create({
+            data: {
+              email: profile.email,
+              fullName: profile.name,
+              avatarUrl: profile.avatarUrl,
+              isEmailVerified: profile.emailVerified,
+              emailVerifiedAt: profile.emailVerified ? new Date() : null,
+              // passwordHash remains null
+              userRoles: {
+                create: { roleId: tenantRole.id },
+              },
+              emailPreference: {
+                create: {},
+              },
+            },
+            include: {
+              userRoles: {
+                include: { role: true },
+              },
+            },
+          });
+        } catch (err: any) {
+          // Handle concurrent requests race condition (unique constraint)
+          if (err.code === 'P2002') {
+            user = await tx.user.findUnique({
+              where: { email: profile.email },
+              include: {
+                userRoles: {
+                  include: { role: true },
+                },
+              },
+            });
+            if (!user) {
+              throw err;
+            }
+          } else {
+            throw err;
+          }
+        }
+      }
+
+      // 3. Link OAuth provider to user
+      await tx.oAuthAccount.create({
+        data: {
+          userId: user.id,
+          provider: OAuthProvider.GOOGLE,
+          providerAccountId: profile.id,
+          email: profile.email,
+        },
+      });
+
+      return this.issueOAuthTokens(user, tx);
+    });
+  }
+
+  private async issueOAuthTokens(user: any, tx: any) {
+    const roles = user.userRoles.map((ur: any) => ur.role.name);
+    const tokens = await this.generateTokens(user.id, user.email, roles);
+
+    // Save refresh token to database
+    await tx.refreshToken.create({
+      data: {
+        userId: user.id,
+        token: tokens.refreshToken,
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+      },
+    });
+
+    return {
+      user: this.sanitizeUser(user),
+      ...tokens,
+    };
   }
 
   private sanitizeUser(user: any) {

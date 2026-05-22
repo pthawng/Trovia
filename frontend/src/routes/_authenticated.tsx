@@ -1,27 +1,27 @@
-import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
 import { AppShell } from "@/components/app/AppShell";
 import { useAuth } from "@/lib/auth-context";
 import { Loader2 } from "lucide-react";
+import { useEffect } from "react";
 
 export const Route = createFileRoute("/_authenticated")({
-  beforeLoad: async ({ location }) => {
-    if (typeof window !== "undefined") {
-      const token = localStorage.getItem("accessToken");
-      if (!token) {
-        throw redirect({
-          to: "/login",
-          search: {
-            redirect: location.href,
-          },
-        });
-      }
-    }
-  },
   component: AuthenticatedLayout,
 });
 
 function AuthenticatedLayout() {
-  const { loading } = useAuth();
+  const { loading, user } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate({
+        to: "/login",
+        search: {
+          redirect: window.location.pathname + window.location.search,
+        },
+      });
+    }
+  }, [loading, user, navigate]);
 
   if (loading) {
     return (
@@ -35,6 +35,10 @@ function AuthenticatedLayout() {
         </p>
       </div>
     );
+  }
+
+  if (!user) {
+    return null;
   }
 
   return (

@@ -26,6 +26,7 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as R404RouteImport } from './routes/404'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app.index'
 import { Route as AuthenticatedAppSavedRouteImport } from './routes/_authenticated/app.saved'
 import { Route as AuthenticatedAppRequestsRouteImport } from './routes/_authenticated/app.requests'
@@ -128,6 +129,11 @@ const R404Route = R404RouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/auth/callback',
+  path: '/auth/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAppIndexRoute = AuthenticatedAppIndexRouteImport.update({
@@ -258,6 +264,7 @@ export interface FileRoutesByFullPath {
   '/tenants': typeof TenantsRoute
   '/terms': typeof TermsRoute
   '/verify-email': typeof VerifyEmailRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/app/become-landlord': typeof AuthenticatedAppBecomeLandlordRoute
   '/app/contracts': typeof AuthenticatedAppContractsRouteWithChildren
   '/app/explore': typeof AuthenticatedAppExploreRoute
@@ -295,6 +302,7 @@ export interface FileRoutesByTo {
   '/tenants': typeof TenantsRoute
   '/terms': typeof TermsRoute
   '/verify-email': typeof VerifyEmailRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/app/become-landlord': typeof AuthenticatedAppBecomeLandlordRoute
   '/app/contracts': typeof AuthenticatedAppContractsRouteWithChildren
   '/app/explore': typeof AuthenticatedAppExploreRoute
@@ -334,6 +342,7 @@ export interface FileRoutesById {
   '/tenants': typeof TenantsRoute
   '/terms': typeof TermsRoute
   '/verify-email': typeof VerifyEmailRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/_authenticated/app/become-landlord': typeof AuthenticatedAppBecomeLandlordRoute
   '/_authenticated/app/contracts': typeof AuthenticatedAppContractsRouteWithChildren
   '/_authenticated/app/explore': typeof AuthenticatedAppExploreRoute
@@ -373,6 +382,7 @@ export interface FileRouteTypes {
     | '/tenants'
     | '/terms'
     | '/verify-email'
+    | '/auth/callback'
     | '/app/become-landlord'
     | '/app/contracts'
     | '/app/explore'
@@ -410,6 +420,7 @@ export interface FileRouteTypes {
     | '/tenants'
     | '/terms'
     | '/verify-email'
+    | '/auth/callback'
     | '/app/become-landlord'
     | '/app/contracts'
     | '/app/explore'
@@ -448,6 +459,7 @@ export interface FileRouteTypes {
     | '/tenants'
     | '/terms'
     | '/verify-email'
+    | '/auth/callback'
     | '/_authenticated/app/become-landlord'
     | '/_authenticated/app/contracts'
     | '/_authenticated/app/explore'
@@ -487,6 +499,7 @@ export interface RootRouteChildren {
   TenantsRoute: typeof TenantsRoute
   TermsRoute: typeof TermsRoute
   VerifyEmailRoute: typeof VerifyEmailRoute
+  AuthCallbackRoute: typeof AuthCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -608,6 +621,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/auth/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/app/': {
@@ -865,6 +885,7 @@ const rootRouteChildren: RootRouteChildren = {
   TenantsRoute: TenantsRoute,
   TermsRoute: TermsRoute,
   VerifyEmailRoute: VerifyEmailRoute,
+  AuthCallbackRoute: AuthCallbackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -14,6 +14,7 @@ import {
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
+import { MailService } from './mail/mail.service';
 
 describe('Trovia Rental Lifecycle Integration & Authorization Auditing Tests', () => {
   let rentalRequestsService: RentalRequestsService;
@@ -23,6 +24,9 @@ describe('Trovia Rental Lifecycle Integration & Authorization Auditing Tests', (
 
   // Mock Prisma methods
   const mockPrisma = {
+    user: {
+      findUnique: jest.fn(),
+    },
     property: {
       findUnique: jest.fn(),
     },
@@ -64,6 +68,16 @@ describe('Trovia Rental Lifecycle Integration & Authorization Auditing Tests', (
     $transaction: jest.fn((callback) => callback(mockPrisma)),
   };
 
+  const mockMailService = {
+    sendRentalRequestSubmittedEmail: jest.fn().mockResolvedValue(true),
+    sendNewRentalRequestEmail: jest.fn().mockResolvedValue(true),
+    sendRentalRequestApprovedEmail: jest.fn().mockResolvedValue(true),
+    sendContractSentEmail: jest.fn().mockResolvedValue(true),
+    sendContractAcceptedEmail: jest.fn().mockResolvedValue(true),
+    sendPaymentMarkedPaidEmail: jest.fn().mockResolvedValue(true),
+    sendPaymentCreatedEmail: jest.fn().mockResolvedValue(true),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -73,6 +87,10 @@ describe('Trovia Rental Lifecycle Integration & Authorization Auditing Tests', (
         {
           provide: PrismaService,
           useValue: mockPrisma,
+        },
+        {
+          provide: MailService,
+          useValue: mockMailService,
         },
       ],
     }).compile();

@@ -44,6 +44,34 @@ class EnvironmentVariables {
 
   @IsString()
   COOKIE_SECURE: string = 'false';
+
+  @IsString()
+  @IsOptional()
+  GOOGLE_CLIENT_ID?: string;
+
+  @IsString()
+  @IsOptional()
+  GOOGLE_CLIENT_SECRET?: string;
+
+  @IsString()
+  @IsOptional()
+  GOOGLE_CALLBACK_URL?: string;
+
+  @IsString()
+  @IsOptional()
+  FRONTEND_AUTH_SUCCESS_REDIRECT_URL?: string;
+
+  @IsString()
+  @IsOptional()
+  FRONTEND_AUTH_ERROR_REDIRECT_URL?: string;
+
+  @IsString()
+  @IsOptional()
+  OAUTH_STATE_COOKIE_NAME?: string = 'oauth_state';
+
+  @IsString()
+  @IsOptional()
+  COOKIE_SAME_SITE?: string = 'lax';
 }
 
 export function validateConfig(config: Record<string, any>) {

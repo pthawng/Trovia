@@ -22,20 +22,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const fetchSession = async () => {
-    const token = typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
-    if (!token) {
-      setUser(null);
-      setLandlordProfile(null);
-      setLoading(false);
-      return;
-    }
-
     try {
-      // 1. Fetch user profile
+      // Always try calling getMe to support cookie-based authentication
       const me = await AuthService.getMe();
       setUser(me);
 
-      // 2. If user is landlord, fetch landlord profile status
+      // If user is landlord, fetch landlord profile status
       if (me.roles.includes("LANDLORD")) {
         try {
           const profile = await LandlordService.getMe();
@@ -56,7 +48,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(null);
         setLandlordProfile(null);
       } else {
-        console.warn("Preserving access token during temporary connection glitch:", err);
+        console.warn("Error checking session status:", err);
+        // If there was no token in localStorage to begin with, we can safely set user to null
+        const token = typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
+        if (!token) {
+          setUser(null);
+          setLandlordProfile(null);
+        }
       }
     } finally {
       setLoading(false);
@@ -151,8 +149,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     },
     signInWithGoogle: async () => {
-      // Non-supported for now, or alert
-      console.warn("Google authentication is disabled. Please register with email.");
+      const baseURL = import.meta.env.VITE_API_URL || "http://localhost:3001/api";
+      window.location.href = `${baseURL}/auth/google`;
     },
     resetPassword: async (email) => {
       try {

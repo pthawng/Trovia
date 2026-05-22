@@ -19,6 +19,7 @@ import {
 } from '@nestjs/swagger';
 import * as express from 'express';
 import { AuthService } from './auth.service';
+import { OAuthService } from './oauth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import {
@@ -32,7 +33,10 @@ import { GetUser } from '../../common/decorators/get-user.decorator';
 @ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly oAuthService: OAuthService,
+  ) {}
 
   @Post('register')
   @ApiOperation({ summary: 'Register a new tenant user' })
@@ -85,6 +89,13 @@ export class AuthController {
       path: '/api/auth',
     });
 
+    res.clearCookie('accessToken', {
+      httpOnly: true,
+      secure: process.env.COOKIE_SECURE === 'true',
+      sameSite: 'lax',
+      path: '/',
+    });
+
     return { message: 'Logged out successfully' };
   }
 
@@ -108,9 +119,18 @@ export class AuthController {
     res.cookie('refreshToken', data.refreshToken, {
       httpOnly: true,
       secure: process.env.COOKIE_SECURE === 'true',
-      sameSite: 'lax',
+      sameSite: (process.env.COOKIE_SAME_SITE as 'lax' | 'strict' | 'none') || 'lax',
       path: '/api/auth',
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
+    // Also set/rotate access token cookie
+    res.cookie('accessToken', data.accessToken, {
+      httpOnly: true,
+      secure: process.env.COOKIE_SECURE === 'true',
+      sameSite: (process.env.COOKIE_SAME_SITE as 'lax' | 'strict' | 'none') || 'lax',
+      path: '/',
+      maxAge: 15 * 60 * 1000, // 15 minutes
     });
 
     return {
@@ -175,5 +195,78 @@ export class AuthController {
   @ApiOperation({ summary: 'Resend email verification link (authenticated)' })
   async resendVerification(@GetUser('id') userId: string) {
     return this.authService.resendVerification(userId);
+  }
+
+  @Get('google')
+  @ApiOperation({ summary: 'Redirect to Google OAuth consent screen' })
+  async googleLogin(@Res() res: express.Response) {
+    const state = this.oAuthService.generateState();
+    const cookieName = process.env.OAUTH_STATE_COOKIE_NAME || 'oauth_state';
+    
+    res.cookie(cookieName, state, {
+      httpOnly: true,
+      secure: process.env.COOKIE_SECURE === 'true',
+      sameSite: (process.env.COOKIE_SAME_SITE as 'lax' | 'strict' | 'none') || 'lax',
+      path: '/',
+      maxAge: 10 * 60 * 1000,
+    });
+
+    const url = this.oAuthService.getGoogleAuthorizationUrl(state);
+    return res.redirect(url);
+  }
+
+  @Get('google/callback')
+  @ApiOperation({ summary: 'Google OAuth callback handler' })
+  async googleCallback(
+    @Req() req: express.Request,
+    @Res() res: express.Response,
+    @Query('code') code: string,
+    @Query('state') state: string,
+  ) {
+    const cookieName = process.env.OAUTH_STATE_COOKIE_NAME || 'oauth_state';
+    const savedState = req.cookies?.[cookieName];
+
+    res.clearCookie(cookieName, {
+      httpOnly: true,
+      secure: process.env.COOKIE_SECURE === 'true',
+      sameSite: (process.env.COOKIE_SAME_SITE as 'lax' | 'strict' | 'none') || 'lax',
+      path: '/',
+    });
+
+    const isStateValid = this.oAuthService.verifyState(savedState, state);
+    if (!isStateValid) {
+      const errorRedirect = process.env.FRONTEND_AUTH_ERROR_REDIRECT_URL || 
+        `${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=csrf_mismatch`;
+      return res.redirect(errorRedirect);
+    }
+
+    try {
+      const data = await this.oAuthService.handleGoogleCallback(code);
+
+      res.cookie('refreshToken', data.refreshToken, {
+        httpOnly: true,
+        secure: process.env.COOKIE_SECURE === 'true',
+        sameSite: (process.env.COOKIE_SAME_SITE as 'lax' | 'strict' | 'none') || 'lax',
+        path: '/api/auth',
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      });
+
+      res.cookie('accessToken', data.accessToken, {
+        httpOnly: true,
+        secure: process.env.COOKIE_SECURE === 'true',
+        sameSite: (process.env.COOKIE_SAME_SITE as 'lax' | 'strict' | 'none') || 'lax',
+        path: '/',
+        maxAge: 15 * 60 * 1000,
+      });
+
+      const successRedirect = process.env.FRONTEND_AUTH_SUCCESS_REDIRECT_URL || 
+        `${process.env.FRONTEND_URL || 'http://localhost:3000'}/auth/callback`;
+      return res.redirect(successRedirect);
+    } catch (error: any) {
+      const errorMessage = error?.message || 'oauth_failed';
+      const errorRedirect = `${process.env.FRONTEND_AUTH_ERROR_REDIRECT_URL || 
+        `${process.env.FRONTEND_URL || 'http://localhost:3000'}/login`}?error=${encodeURIComponent(errorMessage)}`;
+      return res.redirect(errorRedirect);
+    }
   }
 }

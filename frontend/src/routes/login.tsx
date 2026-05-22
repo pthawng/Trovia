@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate, redirect } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { AuthLayout } from "@/components/auth/AuthLayout";
@@ -29,13 +29,25 @@ const schema = z.object({
 });
 
 function LoginPage() {
-  const { signIn } = useAuth();
+  const { signIn, user, loading } = useAuth();
   const navigate = useNavigate();
   const { redirect } = Route.useSearch();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loginLoading, setLoginLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  useEffect(() => {
+    if (!loading && user) {
+      if (redirect) {
+        window.location.href = redirect;
+      } else if (user.roles?.includes("LANDLORD")) {
+        navigate({ to: "/app/landlord", search: { view: "overview" } });
+      } else {
+        navigate({ to: "/app/explore" });
+      }
+    }
+  }, [user, loading, navigate, redirect]);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,9 +56,9 @@ function LoginPage() {
       toast.error(parsed.error.issues[0].message);
       return;
     }
-    setLoading(true);
-    const { error, user } = await signIn(email, password);
-    setLoading(false);
+    setLoginLoading(true);
+    const { error, user: loggedInUser } = await signIn(email, password);
+    setLoginLoading(false);
     if (error) {
       toast.error(error.message || "Tài khoản hoặc mật khẩu không chính xác.");
     } else {
@@ -54,7 +66,7 @@ function LoginPage() {
       if (redirect) {
         // Redirect directly back to where the user was heading (e.g. explore page with search params)
         window.location.href = redirect;
-      } else if (user?.roles?.includes("LANDLORD")) {
+      } else if (loggedInUser?.roles?.includes("LANDLORD")) {
         navigate({ to: "/app/landlord", search: { view: "overview" } });
       } else {
         navigate({ to: "/app/explore" });
@@ -83,14 +95,14 @@ function LoginPage() {
         <div className="space-y-1.5 text-left">
           <Label htmlFor="email">Email</Label>
           <Input
-            id="email"
-            type="email"
-            autoComplete="email"
-            className="h-11"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            placeholder="nhap.email@example.com"
+             id="email"
+             type="email"
+             autoComplete="email"
+             className="h-11"
+             value={email}
+             onChange={(e) => setEmail(e.target.value)}
+             required
+             placeholder="nhap.email@example.com"
           />
         </div>
         <div className="space-y-1.5 text-left">
@@ -120,8 +132,8 @@ function LoginPage() {
             </button>
           </div>
         </div>
-        <Button type="submit" disabled={loading} className="w-full h-11">
-          {loading ? "Đang đăng nhập..." : "Đăng nhập"}
+        <Button type="submit" disabled={loginLoading} className="w-full h-11">
+          {loginLoading ? "Đang đăng nhập..." : "Đăng nhập"}
         </Button>
       </form>
     </AuthLayout>
