@@ -1,6 +1,7 @@
 import { motion } from "motion/react";
 import { TrendingUp, Users, Home, DollarSign } from "lucide-react";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis } from "recharts";
+import { useTranslation } from "react-i18next";
 
 const data = [
   { m: "Jan", v: 8200 }, { m: "Feb", v: 9100 }, { m: "Mar", v: 8800 },
@@ -8,21 +9,30 @@ const data = [
   { m: "Jul", v: 13900 }, { m: "Aug", v: 15200 },
 ];
 
-const stats = [
-  { icon: Home, label: "Occupancy", value: "94%", delta: "+3.2%" },
-  { icon: DollarSign, label: "Revenue", value: "$15.2k", delta: "+12%" },
-  { icon: Users, label: "Tenants", value: "128", delta: "+8" },
-];
-
 export function DashboardPreview() {
+  const { t } = useTranslation();
+
+  const stats = [
+    { icon: Home, label: t("landing.dashboard_preview.occupancy"), value: "94%", delta: "+3.2%" },
+    { icon: DollarSign, label: t("landing.dashboard_preview.revenue"), value: "$15.2k", delta: "+12%" },
+    { icon: Users, label: t("landing.dashboard_preview.tenants"), value: "128", delta: "+8" },
+  ];
+
+  const recentTenants = [
+    { n: "Linh N.", r: t("landing.dashboard_preview.room_studio", { district: "2" }), s: t("landing.dashboard_preview.active"), sRaw: "Active" },
+    { n: "Minh T.", r: t("landing.dashboard_preview.room_1br", { district: "7" }), s: t("landing.dashboard_preview.active"), sRaw: "Active" },
+    { n: "Hoa P.", r: t("landing.dashboard_preview.room_normal", { district: "10" }), s: t("landing.dashboard_preview.pending"), sRaw: "Pending" },
+    { n: "Anh L.", r: t("landing.dashboard_preview.room_studio", { district: "1" }), s: t("landing.dashboard_preview.active"), sRaw: "Active" },
+  ];
+
   return (
     <section className="py-24 sm:py-32 px-4 sm:px-6 bg-surface relative overflow-hidden">
       <div className="absolute inset-0 bg-hero-gradient opacity-60 pointer-events-none" />
       <div className="relative mx-auto max-w-7xl">
         <div className="max-w-2xl mb-12">
-          <div className="text-sm font-medium text-primary mb-3">Landlord dashboard</div>
+          <div className="text-sm font-medium text-primary mb-3">{t("landing.dashboard_preview.tag")}</div>
           <h2 className="text-4xl sm:text-5xl font-semibold tracking-tight">
-            Everything you own,<br className="hidden sm:block" /> at a single calm glance.
+            {t("landing.dashboard_preview.title")}
           </h2>
         </div>
 
@@ -43,7 +53,7 @@ export function DashboardPreview() {
               </div>
               <span className="ml-3 text-xs text-muted-foreground">trovia.app/dashboard</span>
             </div>
-            <span className="text-xs text-muted-foreground hidden sm:block">Live preview</span>
+            <span className="text-xs text-muted-foreground hidden sm:block">{t("landing.dashboard_preview.live_preview")}</span>
           </div>
 
           <div className="grid lg:grid-cols-3 gap-4 mb-4">
@@ -68,8 +78,8 @@ export function DashboardPreview() {
             <div className="lg:col-span-2 rounded-2xl border border-border p-5 bg-surface">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <div className="text-sm font-semibold">Revenue trend</div>
-                  <div className="text-xs text-muted-foreground">Last 8 months</div>
+                  <div className="text-sm font-semibold">{t("landing.dashboard_preview.revenue_trend")}</div>
+                  <div className="text-xs text-muted-foreground">{t("landing.dashboard_preview.last_8_months")}</div>
                 </div>
                 <div className="text-xs text-muted-foreground">USD</div>
               </div>
@@ -98,28 +108,23 @@ export function DashboardPreview() {
             </div>
 
             <div className="rounded-2xl border border-border p-5 bg-surface">
-              <div className="text-sm font-semibold mb-4">Recent tenants</div>
+              <div className="text-sm font-semibold mb-4">{t("landing.dashboard_preview.recent_tenants")}</div>
               <ul className="space-y-3">
-                {[
-                  { n: "Linh N.", r: "Studio · D2", s: "Active" },
-                  { n: "Minh T.", r: "1BR · D7", s: "Active" },
-                  { n: "Hoa P.", r: "Room · D10", s: "Pending" },
-                  { n: "Anh L.", r: "Studio · D1", s: "Active" },
-                ].map((t) => (
-                  <li key={t.n} className="flex items-center gap-3">
+                {recentTenants.map((ten) => (
+                  <li key={ten.n} className="flex items-center gap-3">
                     <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary to-[oklch(0.55_0.2_285)] grid place-items-center text-white text-xs font-semibold">
-                      {t.n[0]}
+                      {ten.n[0]}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium truncate">{t.n}</div>
-                      <div className="text-xs text-muted-foreground truncate">{t.r}</div>
+                      <div className="text-sm font-medium truncate">{ten.n}</div>
+                      <div className="text-xs text-muted-foreground truncate">{ten.r}</div>
                     </div>
                     <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
-                      t.s === "Active"
+                      ten.sRaw === "Active"
                         ? "bg-[oklch(0.95_0.05_165)] text-[oklch(0.4_0.13_165)]"
                         : "bg-[oklch(0.96_0.05_70)] text-[oklch(0.45_0.13_70)]"
                     }`}>
-                      {t.s}
+                      {ten.s}
                     </span>
                   </li>
                 ))}
@@ -131,3 +136,4 @@ export function DashboardPreview() {
     </section>
   );
 }
+

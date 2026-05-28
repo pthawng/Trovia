@@ -4,6 +4,8 @@ import { Footer } from "@/components/landing/Footer";
 import { motion } from "motion/react";
 import { Home, Compass, AlertTriangle, ArrowRight } from "lucide-react";
 
+import { useTranslation } from "react-i18next";
+
 export const Route = createFileRoute("/404")({
   head: () => ({
     meta: [
@@ -14,6 +16,7 @@ export const Route = createFileRoute("/404")({
 });
 
 export function NotFoundPage() {
+  const { t } = useTranslation();
   return (
     <main className="min-h-screen bg-background text-foreground flex flex-col justify-between">
       <div>
@@ -51,7 +54,7 @@ export function NotFoundPage() {
                 transition={{ duration: 0.5, delay: 0.15 }}
                 className="text-2xl font-bold tracking-tight text-foreground"
               >
-                Không tìm thấy trang
+                {t("error.not_found_title")}
               </motion.h2>
               <motion.p
                 initial={{ opacity: 0, y: 15 }}
@@ -59,7 +62,7 @@ export function NotFoundPage() {
                 transition={{ duration: 0.5, delay: 0.2 }}
                 className="text-sm text-muted-foreground leading-relaxed max-w-md mx-auto"
               >
-                Có thể đường dẫn đã thay đổi hoặc trang không còn tồn tại. Hãy quay về trang chủ hoặc tiếp tục hành trình khám phá chỗ ở.
+                {t("error.page_not_found")}
               </motion.p>
             </div>
 
@@ -75,14 +78,14 @@ export function NotFoundPage() {
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-foreground text-background hover:bg-foreground/90 px-6 py-3.5 text-sm font-semibold transition"
               >
                 <Home className="h-4.5 w-4.5" />
-                Về trang chủ
+                {t("common.back_to_home")}
               </Link>
               <Link
                 to="/app/explore"
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-primary text-primary-foreground px-6 py-3.5 text-sm font-semibold shadow-md shadow-primary/20 hover:opacity-95 transition"
               >
                 <Compass className="h-4.5 w-4.5" />
-                Khám phá phòng trọ
+                {t("property.explore_title")}
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </motion.div>

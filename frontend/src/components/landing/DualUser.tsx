@@ -1,30 +1,33 @@
 import { ArrowRight, Check } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
-const tenant = {
-  title: "For tenants",
-  tag: "Find a home you love",
-  bullets: [
-    "Filter by university, commute, and budget",
-    "Chat directly with verified landlords",
-    "Tour, apply, and sign — all in-app",
-    "Deposit protection on every booking",
-  ],
-  cta: "Browse rooms",
-};
-
-const landlord = {
-  title: "For landlords",
-  tag: "Run your properties calmly",
-  bullets: [
-    "List in minutes with smart photo tools",
-    "Automated rent collection & receipts",
-    "Tenant screening with verified IDs",
-    "Insights on occupancy and revenue",
-  ],
-  cta: "List a property",
-};
+interface UserSectionData {
+  title: string;
+  tag: string;
+  bullets: string[];
+  cta: string;
+}
 
 export function DualUser() {
+  const { t } = useTranslation();
+
+  const tenantBullets = t("landing.dual_user.tenant_bullets", { returnObjects: true });
+  const landlordBullets = t("landing.dual_user.landlord_bullets", { returnObjects: true });
+
+  const tenant: UserSectionData = {
+    title: t("landing.dual_user.tenant_title"),
+    tag: t("landing.dual_user.tenant_tag"),
+    bullets: Array.isArray(tenantBullets) ? tenantBullets : [],
+    cta: t("landing.dual_user.tenant_cta"),
+  };
+
+  const landlord: UserSectionData = {
+    title: t("landing.dual_user.landlord_title"),
+    tag: t("landing.dual_user.landlord_tag"),
+    bullets: Array.isArray(landlordBullets) ? landlordBullets : [],
+    cta: t("landing.dual_user.landlord_cta"),
+  };
+
   return (
     <section id="tenants" className="py-24 sm:py-32 px-4 sm:px-6">
       <div className="mx-auto max-w-7xl grid lg:grid-cols-2 gap-6">
@@ -40,7 +43,7 @@ function Card({
   accent,
   id,
 }: {
-  data: typeof tenant;
+  data: UserSectionData;
   accent: "primary" | "emerald";
   id?: string;
 }) {

@@ -10,20 +10,14 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { PaymentService, type Payment } from "@/services/payment.service";
 import { AuthService } from "@/services/auth.service";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 export const Route = createFileRoute("/_authenticated/app/payments")({
   component: PaymentsPage,
 });
 
-const typeLabels = {
-  DEPOSIT: "Tiền đặt cọc",
-  FIRST_MONTH_RENT: "Tiền nhà tháng đầu",
-  MONTHLY_RENT: "Tiền thuê hàng tháng",
-  UTILITIES: "Tiền điện nước",
-  OTHER: "Chi phí khác",
-};
-
 function PaymentsPage() {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [activePayInvoice, setActivePayInvoice] = useState<Payment | null>(null);
 
@@ -45,8 +39,8 @@ function PaymentsPage() {
     onSuccess: (data) => {
       toast.success(
         data.contractActivated
-          ? "Kích hoạt hợp đồng thành công! Lịch lưu trú đã được thiết lập."
-          : "Đã hoàn tất thanh toán hóa đơn."
+          ? t("dashboard.payments.toasts.contract_activated_success")
+          : t("dashboard.payments.toasts.payment_invoice_success")
       );
       setActivePayInvoice(null);
       queryClient.invalidateQueries({ queryKey: ["payments"] });
@@ -54,7 +48,7 @@ function PaymentsPage() {
       queryClient.invalidateQueries({ queryKey: ["tenancies"] });
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.message || "Thanh toán thất bại.");
+      toast.error(err.response?.data?.message || t("dashboard.payments.toasts.payment_failed"));
     },
   });
 
@@ -69,9 +63,9 @@ function PaymentsPage() {
   return (
     <div className="space-y-8 max-w-5xl">
       <div>
-        <h1 className="text-3xl font-semibold tracking-tight">Thanh toán & Hóa đơn</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">{t("dashboard.payments.page_title")}</h1>
         <p className="text-muted-foreground mt-1">
-          Theo dõi các hóa đơn thuê phòng hàng tháng, thực hiện quét mã VietQR và kiểm tra lịch sử giao dịch.
+          {t("dashboard.payments.page_subtitle")}
         </p>
       </div>
 
@@ -103,29 +97,29 @@ function PaymentsPage() {
 
                 <div className="flex items-center gap-2 pb-3 mb-5 border-b border-border/60">
                   <span className="flex h-2.5 w-2.5 rounded-full bg-primary animate-ping shrink-0" />
-                  <h3 className="font-bold text-base text-foreground">Thanh toán cần thực hiện</h3>
+                  <h3 className="font-bold text-base text-foreground">{t("dashboard.payments.due_actions")}</h3>
                 </div>
 
                 {/* Cards for each fee item */}
                 <div className="grid sm:grid-cols-3 gap-4 mb-6">
                   {depositBill && (
                     <div className="rounded-2xl border border-border bg-surface p-4 text-xs space-y-1 relative shadow-sm">
-                      <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Tiền cọc (Deposit)</span>
+                      <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">{t("dashboard.payments.deposit_label")}</span>
                       <span className="font-bold text-foreground block text-sm mt-1">{Number(depositBill.amount).toLocaleString('vi-VN')} đ</span>
-                      <span className="text-[9px] text-amber-600 bg-amber-50 rounded-full px-2 py-0.5 mt-2.5 inline-block font-semibold">Chờ thanh toán</span>
+                      <span className="text-[9px] text-amber-600 bg-amber-50 rounded-full px-2 py-0.5 mt-2.5 inline-block font-semibold">{t("dashboard.payments.pending_status")}</span>
                     </div>
                   )}
                   {rentBill && (
                     <div className="rounded-2xl border border-border bg-surface p-4 text-xs space-y-1 relative shadow-sm">
-                      <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Tháng đầu (First Month)</span>
+                      <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">{t("dashboard.payments.first_month_label")}</span>
                       <span className="font-bold text-foreground block text-sm mt-1">{Number(rentBill.amount).toLocaleString('vi-VN')} đ</span>
-                      <span className="text-[9px] text-amber-600 bg-amber-50 rounded-full px-2 py-0.5 mt-2.5 inline-block font-semibold">Chờ thanh toán</span>
+                      <span className="text-[9px] text-amber-600 bg-amber-50 rounded-full px-2 py-0.5 mt-2.5 inline-block font-semibold">{t("dashboard.payments.pending_status")}</span>
                     </div>
                   )}
                   <div className="rounded-2xl border border-border bg-surface p-4 text-xs space-y-1 relative shadow-sm">
-                    <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Phí dịch vụ (Service fee)</span>
+                    <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">{t("dashboard.payments.service_fee_label")}</span>
                     <span className="font-bold text-foreground block text-sm mt-1">100.000 đ</span>
-                    <span className="text-[9px] text-emerald-600 bg-emerald-50 rounded-full px-2 py-0.5 mt-2.5 inline-block font-semibold font-medium">Cố định</span>
+                    <span className="text-[9px] text-emerald-600 bg-emerald-50 rounded-full px-2 py-0.5 mt-2.5 inline-block font-semibold font-medium">{t("dashboard.payments.fixed_status")}</span>
                   </div>
                 </div>
 
@@ -133,22 +127,22 @@ function PaymentsPage() {
                 <div className="rounded-2xl bg-secondary/25 p-4 border border-border/40 text-xs space-y-2 mb-6">
                   {depositBill && (
                     <div className="flex justify-between items-center">
-                      <span className="text-muted-foreground">Tiền cọc:</span>
+                      <span className="text-muted-foreground">{t("dashboard.payments.deposit_colon")}</span>
                       <span className="font-semibold text-foreground">{Number(depositBill.amount).toLocaleString('vi-VN')}đ</span>
                     </div>
                   )}
                   {rentBill && (
                     <div className="flex justify-between items-center">
-                      <span className="text-muted-foreground">Tháng đầu:</span>
+                      <span className="text-muted-foreground">{t("dashboard.payments.first_month_colon")}</span>
                       <span className="font-semibold text-foreground">{Number(rentBill.amount).toLocaleString('vi-VN')}đ</span>
                     </div>
                   )}
                   <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Phí dịch vụ:</span>
+                    <span className="text-muted-foreground">{t("dashboard.payments.service_fee_colon")}</span>
                     <span className="font-semibold text-foreground">100.000đ</span>
                   </div>
                   <div className="flex justify-between items-center font-bold pt-2 border-t border-border/60 text-sm">
-                    <span className="text-foreground">Tổng cộng:</span>
+                    <span className="text-foreground">{t("dashboard.payments.total_colon")}</span>
                     <span className="text-primary">
                       {Number((depositBill?.amount || 0) + (rentBill?.amount || 0) + 100000).toLocaleString('vi-VN')}đ
                     </span>
@@ -185,7 +179,7 @@ function PaymentsPage() {
                       } as any);
                     }}
                   >
-                    Thanh toán ngay <ArrowRight className="h-4 w-4" />
+                    {t("dashboard.payments.pay_now_btn")} <ArrowRight className="h-4 w-4" />
                   </Button>
                 </div>
               </motion.section>
@@ -194,12 +188,12 @@ function PaymentsPage() {
             {/* General Bills Section */}
             <section className="space-y-4">
               <h2 className="text-xl font-semibold tracking-tight flex items-center gap-2 text-foreground">
-                <CreditCard className="h-5 w-5 text-primary" /> Hóa đơn cần thanh toán khác
+                <CreditCard className="h-5 w-5 text-primary" /> {t("dashboard.payments.other_pending_bills")}
               </h2>
               <div className="space-y-3">
                 {activeBills.length === 0 ? (
                   <div className="rounded-2xl border border-dashed border-border p-8 text-center text-xs text-muted-foreground bg-secondary/10">
-                    Tuyệt vời! Bạn không có hóa đơn nào đang chờ thanh toán.
+                    {t("dashboard.payments.no_pending_bills")}
                   </div>
                 ) : (
                   activeBills.map((b) => {
@@ -213,10 +207,10 @@ function PaymentsPage() {
                           <div>
                             <div className="font-semibold text-xs text-foreground">{b.contract?.property?.title}</div>
                             <div className="text-[10px] text-muted-foreground mt-1 flex flex-wrap items-center gap-2">
-                              <span className="font-medium text-foreground">{typeLabels[b.type] || b.type}</span>
+                              <span className="font-medium text-foreground">{t(`dashboard.payments.types.${b.type}`, { defaultValue: b.type })}</span>
                               <span className="inline-block h-1 w-1 rounded-full bg-border" />
                               <span className="text-primary font-medium flex items-center gap-1">
-                                <Calendar className="h-3 w-3" /> Hạn chót: {formattedDue}
+                                <Calendar className="h-3 w-3" /> {t("dashboard.tenant.payments.due_date", { dueDate: formattedDue })}
                               </span>
                             </div>
                           </div>
@@ -224,10 +218,10 @@ function PaymentsPage() {
                         <div className="flex items-center justify-between sm:justify-end gap-4 shrink-0">
                           <div className="text-left sm:text-right">
                             <div className="font-bold text-xs text-foreground">{Number(b.amount).toLocaleString('vi-VN')} VND</div>
-                            <span className="text-[9px] font-semibold text-amber-600 bg-amber-50 rounded-full px-2 py-0.5 mt-0.5 inline-block text-center border border-amber-200">Đợi thanh toán</span>
+                            <span className="text-[9px] font-semibold text-amber-600 bg-amber-50 rounded-full px-2 py-0.5 mt-0.5 inline-block text-center border border-amber-200">{t("dashboard.payments.waiting_payment")}</span>
                           </div>
                           <Button size="sm" className="font-semibold shadow-sm rounded-xl text-xs h-9 cursor-pointer" onClick={() => setActivePayInvoice(b)}>
-                            Thanh toán
+                            {t("dashboard.payments.pay_btn")}
                           </Button>
                         </div>
                       </div>
@@ -240,16 +234,16 @@ function PaymentsPage() {
             {/* Payment History */}
             <section className="space-y-4">
               <h2 className="text-xl font-semibold tracking-tight flex items-center gap-2 text-foreground">
-                <Receipt className="h-5 w-5 text-primary" /> Lịch sử giao dịch thành công
+                <Receipt className="h-5 w-5 text-primary" /> {t("dashboard.payments.successful_history")}
               </h2>
               <div className="rounded-2xl bg-surface ring-1 ring-border overflow-hidden divide-y divide-border border border-border">
                 {paymentHistory.length === 0 ? (
                   <div className="p-8 text-center text-xs text-muted-foreground bg-secondary/10">
-                    Chưa có giao dịch lịch sử nào được ghi nhận.
+                    {t("dashboard.payments.no_history")}
                   </div>
                 ) : (
                   paymentHistory.map((h) => {
-                    const formattedPaid = h.paidAt ? new Date(h.paidAt).toLocaleDateString("vi-VN", { dateStyle: "medium" }) : "Vừa xong";
+                    const formattedPaid = h.paidAt ? new Date(h.paidAt).toLocaleDateString("vi-VN", { dateStyle: "medium" }) : t("dashboard.payments.just_now");
                     return (
                       <div key={h.id} className="flex items-center justify-between p-4 hover:bg-secondary/5 transition">
                         <div className="flex items-center gap-3">
@@ -259,15 +253,15 @@ function PaymentsPage() {
                           <div>
                             <div className="font-semibold text-xs text-foreground">{h.contract?.property?.title}</div>
                             <div className="text-[10px] text-muted-foreground mt-0.5 flex items-center gap-2">
-                              <span>{typeLabels[h.type] || h.type}</span>
+                              <span>{t(`dashboard.payments.types.${h.type}`, { defaultValue: h.type })}</span>
                               <span>·</span>
-                              <span>Ngày trả: {formattedPaid}</span>
+                              <span>{t("dashboard.payments.payment_date", { date: formattedPaid })}</span>
                             </div>
                           </div>
                         </div>
                         <div className="text-right">
                           <div className="font-bold text-xs text-emerald-600">-{Number(h.amount).toLocaleString('vi-VN')} VND</div>
-                          <div className="text-[8px] text-muted-foreground mt-0.5">Chuyển khoản VietQR · Ref: {h.providerTransactionId || "TRV-TX-ME"}</div>
+                          <div className="text-[8px] text-muted-foreground mt-0.5">{t("dashboard.payments.vietqr_ref", { ref: h.providerTransactionId || "TRV-TX-ME" })}</div>
                         </div>
                       </div>
                     );
@@ -283,34 +277,34 @@ function PaymentsPage() {
             
             {/* Preferred Payout */}
             <section className="rounded-2xl bg-surface border border-border p-6 space-y-4 shadow-sm">
-              <h3 className="text-sm font-bold tracking-tight text-foreground">Phương thức đề xuất</h3>
+              <h3 className="text-sm font-bold tracking-tight text-foreground">{t("dashboard.payments.preferred_method")}</h3>
               <div className="rounded-xl border border-border p-4 flex items-center gap-3 bg-secondary/10">
                 <div className="h-10 w-10 rounded-lg bg-primary/10 text-primary grid place-items-center font-bold text-xs border border-primary/20">
                   QR
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-xs font-semibold text-foreground">VietQR Chuyển khoản nhanh</div>
-                  <div className="text-[10px] text-muted-foreground mt-0.5">Liên kết trực tiếp NAPAS 24/7</div>
+                  <div className="text-xs font-semibold text-foreground">{t("dashboard.payments.vietqr_fast")}</div>
+                  <div className="text-[10px] text-muted-foreground mt-0.5">{t("dashboard.payments.napas_link")}</div>
                 </div>
               </div>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Chúng tôi khuyên dùng mã VietQR để thanh toán được xác nhận tự động tức thì. Tiền cọc/thuê sẽ được chuyển trực tiếp vào tài khoản ngân hàng của Chủ nhà.
+                {t("dashboard.payments.preferred_desc")}
               </p>
             </section>
 
             {/* Quick FAQs */}
             <section className="rounded-2xl bg-secondary/20 p-6 space-y-3 border border-border text-xs text-muted-foreground">
               <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1">
-                <HelpCircle className="h-3.5 w-3.5 text-primary" /> Hỗ trợ thanh toán
+                <HelpCircle className="h-3.5 w-3.5 text-primary" /> {t("dashboard.payments.faq_title")}
               </h4>
               <div className="space-y-3 pt-1">
                 <div>
-                  <h5 className="font-semibold text-foreground">Tiền cọc giữ chỗ có được bảo vệ không?</h5>
-                  <p className="text-[11px] mt-0.5 leading-relaxed">Có, toàn bộ khoản cọc được giữ an toàn trên hệ thống Trovia Trust cho tới khi bạn hoàn thành việc nhận phòng.</p>
+                  <h5 className="font-semibold text-foreground">{t("dashboard.payments.faq_1_q")}</h5>
+                  <p className="text-[11px] mt-0.5 leading-relaxed">{t("dashboard.payments.faq_1_a")}</p>
                 </div>
                 <div>
-                  <h5 className="font-semibold text-foreground">Có mất phí giao dịch không?</h5>
-                  <p className="text-[11px] mt-0.5 leading-relaxed">Hoàn toàn miễn phí khi thanh toán bằng hình thức Quét mã VietQR/Chuyển khoản liên ngân hàng.</p>
+                  <h5 className="font-semibold text-foreground">{t("dashboard.payments.faq_2_q")}</h5>
+                  <p className="text-[11px] mt-0.5 leading-relaxed">{t("dashboard.payments.faq_2_a")}</p>
                 </div>
               </div>
             </section>
@@ -347,7 +341,7 @@ function PaymentsPage() {
               </button>
 
               <div className="pt-2">
-                <span className="text-[10px] font-bold tracking-widest text-primary uppercase bg-primary-soft/30 px-3 py-1 rounded-full border border-primary/20">VietQR Thanh toán nhanh</span>
+                <span className="text-[10px] font-bold tracking-widest text-primary uppercase bg-primary-soft/30 px-3 py-1 rounded-full border border-primary/20">{t("dashboard.payments.vietqr_quick_payout")}</span>
               </div>
 
               {/* VietQR Code Generator */}
@@ -363,15 +357,15 @@ function PaymentsPage() {
               <div className="space-y-1">
                 <h3 className="font-bold text-base text-foreground">{Number(activePayInvoice.amount).toLocaleString('vi-VN')} VND</h3>
                 <p className="text-xs text-muted-foreground">
-                  {(activePayInvoice as any).isBulk ? "Tổng thanh toán giữ chỗ" : typeLabels[activePayInvoice.type]}
+                  {(activePayInvoice as any).isBulk ? t("dashboard.payments.total_reservation_payment") : t(`dashboard.payments.types.${activePayInvoice.type}`, { defaultValue: activePayInvoice.type })}
                 </p>
               </div>
 
               <div className="text-[11px] text-muted-foreground leading-relaxed bg-secondary/40 p-3 rounded-xl border border-border/40 text-left space-y-1">
-                <div className="flex justify-between"><span>Ngân hàng:</span><span className="font-semibold text-foreground">VIETCOMBANK</span></div>
-                <div className="flex justify-between"><span>Số tài khoản:</span><span className="font-semibold text-foreground">982 109 485067</span></div>
-                <div className="flex justify-between"><span>Chủ tài khoản:</span><span className="font-semibold text-foreground">TROVIA TRUST HOLDINGS</span></div>
-                <div className="flex justify-between"><span>Nội dung chuyển:</span><span className="font-semibold text-foreground">TRV PAY {activePayInvoice.id.slice(0,8).toUpperCase()}</span></div>
+                <div className="flex justify-between"><span>{t("dashboard.payments.bank_label")}</span><span className="font-semibold text-foreground">VIETCOMBANK</span></div>
+                <div className="flex justify-between"><span>{t("dashboard.payments.account_number_label")}</span><span className="font-semibold text-foreground">982 109 485067</span></div>
+                <div className="flex justify-between"><span>{t("dashboard.payments.account_holder_label")}</span><span className="font-semibold text-foreground">TROVIA TRUST HOLDINGS</span></div>
+                <div className="flex justify-between"><span>{t("dashboard.payments.transfer_content_label")}</span><span className="font-semibold text-foreground">TRV PAY {activePayInvoice.id.slice(0,8).toUpperCase()}</span></div>
               </div>
 
               <div className="pt-2 space-y-2">
@@ -383,13 +377,13 @@ function PaymentsPage() {
                       try {
                         // Mark all bulk IDs as paid in parallel
                         await Promise.all(ids.map((id: string) => PaymentService.markAsPaid(id)));
-                        toast.success("Kích hoạt hợp đồng thành công! Lịch lưu trú đã được thiết lập.");
+                        toast.success(t("dashboard.payments.toasts.contract_activated_success"));
                         setActivePayInvoice(null);
                         queryClient.invalidateQueries({ queryKey: ["payments"] });
                         queryClient.invalidateQueries({ queryKey: ["contracts"] });
                         queryClient.invalidateQueries({ queryKey: ["tenancies"] });
                       } catch (err: any) {
-                        toast.error(err.response?.data?.message || "Thanh toán thất bại.");
+                        toast.error(err.response?.data?.message || t("dashboard.payments.toasts.payment_failed"));
                       }
                     } else {
                       payMutation.mutate(activePayInvoice.id);
@@ -397,9 +391,9 @@ function PaymentsPage() {
                   }}
                   className="w-full rounded-xl h-11 text-xs font-semibold shadow-[var(--shadow-glow)]"
                 >
-                  {payMutation.isPending ? "Đang xác thực giao dịch..." : "Xác nhận đã chuyển khoản"}
+                  {payMutation.isPending ? t("dashboard.payments.validating_transaction") : t("dashboard.payments.confirm_transferred")}
                 </Button>
-                <p className="text-[10px] text-muted-foreground">Quét QR hoặc chuyển tiền, sau đó click nút để xác nhận thanh toán.</p>
+                <p className="text-[10px] text-muted-foreground">{t("dashboard.payments.qr_instruction")}</p>
               </div>
             </motion.div>
           </div>

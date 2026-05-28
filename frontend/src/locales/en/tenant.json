@@ -1,0 +1,17 @@
+{
+  "title": "Rental Applications",
+  "tenant_requests": "My Applications",
+  "landlord_requests": "Incoming Applications",
+  "proposed_date": "Proposed Move-in Date",
+  "tenant_info": "Applicant",
+  "room_info": "Selected Room",
+  "status": {
+    "pending": "Pending review",
+    "approved": "Approved",
+    "rejected": "Declined",
+    "cancelled": "Cancelled"
+  },
+  "approve_btn": "Approve",
+  "reject_btn": "Decline",
+  "cancel_btn": "Cancel Application"
+}

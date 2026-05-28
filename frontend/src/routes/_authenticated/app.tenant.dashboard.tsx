@@ -5,6 +5,7 @@ import {
   ArrowRight, ShieldCheck, Sparkles, Calendar
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
+import { useTranslation } from "react-i18next";
 import { PropertyCard } from "@/components/app/PropertyCard";
 import { useQuery } from "@tanstack/react-query";
 import { ListingService } from "@/services/listing.service";
@@ -19,8 +20,9 @@ export const Route = createFileRoute("/_authenticated/app/tenant/dashboard")({
 });
 
 function TenantDashboard() {
+  const { t } = useTranslation();
   const { user } = useAuth();
-  const name = user?.fullName?.split(" ")[0] || "bạn";
+  const name = user?.fullName?.split(" ")[0] || t("common.you");
 
   // 1. Fetch listings for "Recently viewed" & "Recommendations"
   const { data: listingsData, isLoading: listingsLoading } = useQuery({
@@ -56,28 +58,28 @@ function TenantDashboard() {
 
   const stats = [
     { 
-      label: "Đã lưu", 
+      label: t("dashboard.tenant.stats.saved"), 
       value: savedList.length.toString(), 
       icon: Bookmark, 
       color: "text-primary bg-primary-soft",
       to: "/app/saved"
     },
     { 
-      label: "Hóa đơn chờ", 
+      label: t("dashboard.tenant.stats.pending_bills"), 
       value: activeBills.length.toString(), 
       icon: CreditCard, 
       color: "text-amber-600 bg-amber-50",
       to: "/app/payments"
     },
     { 
-      label: "Tin nhắn", 
+      label: t("dashboard.tenant.stats.messages"), 
       value: conversations.length.toString(), 
       icon: MessageSquare, 
       color: "text-emerald-600 bg-emerald-50",
       to: "/app/messages"
     },
     { 
-      label: "Yêu cầu thuê", 
+      label: t("dashboard.tenant.stats.requests"), 
       value: requests.length.toString(), 
       icon: FileText, 
       color: "text-blue-600 bg-blue-50",
@@ -98,11 +100,13 @@ function TenantDashboard() {
         </div>
         <div className="relative z-10 max-w-2xl text-left">
           <div className="text-xs font-semibold text-primary uppercase tracking-wider mb-2 flex items-center gap-1.5">
-            <Sparkles className="h-3.5 w-3.5" /> Bảng điều khiển cá nhân
+            <Sparkles className="h-3.5 w-3.5" /> {t("dashboard.tenant.personal_hub")}
           </div>
-          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground">Chào mừng trở lại, {name}.</h1>
+          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground">
+            {t("dashboard.tenant.welcome_back", { name })}
+          </h1>
           <p className="text-muted-foreground mt-2 max-w-lg leading-relaxed text-sm">
-            Theo dõi tình trạng duyệt hồ sơ thuê trọ, trao đổi tin nhắn trực tiếp với chủ nhà và hoàn thành các hóa đơn đặt cọc lưu trú trực tuyến.
+            {t("dashboard.tenant.subtitle")}
           </p>
         </div>
       </motion.div>
@@ -142,19 +146,19 @@ function TenantDashboard() {
             <div className="flex items-center justify-between pb-3 border-b border-border">
               <div>
                 <h2 className="text-base font-semibold tracking-tight flex items-center gap-2 text-foreground">
-                  <CreditCard className="h-4 w-4 text-primary" /> Nhắc nhở thanh toán
+                  <CreditCard className="h-4 w-4 text-primary" /> {t("dashboard.tenant.payments.title")}
                 </h2>
-                <p className="text-xs text-muted-foreground">Theo dõi các khoản tiền cọc và tiền nhà cần thanh toán</p>
+                <p className="text-xs text-muted-foreground">{t("dashboard.tenant.payments.subtitle")}</p>
               </div>
               <Link to="/app/payments" className="text-xs font-semibold text-primary hover:underline flex items-center gap-0.5">
-                Xem tất cả <ArrowRight className="h-3 w-3" />
+                {t("dashboard.tenant.payments.view_all")} <ArrowRight className="h-3 w-3" />
               </Link>
             </div>
 
             <div className="space-y-3">
               {activeBills.length === 0 ? (
                 <div className="text-center py-6 text-xs text-muted-foreground bg-secondary/15 rounded-xl border border-dashed border-border/80">
-                  Không có hóa đơn nào đang chờ. Bạn đã hoàn thành tất cả khoản thanh toán!
+                  {t("dashboard.tenant.payments.empty")}
                 </div>
               ) : (
                 activeBills.slice(0, 2).map((p) => {
@@ -168,9 +172,9 @@ function TenantDashboard() {
                         <div>
                           <div className="font-semibold text-xs text-foreground">{p.contract?.property?.title}</div>
                           <div className="text-[10px] text-muted-foreground mt-1 flex items-center gap-1.5 font-medium">
-                            <span>{p.type === "DEPOSIT" ? "Tiền đặt cọc" : "Tiền thuê nhà"}</span>
+                            <span>{p.type === "DEPOSIT" ? t("dashboard.tenant.payments.deposit") : t("dashboard.tenant.payments.rent")}</span>
                             <span className="inline-block h-1 w-1 rounded-full bg-border" />
-                            <span className="flex items-center gap-1 text-primary"><Calendar className="h-3 w-3" /> Hạn chót: {formattedDue}</span>
+                            <span className="flex items-center gap-1 text-primary"><Calendar className="h-3 w-3" /> {t("dashboard.tenant.payments.due_date", { dueDate: formattedDue })}</span>
                           </div>
                         </div>
                       </div>
@@ -179,7 +183,7 @@ function TenantDashboard() {
                           <div className="font-bold text-xs text-foreground">{Number(p.amount).toLocaleString('vi-VN')} VND</div>
                         </div>
                         <Button size="sm" className="h-8 text-[11px] font-semibold shadow-[var(--shadow-glow)] rounded-xl" asChild>
-                          <Link to="/app/payments">Chi tiết</Link>
+                          <Link to="/app/payments">{t("dashboard.tenant.payments.details")}</Link>
                         </Button>
                       </div>
                     </div>
@@ -194,12 +198,12 @@ function TenantDashboard() {
             <div className="flex items-center justify-between pb-3 border-b border-border">
               <div>
                 <h2 className="text-base font-semibold tracking-tight flex items-center gap-2 text-foreground">
-                  <FileText className="h-4 w-4 text-primary" /> Yêu cầu thuê đang xử lý
+                  <FileText className="h-4 w-4 text-primary" /> {t("dashboard.tenant.requests.title")}
                 </h2>
-                <p className="text-xs text-muted-foreground">Các hồ sơ xin thuê đã gửi cho chủ nhà</p>
+                <p className="text-xs text-muted-foreground">{t("dashboard.tenant.requests.subtitle")}</p>
               </div>
               <Link to="/app/requests" className="text-xs font-semibold text-primary hover:underline flex items-center gap-0.5">
-                Quản lý hồ sơ <ArrowRight className="h-3 w-3" />
+                {t("dashboard.tenant.requests.manage")} <ArrowRight className="h-3 w-3" />
               </Link>
             </div>
 
@@ -212,10 +216,10 @@ function TenantDashboard() {
                 <div className="h-10 w-10 rounded-full bg-primary-soft text-primary grid place-items-center mx-auto mb-3">
                   <Clock className="h-4 w-4" />
                 </div>
-                <p className="text-xs font-semibold text-foreground">Không có hồ sơ thuê nào đang hoạt động</p>
-                <p className="text-[11px] text-muted-foreground mt-1">Gửi yêu cầu thuê trực tiếp ngay tại trang thông tin chi tiết bất động sản.</p>
+                <p className="text-xs font-semibold text-foreground">{t("dashboard.tenant.requests.empty_title")}</p>
+                <p className="text-[11px] text-muted-foreground mt-1">{t("dashboard.tenant.requests.empty_desc")}</p>
                 <Link to="/app/explore" className="inline-flex items-center gap-1.5 text-xs text-primary font-medium hover:underline mt-3">
-                  Khám phá phòng trọ ngay <ArrowRight className="h-3 w-3" />
+                  {t("dashboard.tenant.requests.explore_now")} <ArrowRight className="h-3 w-3" />
                 </Link>
               </div>
             ) : (
@@ -233,7 +237,7 @@ function TenantDashboard() {
                         <div className="min-w-0">
                           <div className="font-semibold text-xs text-foreground truncate">{r.property?.title || "Nhà thuê"}</div>
                           <p className="text-[10px] text-muted-foreground mt-0.5">
-                            Ngày dọn vào: <span className="font-medium text-foreground">{proposedDate}</span>
+                            {t("tenant.proposed_date")}: <span className="font-medium text-foreground">{proposedDate}</span>
                           </p>
                         </div>
                       </div>
@@ -243,10 +247,12 @@ function TenantDashboard() {
                           r.status === "ACCEPTED" ? "text-emerald-700 bg-emerald-50 border border-emerald-200" :
                           "text-rose-700 bg-rose-50 border border-rose-200"
                         }`}>
-                          {r.status === "PENDING" ? "Chờ duyệt" : r.status === "ACCEPTED" ? "Đã đồng ý" : "Từ chối"}
+                          {r.status === "PENDING" ? t("dashboard.tenant.requests.status.pending") :
+                           r.status === "ACCEPTED" ? t("dashboard.tenant.requests.status.accepted") :
+                           t("dashboard.tenant.requests.status.rejected")}
                         </span>
                         <Link to="/app/requests" className="text-[11px] font-bold text-primary hover:underline">
-                          Xem
+                          {t("dashboard.tenant.requests.view")}
                         </Link>
                       </div>
                     </div>
@@ -266,19 +272,19 @@ function TenantDashboard() {
             <div className="flex items-center justify-between pb-3 border-b border-border">
               <div>
                 <h2 className="text-base font-semibold tracking-tight flex items-center gap-2 text-foreground">
-                  <MessageSquare className="h-4 w-4 text-primary" /> Tin nhắn gần đây
+                  <MessageSquare className="h-4 w-4 text-primary" /> {t("dashboard.tenant.messages.title")}
                 </h2>
-                <p className="text-xs text-muted-foreground">Các thảo luận trao đổi phòng trọ</p>
+                <p className="text-xs text-muted-foreground">{t("dashboard.tenant.messages.subtitle")}</p>
               </div>
               <Link to="/app/messages" className="text-xs font-semibold text-primary hover:underline flex items-center gap-0.5">
-                Hộp thư <ArrowRight className="h-3 w-3" />
+                {t("dashboard.tenant.messages.mailbox")} <ArrowRight className="h-3 w-3" />
               </Link>
             </div>
 
             <div className="space-y-3">
               {conversations.length === 0 ? (
                 <div className="text-center py-8 text-xs text-muted-foreground bg-secondary/15 rounded-xl border border-dashed border-border/80">
-                  Không có tin nhắn nào.
+                  {t("dashboard.tenant.messages.empty")}
                 </div>
               ) : (
                 conversations.slice(0, 3).map((c) => {
@@ -294,7 +300,7 @@ function TenantDashboard() {
                           <div className="text-xs font-bold text-foreground truncate group-hover:text-primary transition-colors">{otherUser?.fullName}</div>
                         </div>
                         <p className="text-[11px] mt-1 truncate text-muted-foreground">
-                          {c.lastMessage ? c.lastMessage.content : "Bắt đầu hội thoại"}
+                          {c.lastMessage ? c.lastMessage.content : t("dashboard.tenant.messages.start_convo")}
                         </p>
                       </div>
                     </Link>
@@ -307,10 +313,10 @@ function TenantDashboard() {
           {/* Quick Help / Trust Card */}
           <section className="rounded-2xl bg-gradient-to-br from-secondary/50 to-secondary p-6 ring-1 ring-border relative overflow-hidden border border-border">
             <h3 className="text-xs font-bold tracking-tight flex items-center gap-1.5 text-foreground">
-              <ShieldCheck className="h-4 w-4 text-emerald-600" /> Cam kết bảo mật Trovia
+              <ShieldCheck className="h-4 w-4 text-emerald-600" /> {t("dashboard.tenant.trust.title")}
             </h3>
             <p className="text-[11px] text-muted-foreground mt-2 leading-relaxed">
-              Mọi bất động sản đều được kiểm duyệt chặt chẽ bởi đội ngũ Trovia. Tuyệt vời hơn, tất cả giao dịch cọc giữ chỗ đều được nắm giữ an toàn và cam kết minh bạch theo hợp đồng số e-Sign.
+              {t("dashboard.tenant.trust.desc")}
             </p>
           </section>
 
@@ -322,11 +328,11 @@ function TenantDashboard() {
       <section className="space-y-6">
         <div className="flex items-end justify-between border-b border-border pb-3">
           <div>
-            <h2 className="text-2xl font-bold tracking-tight text-foreground">Gợi ý phòng dành cho bạn</h2>
-            <p className="text-xs text-muted-foreground mt-1">Dựa trên lịch sử xem phòng và đánh giá cao nhất tại khu vực TP. Hồ Chí Minh</p>
+            <h2 className="text-2xl font-bold tracking-tight text-foreground">{t("dashboard.tenant.recommendations.title")}</h2>
+            <p className="text-xs text-muted-foreground mt-1">{t("dashboard.tenant.recommendations.subtitle")}</p>
           </div>
           <Link to="/app/explore" className="text-xs font-semibold text-primary inline-flex items-center gap-1 hover:underline">
-            Khám phá thêm <ArrowRight className="h-3.5 w-3.5" />
+            {t("dashboard.tenant.recommendations.explore_more")} <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>
 
@@ -337,7 +343,7 @@ function TenantDashboard() {
             ))}
           </div>
         ) : listings.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground text-xs">Không có gợi ý bất động sản nào tại thời điểm này.</div>
+          <div className="text-center py-12 text-muted-foreground text-xs">{t("dashboard.tenant.recommendations.empty")}</div>
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {listings.slice(0, 3).map((p, i) => (

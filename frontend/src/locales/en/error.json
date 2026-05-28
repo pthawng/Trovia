@@ -1,0 +1,10 @@
+{
+  "something_went_wrong": "An error occurred. Please try again.",
+  "something_went_wrong_server": "Connection error. Please try again later.",
+  "page_not_found": "Page not found or has been moved.",
+  "not_found_title": "404 - Page Not Found",
+  "not_found_desc": "Sorry, we couldn't find the page you are looking for.",
+  "unauthorized": "Session expired. Please sign in again.",
+  "forbidden": "You do not have permission to perform this action.",
+  "validation_failed": "Invalid data. Please verify your inputs."
+}

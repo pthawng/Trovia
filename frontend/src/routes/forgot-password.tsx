@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { AuthLayout } from "@/components/auth/AuthLayout";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,7 @@ import { Mail, CheckCircle } from "lucide-react";
 export const Route = createFileRoute("/forgot-password")({ component: ForgotPage });
 
 function ForgotPage() {
+  const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -32,27 +34,33 @@ function ForgotPage() {
 
   return (
     <AuthLayout
-      title="Quên mật khẩu"
-      subtitle="Nhập email của bạn và chúng tôi sẽ gửi hướng dẫn đặt lại mật khẩu."
-      footer={<>Nhớ mật khẩu? <Link to="/login" className="text-primary font-medium hover:underline">Đăng nhập</Link></>}
+      title={t("auth.forgot_password_title")}
+      subtitle={t("auth.forgot_password_subtitle")}
+      footer={
+        <>
+          {t("auth.remember_password")}{" "}
+          <Link to="/login" className="text-primary font-medium hover:underline">
+            {t("auth.login_btn")}
+          </Link>
+        </>
+      }
     >
       {sent ? (
         <div className="rounded-2xl border border-border bg-secondary/50 p-6 space-y-3">
           <div className="flex items-center gap-3">
             <CheckCircle className="h-5 w-5 text-green-500 shrink-0" />
-            <p className="text-sm font-medium">Đã gửi hướng dẫn</p>
+            <p className="text-sm font-medium">{t("auth.instructions_sent")}</p>
           </div>
           <p className="text-sm text-muted-foreground">
-            Nếu email <span className="font-medium text-foreground">{email}</span> tồn tại, hướng dẫn đặt lại mật khẩu đã được gửi.
-            Liên kết hết hạn sau <strong>15 phút</strong>.
+            {t("auth.forgot_email_sent_info", { email })}
           </p>
           <p className="text-xs text-muted-foreground">
-            Không thấy email? Kiểm tra thư mục spam hoặc{" "}
+            {t("auth.no_email_received")}
             <button
               onClick={() => { setSent(false); }}
               className="text-primary underline"
             >
-              thử lại
+              {t("auth.try_again_lowercase")}
             </button>
             .
           </p>
@@ -60,14 +68,14 @@ function ForgotPage() {
       ) : (
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="email">Địa chỉ email</Label>
+            <Label htmlFor="email">{t("auth.email")}</Label>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 id="email"
                 type="email"
                 className="h-11 pl-10"
-                placeholder="you@example.com"
+                placeholder={t("auth.email_placeholder")}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -76,7 +84,7 @@ function ForgotPage() {
             </div>
           </div>
           <Button type="submit" disabled={loading} className="w-full h-11">
-            {loading ? "Đang gửi…" : "Gửi hướng dẫn đặt lại mật khẩu"}
+            {loading ? t("auth.sending") : t("auth.send_recovery_email")}
           </Button>
         </form>
       )}

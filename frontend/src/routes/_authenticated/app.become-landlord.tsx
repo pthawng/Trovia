@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
 import { ShieldCheck, CreditCard, Sparkles, ArrowRight, Check } from "lucide-react";
@@ -14,12 +15,13 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/_authenticated/app/become-landlord")({ component: BecomeLandlord });
 
 const steps = [
-  { key: "identity", title: "Identity verification", subtitle: "Confirm who you are", icon: ShieldCheck },
-  { key: "payment", title: "Setup payments", subtitle: "How you'll get paid", icon: CreditCard },
-  { key: "done", title: "Activate landlord mode", subtitle: "You're ready", icon: Sparkles },
+  { key: "identity", icon: ShieldCheck },
+  { key: "payment", icon: CreditCard },
+  { key: "done", icon: Sparkles },
 ] as const;
 
 function BecomeLandlord() {
+  const { t } = useTranslation();
   const { user, refreshProfile, landlordProfile } = useAuth();
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
@@ -57,19 +59,19 @@ function BecomeLandlord() {
   const handleIdentitySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!licenseNumber) {
-      toast.error("Please enter your national ID / CCCD number.");
+      toast.error(t("dashboard.onboarding.errors.license_required"));
       return;
     }
     if (!businessAddress) {
-      toast.error("Please enter your business address.");
+      toast.error(t("dashboard.onboarding.errors.address_required"));
       return;
     }
     if (!businessEmail) {
-      toast.error("Please enter your business contact email.");
+      toast.error(t("dashboard.onboarding.errors.email_required"));
       return;
     }
     if (!businessPhone) {
-      toast.error("Please enter your business contact phone number.");
+      toast.error(t("dashboard.onboarding.errors.phone_required"));
       return;
     }
 
@@ -86,10 +88,10 @@ function BecomeLandlord() {
         identityCardBackUrl,
       });
       
-      toast.success("Identity verified successfully!");
+      toast.success(t("dashboard.onboarding.success.identity_verified"));
       setStep(1);
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to start onboarding.");
+      toast.error(err.response?.data?.message || t("dashboard.onboarding.errors.onboarding_failed"));
     } finally {
       setLoading(false);
     }
@@ -98,17 +100,17 @@ function BecomeLandlord() {
   const handlePaymentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!bankAccountNumber) {
-      toast.error("Please enter a bank account or card number.");
+      toast.error(t("dashboard.onboarding.errors.bank_account_required"));
       return;
     }
 
     setLoading(true);
     try {
       // Payment details are kept locally for demo simplicity as backend doesn't store cards
-      toast.success("Payment method configured!");
+      toast.success(t("dashboard.onboarding.success.payment_configured"));
       setStep(2);
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to update payment settings.");
+      toast.error(err.response?.data?.message || t("dashboard.onboarding.errors.payment_failed"));
     } finally {
       setLoading(false);
     }
@@ -119,10 +121,10 @@ function BecomeLandlord() {
     try {
       await LandlordService.activate();
       await refreshProfile();
-      toast.success("Landlord mode activated! Welcome to Trovia Host.");
+      toast.success(t("dashboard.onboarding.success.landlord_activated"));
       navigate({ to: "/app/landlord" as any });
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to activate landlord mode.");
+      toast.error(err.response?.data?.message || t("dashboard.onboarding.errors.activation_failed"));
     } finally {
       setLoading(false);
     }
@@ -132,18 +134,18 @@ function BecomeLandlord() {
     <div className="max-w-3xl mx-auto space-y-8">
       <div className="text-center">
         <div className="text-sm font-medium text-primary mb-2 flex items-center justify-center gap-1.5">
-          <Sparkles className="h-3.5 w-3.5" /> Landlord onboarding
+          <Sparkles className="h-3.5 w-3.5" /> {t("dashboard.onboarding.page.onboarding_banner")}
         </div>
-        <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight">Welcome to the host side of Trovia.</h1>
+        <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight">{t("dashboard.onboarding.page.welcome_title")}</h1>
         <p className="text-muted-foreground mt-2 max-w-xl mx-auto">
-          A few short steps and you'll be ready to list your properties and start hosting.
+          {t("dashboard.onboarding.page.welcome_subtitle")}
         </p>
       </div>
 
       <div>
         <div className="flex justify-between text-xs text-muted-foreground mb-2">
-          <span>Step {step + 1} of {steps.length}</span>
-          <span>{Math.round(progress)}% complete</span>
+          <span>{t("dashboard.onboarding.page.step_progress", { current: step + 1, total: steps.length })}</span>
+          <span>{t("dashboard.onboarding.page.percent_complete", { percent: Math.round(progress) })}</span>
         </div>
         <Progress value={progress} className="h-2" />
       </div>
@@ -160,7 +162,7 @@ function BecomeLandlord() {
             )}>
               {i < step ? <Check className="h-4 w-4" /> : <s.icon className="h-4 w-4" />}
             </div>
-            <div className="text-xs font-medium hidden sm:block">{s.title}</div>
+            <div className="text-xs font-medium hidden sm:block">{t(`dashboard.onboarding.steps.${s.key}.title`)}</div>
           </div>
         ))}
       </div>
@@ -177,51 +179,51 @@ function BecomeLandlord() {
             {step === 0 && (
               <form onSubmit={handleIdentitySubmit} className="space-y-6">
                 <div>
-                  <h2 className="text-2xl font-semibold tracking-tight">Verify your identity</h2>
-                  <p className="text-muted-foreground mt-1">A quick verification check keeps Trovia trustworthy for both tenants and landlords.</p>
+                  <h2 className="text-2xl font-semibold tracking-tight">{t("dashboard.onboarding.page.verify_identity_title")}</h2>
+                  <p className="text-muted-foreground mt-1">{t("dashboard.onboarding.page.verify_identity_subtitle")}</p>
                 </div>
                 
                 <div className="grid sm:grid-cols-2 gap-5">
                   <div className="space-y-1.5">
-                    <Label htmlFor="id-license">National ID / CCCD Number</Label>
+                    <Label htmlFor="id-license">{t("dashboard.onboarding.page.label_id_number")}</Label>
                     <Input 
                       id="id-license"
                       className="h-11" 
-                      placeholder="e.g. 079195001234" 
+                      placeholder={t("dashboard.onboarding.page.placeholder_id_number")} 
                       value={licenseNumber}
                       onChange={(e) => setLicenseNumber(e.target.value)}
                       required
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="id-company">Company / Business Name (Optional)</Label>
+                    <Label htmlFor="id-company">{t("dashboard.onboarding.page.label_company_name")}</Label>
                     <Input 
                       id="id-company"
                       className="h-11" 
-                      placeholder="e.g. Trovia Rentals Ltd" 
+                      placeholder={t("dashboard.onboarding.page.placeholder_company_name")} 
                       value={companyName}
                       onChange={(e) => setCompanyName(e.target.value)}
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="id-email">Business Contact Email</Label>
+                    <Label htmlFor="id-email">{t("dashboard.onboarding.page.label_business_email")}</Label>
                     <Input 
                       id="id-email"
                       type="email"
                       className="h-11" 
-                      placeholder="e.g. contact@mybusiness.com" 
+                      placeholder={t("dashboard.onboarding.page.placeholder_business_email")} 
                       value={businessEmail}
                       onChange={(e) => setBusinessEmail(e.target.value)}
                       required
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="id-phone">Business Contact Phone</Label>
+                    <Label htmlFor="id-phone">{t("dashboard.onboarding.page.label_business_phone")}</Label>
                     <Input 
                       id="id-phone"
                       className="h-11" 
-                      placeholder="e.g. 0901234567" 
+                      placeholder={t("dashboard.onboarding.page.placeholder_business_phone")} 
                       value={businessPhone}
                       onChange={(e) => setBusinessPhone(e.target.value)}
                       required
@@ -229,11 +231,11 @@ function BecomeLandlord() {
                   </div>
 
                   <div className="sm:col-span-2 space-y-1.5">
-                    <Label htmlFor="id-address">Business Physical Address</Label>
+                    <Label htmlFor="id-address">{t("dashboard.onboarding.page.label_business_address")}</Label>
                     <Input 
                       id="id-address"
                       className="h-11" 
-                      placeholder="e.g. 123 Điện Biên Phủ, Bình Thạnh, HCMC" 
+                      placeholder={t("dashboard.onboarding.page.placeholder_business_address")} 
                       value={businessAddress}
                       onChange={(e) => setBusinessAddress(e.target.value)}
                       required
@@ -241,22 +243,22 @@ function BecomeLandlord() {
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="id-front">ID Card Front Side Photo URL</Label>
+                    <Label htmlFor="id-front">{t("dashboard.onboarding.page.label_id_front")}</Label>
                     <Input 
                       id="id-front"
                       className="h-11" 
-                      placeholder="URL to front side photo" 
+                      placeholder={t("dashboard.onboarding.page.placeholder_id_front")} 
                       value={identityCardFrontUrl}
                       onChange={(e) => setIdentityCardFrontUrl(e.target.value)}
                       required
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="id-back">ID Card Back Side Photo URL</Label>
+                    <Label htmlFor="id-back">{t("dashboard.onboarding.page.label_id_back")}</Label>
                     <Input 
                       id="id-back"
                       className="h-11" 
-                      placeholder="URL to back side photo" 
+                      placeholder={t("dashboard.onboarding.page.placeholder_id_back")} 
                       value={identityCardBackUrl}
                       onChange={(e) => setIdentityCardBackUrl(e.target.value)}
                       required
@@ -265,7 +267,7 @@ function BecomeLandlord() {
                 </div>
 
                 <Button type="submit" disabled={loading} className="w-full h-12 gap-2 mt-4">
-                  {loading ? "Verifying..." : "Verify identity & Continue"} <ArrowRight className="h-4 w-4" />
+                  {loading ? t("dashboard.onboarding.page.verifying_loading") : t("dashboard.onboarding.page.verify_and_continue")} <ArrowRight className="h-4 w-4" />
                 </Button>
               </form>
             )}
@@ -273,28 +275,28 @@ function BecomeLandlord() {
             {step === 1 && (
               <form onSubmit={handlePaymentSubmit} className="space-y-6">
                 <div>
-                  <h2 className="text-2xl font-semibold tracking-tight">Setup payments</h2>
-                  <p className="text-muted-foreground mt-1">Configure where you'd like your rent payouts transferred.</p>
+                  <h2 className="text-2xl font-semibold tracking-tight">{t("dashboard.onboarding.page.setup_payment_title")}</h2>
+                  <p className="text-muted-foreground mt-1">{t("dashboard.onboarding.page.setup_payment_subtitle")}</p>
                 </div>
 
                 <div className="grid sm:grid-cols-2 gap-5">
                   <div className="space-y-1.5">
-                    <Label htmlFor="pay-name">Beneficiary Full Name</Label>
+                    <Label htmlFor="pay-name">{t("dashboard.onboarding.page.label_payee_name")}</Label>
                     <Input 
                       id="pay-name"
                       className="h-11" 
-                      placeholder="e.g. NGUYEN VAN A" 
+                      placeholder={t("dashboard.onboarding.page.placeholder_payee_name")} 
                       value={payeeName}
                       onChange={(e) => setPayeeName(e.target.value)}
                       required
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="pay-bank">Bank Account / Card Number</Label>
+                    <Label htmlFor="pay-bank">{t("dashboard.onboarding.page.label_bank_account")}</Label>
                     <Input 
                       id="pay-bank"
                       className="h-11" 
-                      placeholder="e.g. Techcombank 1903..." 
+                      placeholder={t("dashboard.onboarding.page.placeholder_bank_account")} 
                       value={bankAccountNumber}
                       onChange={(e) => setBankAccountNumber(e.target.value)}
                       required
@@ -303,7 +305,7 @@ function BecomeLandlord() {
                 </div>
 
                 <Button type="submit" disabled={loading} className="w-full h-12 gap-2 mt-4">
-                  {loading ? "Configuring..." : "Configure & Continue"} <ArrowRight className="h-4 w-4" />
+                  {loading ? t("dashboard.onboarding.page.configuring_loading") : t("dashboard.onboarding.page.configure_and_continue")} <ArrowRight className="h-4 w-4" />
                 </Button>
               </form>
             )}
@@ -314,13 +316,13 @@ function BecomeLandlord() {
                   <Sparkles className="h-7 w-7" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-semibold tracking-tight">You're all set</h2>
+                  <h2 className="text-2xl font-semibold tracking-tight">{t("dashboard.onboarding.page.ready_title")}</h2>
                   <p className="text-muted-foreground mt-2 max-w-md mx-auto">
-                    Activate landlord mode to access your host dashboard, publish properties, manage tenants, and track rental agreements.
+                    {t("dashboard.onboarding.page.ready_desc")}
                   </p>
                 </div>
                 <Button onClick={handleActivation} disabled={loading} className="h-12 px-8">
-                  {loading ? "Activating Host Mode…" : "Enter landlord dashboard"}
+                  {loading ? t("dashboard.onboarding.page.activating_loading") : t("dashboard.onboarding.page.enter_dashboard")}
                 </Button>
               </div>
             )}

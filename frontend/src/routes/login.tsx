@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/lib/auth-context";
 import { Eye, EyeOff } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export const Route = createFileRoute("/login")({
   validateSearch: z.object({
@@ -23,12 +24,13 @@ export const Route = createFileRoute("/login")({
   component: LoginPage,
 });
 
-const schema = z.object({
-  email: z.string().email("Vui lòng nhập email hợp lệ").max(255),
-  password: z.string().min(6, "Mật khẩu phải chứa ít nhất 6 ký tự").max(72),
+const getSchema = (t: any) => z.object({
+  email: z.string().email(t("validation.email_invalid")).max(255),
+  password: z.string().min(6, t("validation.password_min", { count: 6 })).max(72),
 });
 
 function LoginPage() {
+  const { t } = useTranslation();
   const { signIn, user, loading } = useAuth();
   const navigate = useNavigate();
   const { redirect } = Route.useSearch();
@@ -51,6 +53,7 @@ function LoginPage() {
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const schema = getSchema(t);
     const parsed = schema.safeParse({ email, password });
     if (!parsed.success) {
       toast.error(parsed.error.issues[0].message);
@@ -60,11 +63,10 @@ function LoginPage() {
     const { error, user: loggedInUser } = await signIn(email, password);
     setLoginLoading(false);
     if (error) {
-      toast.error(error.message || "Tài khoản hoặc mật khẩu không chính xác.");
+      toast.error(error.message || t("auth.invalid_credentials"));
     } else {
-      toast.success("Chào mừng bạn quay trở lại!");
+      toast.success(t("auth.login_success"));
       if (redirect) {
-        // Redirect directly back to where the user was heading (e.g. explore page with search params)
         window.location.href = redirect;
       } else if (loggedInUser?.roles?.includes("LANDLORD")) {
         navigate({ to: "/app/landlord", search: { view: "overview" } });
@@ -76,24 +78,24 @@ function LoginPage() {
 
   return (
     <AuthLayout
-      title="Chào mừng quay trở lại"
-      subtitle="Đăng nhập để tiếp tục tìm kiếm và quản lý phòng trọ tiện nghi."
+      title={t("auth.login_welcome")}
+      subtitle={t("auth.login_desc")}
       footer={
         <>
-          Chưa có tài khoản?{" "}
+          {t("auth.no_account")}{" "}
           <Link to="/register" search={{ redirect }} className="text-primary font-medium hover:underline">
-            Đăng ký ngay
+            {t("auth.register_now")}
           </Link>
         </>
       }
     >
       <form onSubmit={onSubmit} className="space-y-4">
-        <GoogleButton label="Tiếp tục với Google" />
+        <GoogleButton label={t("auth.google_login")} />
         <div className="flex items-center gap-3 text-xs text-muted-foreground">
-          <div className="h-px flex-1 bg-border" /> HOẶC <div className="h-px flex-1 bg-border" />
+          <div className="h-px flex-1 bg-border" /> {t("common.or")} <div className="h-px flex-1 bg-border" />
         </div>
         <div className="space-y-1.5 text-left">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">{t("auth.email")}</Label>
           <Input
              id="email"
              type="email"
@@ -102,14 +104,14 @@ function LoginPage() {
              value={email}
              onChange={(e) => setEmail(e.target.value)}
              required
-             placeholder="nhap.email@example.com"
+             placeholder={t("auth.email_placeholder")}
           />
         </div>
         <div className="space-y-1.5 text-left">
           <div className="flex items-center justify-between">
-            <Label htmlFor="password">Mật khẩu</Label>
+            <Label htmlFor="password">{t("auth.password")}</Label>
             <Link to="/forgot-password" className="text-xs text-primary hover:underline">
-              Quên mật khẩu?
+              {t("auth.forgot_password")}
             </Link>
           </div>
           <div className="relative">
@@ -133,7 +135,7 @@ function LoginPage() {
           </div>
         </div>
         <Button type="submit" disabled={loginLoading} className="w-full h-11">
-          {loginLoading ? "Đang đăng nhập..." : "Đăng nhập"}
+          {loginLoading ? t("auth.logging_in") : t("auth.login_btn")}
         </Button>
       </form>
     </AuthLayout>

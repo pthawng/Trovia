@@ -1,0 +1,11 @@
+{
+  "email_invalid": "Email không hợp lệ",
+  "email_required": "Vui lòng nhập địa chỉ email",
+  "password_len": "Mật khẩu phải từ 8 ký tự trở lên",
+  "password_min": "Mật khẩu phải có ít nhất {{count}} ký tự",
+  "password_required": "Vui lòng nhập mật khẩu",
+  "name_required": "Vui lòng nhập họ và tên của bạn",
+  "confirm_password_match": "Mật khẩu xác nhận không khớp",
+  "confirm_password_required": "Vui lòng xác nhận mật khẩu của bạn",
+  "field_required": "Trường này là bắt buộc"
+}

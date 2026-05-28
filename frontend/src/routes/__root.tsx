@@ -14,7 +14,10 @@ import { AlertTriangle, Home, Compass, ArrowRight } from "lucide-react";
 import { Navbar } from "@/components/landing/Navbar";
 import { Footer } from "@/components/landing/Footer";
 
+import { useTranslation } from "react-i18next";
+
 function NotFoundComponent() {
+  const { t } = useTranslation();
   return (
     <main className="min-h-screen bg-background text-foreground flex flex-col justify-between w-full">
       <div>
@@ -37,10 +40,10 @@ function NotFoundComponent() {
                 404
               </h1>
               <h2 className="text-2xl font-bold tracking-tight text-foreground">
-                Không tìm thấy trang
+                {t("error.not_found_title")}
               </h2>
               <p className="text-sm text-muted-foreground leading-relaxed max-w-md mx-auto">
-                Có thể đường dẫn đã thay đổi hoặc trang không còn tồn tại. Hãy quay về trang chủ hoặc tiếp tục hành trình khám phá chỗ ở.
+                {t("error.page_not_found")}
               </p>
             </div>
 
@@ -51,14 +54,14 @@ function NotFoundComponent() {
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-foreground text-background hover:bg-foreground/90 px-6 py-3.5 text-sm font-semibold transition"
               >
                 <Home className="h-4.5 w-4.5" />
-                Về trang chủ
+                {t("common.back_to_home")}
               </Link>
               <Link
                 to="/app/explore"
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-primary text-primary-foreground px-6 py-3.5 text-sm font-semibold shadow-md shadow-primary/20 hover:opacity-95 transition"
               >
                 <Compass className="h-4.5 w-4.5" />
-                Khám phá phòng trọ
+                {t("property.explore_title")}
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
@@ -72,15 +75,16 @@ function NotFoundComponent() {
 }
 
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
+  const { t } = useTranslation();
   console.error(error);
   const router = useRouter();
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
-        <h1 className="text-xl font-semibold">Something went wrong</h1>
+        <h1 className="text-xl font-semibold">{t("error.something_went_wrong")}</h1>
         <p className="mt-2 text-sm text-muted-foreground">{error.message}</p>
         <button onClick={() => { router.invalidate(); reset(); }} className="mt-6 inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
-          Try again
+          {t("common.try_again")}
         </button>
       </div>
     </div>

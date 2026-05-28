@@ -1,37 +1,40 @@
 import { motion } from "motion/react";
 import { BadgeCheck, Sparkles, Lock, LineChart } from "lucide-react";
-
-const features = [
-  {
-    icon: BadgeCheck,
-    title: "Verified listings",
-    desc: "Every property is reviewed and identity-checked so what you see is what you get.",
-  },
-  {
-    icon: Sparkles,
-    title: "Smart matching",
-    desc: "Tell us your budget, school, and lifestyle — we surface the rooms that actually fit.",
-  },
-  {
-    icon: Lock,
-    title: "Secure experience",
-    desc: "Encrypted messaging, protected deposits, and contracts you can sign in minutes.",
-  },
-  {
-    icon: LineChart,
-    title: "Easy management",
-    desc: "Landlords get a calm dashboard for occupancy, payments, and tenant requests.",
-  },
-];
+import { useTranslation } from "react-i18next";
 
 export function Features() {
+  const { t } = useTranslation();
+
+  const features = [
+    {
+      icon: BadgeCheck,
+      title: t("landing.features.verified_title"),
+      desc: t("landing.features.verified_desc"),
+    },
+    {
+      icon: Sparkles,
+      title: t("landing.features.matching_title"),
+      desc: t("landing.features.matching_desc"),
+    },
+    {
+      icon: Lock,
+      title: t("landing.features.secure_title"),
+      desc: t("landing.features.secure_desc"),
+    },
+    {
+      icon: LineChart,
+      title: t("landing.features.management_title"),
+      desc: t("landing.features.management_desc"),
+    },
+  ];
+
   return (
     <section className="py-24 sm:py-32 px-4 sm:px-6 bg-surface">
       <div className="mx-auto max-w-7xl">
         <div className="max-w-2xl mb-14">
-          <div className="text-sm font-medium text-primary mb-3">Why Trovia</div>
+          <div className="text-sm font-medium text-primary mb-3">{t("landing.why_us")}</div>
           <h2 className="text-4xl sm:text-5xl font-semibold tracking-tight">
-            Built for the way people really rent today.
+            {t("landing.features.subtitle")}
           </h2>
         </div>
 
@@ -57,3 +60,4 @@ export function Features() {
     </section>
   );
 }
+

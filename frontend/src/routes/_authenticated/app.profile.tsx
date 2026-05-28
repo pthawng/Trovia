@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -40,6 +41,7 @@ export const Route = createFileRoute("/_authenticated/app/profile")({ component:
 type ProfileTab = "personal" | "rental" | "landlord" | "security" | "notifications";
 
 function Profile() {
+  const { t } = useTranslation();
   const { refreshProfile } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<ProfileTab>("personal");
@@ -80,7 +82,7 @@ function Profile() {
           });
         })
         .catch(() => {
-          toast.error("Không thể tải cấu hình thông báo email.");
+          toast.error(t("profile.toasts.notifications_load_error"));
         })
         .finally(() => setPrefsLoading(false));
     }
@@ -90,9 +92,9 @@ function Profile() {
     setPrefsSaving(true);
     try {
       await UserService.updateEmailPreferences(emailPrefs);
-      toast.success("Cập nhật tùy chọn thông báo email thành công! 🔔");
+      toast.success(t("profile.toasts.notifications_save_success"));
     } catch {
-      toast.error("Không thể lưu tùy chọn thông báo email.");
+      toast.error(t("profile.toasts.notifications_save_error"));
     } finally {
       setPrefsSaving(false);
     }
@@ -175,12 +177,12 @@ function Profile() {
   const updateProfileMutation = useMutation({
     mutationFn: (dto: any) => UserService.updateProfile(dto),
     onSuccess: async () => {
-      toast.success("Cập nhật thông tin tài khoản thành công! ✨");
+      toast.success(t("profile.toasts.personal_update_success"));
       await refetch();
       await refreshProfile();
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.message || "Không thể cập nhật hồ sơ cá nhân.");
+      toast.error(err.response?.data?.message || t("profile.toasts.personal_update_error"));
     }
   });
 
@@ -209,7 +211,7 @@ function Profile() {
 
   const onReset = () => {
     setForm(initialForm);
-    toast.info("Đã khôi phục các thay đổi.");
+    toast.info(t("profile.toasts.personal_restore_info"));
   };
 
   const initials = (form.fullName || me?.email || "U").slice(0, 2).toUpperCase();
@@ -227,7 +229,7 @@ function Profile() {
   if (!me) {
     return (
       <div className="max-w-4xl mx-auto py-12 text-center text-muted-foreground">
-        Không tìm thấy thông tin tài khoản của bạn.
+        {t("profile.no_profile_found")}
       </div>
     );
   }
@@ -256,7 +258,7 @@ function Profile() {
               </div>
             )}
             {me.isEmailVerified && (
-              <span className="absolute -bottom-2 -right-2 bg-success text-success-foreground p-1.5 rounded-xl border-2 border-surface-elevated shadow-md" title="Đã xác thực tài khoản">
+              <span className="absolute -bottom-2 -right-2 bg-success text-success-foreground p-1.5 rounded-xl border-2 border-surface-elevated shadow-md" title={t("profile.email_verified")}>
                 <CheckCircle2 className="h-4.5 w-4.5" />
               </span>
             )}
@@ -264,14 +266,14 @@ function Profile() {
 
           <div className="flex-1 text-center sm:text-left space-y-2">
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 justify-center sm:justify-start">
-              <h1 className="text-2xl font-bold tracking-tight text-foreground">{form.fullName || "Người dùng Trovia"}</h1>
+              <h1 className="text-2xl font-bold tracking-tight text-foreground">{form.fullName || t("profile.user_placeholder")}</h1>
               <div className="flex items-center justify-center sm:justify-start gap-1.5">
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary/15 text-primary border border-primary/25">
-                  Tenant (Người thuê)
+                  {t("profile.tenant_badge", { defaultValue: "Tenant (Người thuê)" })}
                 </span>
                 {isLandlord && (
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25">
-                    Landlord (Chủ nhà)
+                    {t("profile.landlord_badge", { defaultValue: "Landlord (Chủ nhà)" })}
                   </span>
                 )}
               </div>
@@ -286,14 +288,14 @@ function Profile() {
             </p>
 
             <div className="flex items-center justify-center sm:justify-start gap-2 text-xs">
-              <span className="text-muted-foreground">Xác minh tài khoản:</span>
+              <span className="text-muted-foreground">{t("profile.verification_status_label")}</span>
               {me.isEmailVerified ? (
                 <span className="text-success font-medium flex items-center gap-1">
-                  <CheckCircle2 className="h-3.5 w-3.5" /> Đã xác thực Email
+                  <CheckCircle2 className="h-3.5 w-3.5" /> {t("profile.email_verified")}
                 </span>
               ) : (
                 <span className="text-amber-600 dark:text-amber-400 font-medium flex items-center gap-1">
-                  <AlertCircle className="h-3.5 w-3.5" /> Chưa xác thực Email
+                  <AlertCircle className="h-3.5 w-3.5" /> {t("profile.email_unverified")}
                 </span>
               )}
             </div>
@@ -311,7 +313,7 @@ function Profile() {
             }`}
           >
             <UserIcon className="h-4 w-4" />
-            Thông tin cá nhân
+            {t("profile.tabs.personal")}
           </button>
 
           <button
@@ -323,7 +325,7 @@ function Profile() {
             }`}
           >
             <Home className="h-4 w-4" />
-            Hồ sơ thuê nhà
+            {t("profile.tabs.rental")}
           </button>
 
           {isLandlord && (
@@ -336,7 +338,7 @@ function Profile() {
               }`}
             >
               <Building className="h-4 w-4" />
-              Xem hồ sơ chủ nhà
+              {t("profile.tabs.landlord")}
             </button>
           )}
 
@@ -349,7 +351,7 @@ function Profile() {
             }`}
           >
             <Shield className="h-4 w-4" />
-            Bảo mật & Đăng nhập
+            {t("profile.tabs.security")}
           </button>
 
           <button
@@ -361,7 +363,7 @@ function Profile() {
             }`}
           >
             <Bell className="h-4 w-4" />
-            Thông báo Email
+            {t("profile.tabs.notifications")}
           </button>
         </div>
       </div>
@@ -378,43 +380,43 @@ function Profile() {
               className="space-y-6"
             >
               <div>
-                <h2 className="text-xl font-bold text-foreground">Thông tin cá nhân cơ bản</h2>
-                <p className="text-sm text-muted-foreground mt-1">Thông tin này được sử dụng trên toàn bộ các hợp đồng và hồ sơ của hệ thống Trovia.</p>
+                <h2 className="text-xl font-bold text-foreground">{t("profile.personal.title")}</h2>
+                <p className="text-sm text-muted-foreground mt-1">{t("profile.personal.subtitle")}</p>
               </div>
 
               <div className="grid sm:grid-cols-2 gap-5">
                 <div className="space-y-1.5">
-                  <Label>Họ & Tên</Label>
+                  <Label>{t("profile.personal.fullname_label")}</Label>
                   <Input 
                     value={form.fullName} 
                     onChange={(e) => setForm({ ...form, fullName: e.target.value })} 
                     className="h-11 pl-4"
-                    placeholder="Nguyễn Văn A"
+                    placeholder={t("profile.personal.fullname_placeholder")}
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label>Số điện thoại liên hệ</Label>
+                  <Label>{t("profile.personal.phone_label")}</Label>
                   <Input 
                     value={form.phone} 
                     onChange={(e) => setForm({ ...form, phone: e.target.value })} 
                     className="h-11"
-                    placeholder="09xxxxxxxx"
+                    placeholder={t("profile.personal.phone_placeholder")}
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label>Thành phố sinh sống</Label>
+                  <Label>{t("profile.personal.city_label")}</Label>
                   <Input 
                     value={form.city} 
                     onChange={(e) => setForm({ ...form, city: e.target.value })} 
                     className="h-11"
-                    placeholder="Hà Nội, Đà Nẵng, TP. Hồ Chí Minh"
+                    placeholder={t("profile.personal.city_placeholder")}
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label>Ngày sinh</Label>
+                  <Label>{t("profile.personal.dob_label")}</Label>
                   <Input 
                     type="date"
                     value={form.dateOfBirth} 
@@ -424,17 +426,17 @@ function Profile() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label>Nghề nghiệp</Label>
+                  <Label>{t("profile.personal.occupation_label")}</Label>
                   <Input 
                     value={form.occupation} 
                     onChange={(e) => setForm({ ...form, occupation: e.target.value })} 
                     className="h-11"
-                    placeholder="Kỹ sư phần mềm, Sinh viên, Giáo viên..."
+                    placeholder={t("profile.personal.occupation_placeholder")}
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label>Đường dẫn ảnh đại diện (Avatar URL)</Label>
+                  <Label>{t("profile.personal.avatar_label")}</Label>
                   <Input 
                     value={form.avatarUrl} 
                     onChange={(e) => setForm({ ...form, avatarUrl: e.target.value })} 
@@ -456,8 +458,8 @@ function Profile() {
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-xl font-bold text-foreground">Hồ sơ người thuê nhà</h2>
-                  <p className="text-sm text-muted-foreground mt-1">Giúp các chủ nhà hiểu rõ hơn về nhu cầu và khả năng chi trả khi đánh giá yêu cầu thuê.</p>
+                  <h2 className="text-xl font-bold text-foreground">{t("profile.rental.title")}</h2>
+                  <p className="text-sm text-muted-foreground mt-1">{t("profile.rental.subtitle")}</p>
                 </div>
                 <span className="p-2 rounded-xl bg-primary/10 text-primary">
                   <Sparkles className="h-5 w-5" />
@@ -467,63 +469,63 @@ function Profile() {
               <div className="grid sm:grid-cols-2 gap-5">
                 <div className="space-y-1.5">
                   <Label className="flex items-center gap-1.5">
-                    <Briefcase className="h-4 w-4 text-muted-foreground" /> Loại hình người thuê
+                    <Briefcase className="h-4 w-4 text-muted-foreground" /> {t("profile.rental.renter_type_label")}
                   </Label>
                   <select 
                     value={form.renterType} 
                     onChange={(e) => setForm({ ...form, renterType: e.target.value })}
                     className="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    <option value="">Chọn loại hình</option>
-                    <option value="STUDENT">Sinh viên (Student)</option>
-                    <option value="OFFICE_WORKER">Nhân viên văn phòng (Office Worker)</option>
-                    <option value="FREELANCER">Làm việc tự do (Freelancer)</option>
-                    <option value="FAMILY">Hộ gia đình (Family)</option>
-                    <option value="OTHER">Khác (Other)</option>
+                    <option value="">{t("profile.rental.renter_type_select")}</option>
+                    <option value="STUDENT">{t("profile.rental.types.STUDENT")}</option>
+                    <option value="OFFICE_WORKER">{t("profile.rental.types.OFFICE_WORKER")}</option>
+                    <option value="FREELANCER">{t("profile.rental.types.FREELANCER")}</option>
+                    <option value="FAMILY">{t("profile.rental.types.FAMILY")}</option>
+                    <option value="OTHER">{t("profile.rental.types.OTHER")}</option>
                   </select>
                 </div>
 
                 <div className="space-y-1.5">
                   <Label className="flex items-center gap-1.5">
-                    <MapPin className="h-4 w-4 text-muted-foreground" /> Khu vực mong muốn thuê (Quận/Huyện)
+                    <MapPin className="h-4 w-4 text-muted-foreground" /> {t("profile.rental.district_label")}
                   </Label>
                   <Input 
                     value={form.preferredDistrict} 
                     onChange={(e) => setForm({ ...form, preferredDistrict: e.target.value })} 
                     className="h-11"
-                    placeholder="VD: Cầu Giấy, Bình Thạnh, Hải Châu"
+                    placeholder={t("profile.rental.district_placeholder")}
                   />
                 </div>
 
                 <div className="space-y-1.5">
                   <Label className="flex items-center gap-1.5">
-                    <DollarSign className="h-4 w-4 text-muted-foreground" /> Ngân sách tối thiểu (VND)
+                    <DollarSign className="h-4 w-4 text-muted-foreground" /> {t("profile.rental.budget_min_label")}
                   </Label>
                   <Input 
                     type="number"
                     value={form.budgetMin} 
                     onChange={(e) => setForm({ ...form, budgetMin: e.target.value })} 
                     className="h-11"
-                    placeholder="VD: 3000000"
+                    placeholder={t("profile.rental.budget_min_placeholder")}
                   />
                 </div>
 
                 <div className="space-y-1.5">
                   <Label className="flex items-center gap-1.5">
-                    <DollarSign className="h-4 w-4 text-muted-foreground" /> Ngân sách tối đa (VND)
+                    <DollarSign className="h-4 w-4 text-muted-foreground" /> {t("profile.rental.budget_max_label")}
                   </Label>
                   <Input 
                     type="number"
                     value={form.budgetMax} 
                     onChange={(e) => setForm({ ...form, budgetMax: e.target.value })} 
                     className="h-11"
-                    placeholder="VD: 6000000"
+                    placeholder={t("profile.rental.budget_max_placeholder")}
                   />
                 </div>
 
                 <div className="space-y-1.5">
                   <Label className="flex items-center gap-1.5">
-                    <Calendar className="h-4 w-4 text-muted-foreground" /> Ngày mong muốn dọn vào
+                    <Calendar className="h-4 w-4 text-muted-foreground" /> {t("profile.rental.move_in_label")}
                   </Label>
                   <Input 
                     type="date"
@@ -535,12 +537,12 @@ function Profile() {
               </div>
 
               <div className="space-y-1.5">
-                <Label>Giới thiệu bản thân & Lối sống</Label>
+                <Label>{t("profile.rental.bio_label")}</Label>
                 <textarea 
                   value={form.bio} 
                   onChange={(e) => setForm({ ...form, bio: e.target.value })} 
                   className="flex min-h-[100px] w-full rounded-xl border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  placeholder="Chia sẻ một chút về tính cách của bạn, giờ giấc sinh hoạt, vật nuôi hoặc thói quen sống..."
+                  placeholder={t("profile.rental.bio_placeholder")}
                 />
               </div>
             </motion.div>
@@ -555,8 +557,8 @@ function Profile() {
               className="space-y-6"
             >
               <div>
-                <h2 className="text-xl font-bold text-foreground">Hồ sơ chủ nhà (Xem trước)</h2>
-                <p className="text-sm text-muted-foreground mt-1">Thông tin cơ bản về hồ sơ nhà cung cấp của bạn trên hệ thống.</p>
+                <h2 className="text-xl font-bold text-foreground">{t("profile.landlord.title")}</h2>
+                <p className="text-sm text-muted-foreground mt-1">{t("profile.landlord.subtitle")}</p>
               </div>
 
               {fetchingLandlord ? (
@@ -568,24 +570,24 @@ function Profile() {
                 <div className="space-y-6">
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div className="p-4 bg-muted/20 border border-border rounded-2xl space-y-1">
-                      <span className="text-xs text-muted-foreground">Tên thương hiệu doanh nghiệp</span>
-                      <div className="font-semibold text-foreground">{landlordProfile.businessName || "Không có"}</div>
+                      <span className="text-xs text-muted-foreground">{t("profile.landlord.business_name_label")}</span>
+                      <div className="font-semibold text-foreground">{landlordProfile.businessName || t("profile.landlord.none")}</div>
                     </div>
                     <div className="p-4 bg-muted/20 border border-border rounded-2xl space-y-1">
-                      <span className="text-xs text-muted-foreground">Tên chủ nhà hiển thị công khai</span>
-                      <div className="font-semibold text-foreground">{landlordProfile.publicName || "Không có"}</div>
+                      <span className="text-xs text-muted-foreground">{t("profile.landlord.public_name_label")}</span>
+                      <div className="font-semibold text-foreground">{landlordProfile.publicName || t("profile.landlord.none")}</div>
                     </div>
                     <div className="p-4 bg-muted/20 border border-border rounded-2xl space-y-1">
-                      <span className="text-xs text-muted-foreground">Số lượng bất động sản đang quản lý</span>
-                      <div className="font-semibold text-foreground">{propertyCount} căn hộ / nhà trọ</div>
+                      <span className="text-xs text-muted-foreground">{t("profile.landlord.managed_count")}</span>
+                      <div className="font-semibold text-foreground">{t("profile.landlord.property_count", { count: propertyCount })}</div>
                     </div>
                     <div className="p-4 bg-muted/20 border border-border rounded-2xl space-y-1">
-                      <span className="text-xs text-muted-foreground">Trạng thái hồ sơ chủ nhà</span>
+                      <span className="text-xs text-muted-foreground">{t("profile.landlord.status_label")}</span>
                       <div className="font-semibold text-foreground flex items-center gap-1.5">
                         <span className={`h-2.5 w-2.5 rounded-full ${
                           landlordProfile.status === "ACTIVE" ? "bg-emerald-500" : "bg-amber-500 animate-pulse"
                         }`} />
-                        {landlordProfile.status === "ACTIVE" ? "Đang hoạt động / Đã kích hoạt" : `Đang xử lý (${landlordProfile.status})`}
+                        {landlordProfile.status === "ACTIVE" ? t("profile.landlord.status_active") : t("profile.landlord.status_pending", { status: landlordProfile.status })}
                       </div>
                     </div>
                   </div>
@@ -593,8 +595,8 @@ function Profile() {
                   <div className="p-4 bg-primary/5 rounded-2xl border border-primary/10 flex items-start gap-3">
                     <Info className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                     <div className="text-xs text-muted-foreground space-y-1">
-                      <div className="font-semibold text-foreground text-sm">Cài đặt vận hành & Doanh thu</div>
-                      <div>Để quản lý ngân hàng nhận tiền qua VietQR, thiết lập mẫu ghi chú tự động, nội quy tòa nhà hoặc các chính sách dọn phòng và tiện ích, hãy di chuyển tới menu quản trị.</div>
+                      <div className="font-semibold text-foreground text-sm">{t("profile.landlord.settings_section_title")}</div>
+                      <div>{t("profile.landlord.settings_section_desc")}</div>
                     </div>
                   </div>
 
@@ -604,13 +606,13 @@ function Profile() {
                     className="flex items-center gap-2 h-11 border-primary/20 hover:bg-primary/5 hover:text-primary transition-all rounded-xl"
                   >
                     <Settings className="h-4 w-4" />
-                    Mở cài đặt chủ nhà
+                    {t("profile.landlord.open_settings_btn")}
                     <ArrowUpRight className="h-4 w-4" />
                   </Button>
                 </div>
               ) : (
                 <div className="text-center py-6 text-muted-foreground">
-                  Không tìm thấy hồ sơ chủ nhà của bạn.
+                  {t("profile.landlord.no_profile")}
                 </div>
               )}
             </motion.div>
@@ -625,45 +627,45 @@ function Profile() {
               className="space-y-6"
             >
               <div>
-                <h2 className="text-xl font-bold text-foreground">Bảo mật & Đăng nhập</h2>
-                <p className="text-sm text-muted-foreground mt-1">Cấu hình các tùy chọn bảo mật để giữ cho tài khoản của bạn được an toàn.</p>
+                <h2 className="text-xl font-bold text-foreground">{t("profile.security.title")}</h2>
+                <p className="text-sm text-muted-foreground mt-1">{t("profile.security.subtitle")}</p>
               </div>
 
               {/* Password update simulated */}
               <div className="p-5 border border-border rounded-2xl space-y-4">
                 <div className="flex items-center gap-2 text-foreground font-semibold text-sm">
-                  <Key className="h-4 w-4 text-primary" /> Thay đổi mật khẩu tài khoản
+                  <Key className="h-4 w-4 text-primary" /> {t("profile.security.change_password_title")}
                 </div>
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <Label>Mật khẩu hiện tại</Label>
+                    <Label>{t("profile.security.current_password_label")}</Label>
                     <Input type="password" placeholder="••••••••" className="h-11" disabled />
                   </div>
                   <div className="space-y-1.5">
-                    <Label>Mật khẩu mới</Label>
+                    <Label>{t("profile.security.new_password_label")}</Label>
                     <Input type="password" placeholder="••••••••" className="h-11" disabled />
                   </div>
                 </div>
-                <Button variant="outline" disabled className="h-10 text-xs rounded-xl">Cập nhật mật khẩu</Button>
+                <Button variant="outline" disabled className="h-10 text-xs rounded-xl">{t("profile.security.update_password_btn")}</Button>
               </div>
 
               {/* Active Sessions */}
               <div className="p-5 border border-border rounded-2xl space-y-3">
-                <div className="text-foreground font-semibold text-sm">Các phiên thiết bị đang hoạt động</div>
+                <div className="text-foreground font-semibold text-sm">{t("profile.security.active_sessions_title")}</div>
                 <div className="space-y-3 text-xs text-muted-foreground">
                   <div className="flex justify-between items-center p-3 bg-muted/20 border border-border rounded-xl">
                     <div className="space-y-0.5">
-                      <div className="font-semibold text-foreground">Windows 11 - Google Chrome (Thiết bị này)</div>
-                      <div>Hà Nội, Việt Nam • Đang hoạt động</div>
+                      <div className="font-semibold text-foreground">{t("profile.security.this_device")}</div>
+                      <div>{t("profile.security.this_device_desc")}</div>
                     </div>
-                    <span className="px-2 py-0.5 bg-success/10 text-success rounded-lg font-medium">Hiện tại</span>
+                    <span className="px-2 py-0.5 bg-success/10 text-success rounded-lg font-medium">{t("profile.security.current_badge")}</span>
                   </div>
                   <div className="flex justify-between items-center p-3 bg-muted/20 border border-border rounded-xl opacity-75">
                     <div className="space-y-0.5">
-                      <div className="font-semibold text-foreground">iPhone 15 Pro - Trovia Mobile Client</div>
-                      <div>TP. Hồ Chí Minh, Việt Nam • 2 giờ trước</div>
+                      <div className="font-semibold text-foreground">{t("profile.security.other_device")}</div>
+                      <div>{t("profile.security.other_device_desc")}</div>
                     </div>
-                    <Button variant="ghost" disabled size="sm" className="h-8 text-xs hover:text-destructive">Đăng xuất</Button>
+                    <Button variant="ghost" disabled size="sm" className="h-8 text-xs hover:text-destructive">{t("profile.security.logout_btn")}</Button>
                   </div>
                 </div>
               </div>
@@ -671,13 +673,13 @@ function Profile() {
               {/* Danger Zone */}
               <div className="p-5 border border-destructive/20 bg-destructive/5 rounded-2xl space-y-3">
                 <div className="text-destructive font-bold text-sm flex items-center gap-2">
-                  <Trash2 className="h-4 w-4" /> Vùng nguy hiểm (Danger Zone)
+                  <Trash2 className="h-4 w-4" /> {t("profile.security.danger_zone_title")}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Khi xóa tài khoản, mọi thông tin hợp đồng điện tử, hóa đơn thanh toán và các cuộc thảo luận trực tuyến sẽ bị xóa vĩnh viễn và không thể khôi phục.
+                  {t("profile.security.danger_zone_desc")}
                 </p>
                 <Button variant="destructive" disabled className="h-10 text-xs rounded-xl">
-                  Yêu cầu xóa tài khoản vĩnh viễn
+                  {t("profile.security.delete_account_btn")}
                 </Button>
               </div>
             </motion.div>
@@ -692,8 +694,8 @@ function Profile() {
               className="space-y-6"
             >
               <div>
-                <h2 className="text-xl font-bold text-foreground">Cấu hình thông báo Email</h2>
-                <p className="text-sm text-muted-foreground mt-1">Trovia gửi email cho các hoạt động quan trọng liên quan đến tài khoản, hợp đồng và hóa đơn của bạn. Bạn có thể bật/tắt tùy ý.</p>
+                <h2 className="text-xl font-bold text-foreground">{t("profile.notifications.title")}</h2>
+                <p className="text-sm text-muted-foreground mt-1">{t("profile.notifications.subtitle")}</p>
               </div>
 
               {prefsLoading ? (
@@ -713,8 +715,8 @@ function Profile() {
                           <Shield className="h-5 w-5" />
                         </div>
                         <div className="space-y-1">
-                          <div className="font-semibold text-sm text-foreground">Tài khoản & Đăng nhập</div>
-                          <div className="text-xs text-muted-foreground">Email chào mừng, xác minh tài khoản, đổi mật khẩu và bảo mật quan trọng.</div>
+                          <div className="font-semibold text-sm text-foreground">{t("profile.notifications.types.auth_title")}</div>
+                          <div className="text-xs text-muted-foreground">{t("profile.notifications.types.auth_desc")}</div>
                         </div>
                       </div>
                       <input
@@ -732,8 +734,8 @@ function Profile() {
                           <Home className="h-5 w-5" />
                         </div>
                         <div className="space-y-1">
-                          <div className="font-semibold text-sm text-foreground">Yêu cầu thuê phòng</div>
-                          <div className="text-xs text-muted-foreground">Gửi yêu cầu thuê phòng mới, nhận thông báo chủ nhà phê duyệt hoặc từ chối.</div>
+                          <div className="font-semibold text-sm text-foreground">{t("profile.notifications.types.rental_title")}</div>
+                          <div className="text-xs text-muted-foreground">{t("profile.notifications.types.rental_desc")}</div>
                         </div>
                       </div>
                       <input
@@ -751,8 +753,8 @@ function Profile() {
                           <FileText className="h-5 w-5" />
                         </div>
                         <div className="space-y-1">
-                          <div className="font-semibold text-sm text-foreground">Hợp đồng điện tử</div>
-                          <div className="text-xs text-muted-foreground">Nhận hợp đồng thuê mới, thông báo đối tác đã chấp nhận và ký hợp đồng.</div>
+                          <div className="font-semibold text-sm text-foreground">{t("profile.notifications.types.contract_title")}</div>
+                          <div className="text-xs text-muted-foreground">{t("profile.notifications.types.contract_desc")}</div>
                         </div>
                       </div>
                       <input
@@ -770,8 +772,8 @@ function Profile() {
                           <CreditCard className="h-5 w-5" />
                         </div>
                         <div className="space-y-1">
-                          <div className="font-semibold text-sm text-foreground">Hóa đơn & Thanh toán</div>
-                          <div className="text-xs text-muted-foreground">Hóa đơn tiền nhà hàng tháng, thông báo xác nhận thanh toán thành công.</div>
+                          <div className="font-semibold text-sm text-foreground">{t("profile.notifications.types.payment_title")}</div>
+                          <div className="text-xs text-muted-foreground">{t("profile.notifications.types.payment_desc")}</div>
                         </div>
                       </div>
                       <input
@@ -789,8 +791,8 @@ function Profile() {
                           <Wrench className="h-5 w-5" />
                         </div>
                         <div className="space-y-1">
-                          <div className="font-semibold text-sm text-foreground">Bảo trì & Sự cố</div>
-                          <div className="text-xs text-muted-foreground">Cập nhật tiến độ sửa chữa, ý kiến ghi chú từ chủ nhà và người thuê phòng.</div>
+                          <div className="font-semibold text-sm text-foreground">{t("profile.notifications.types.maintenance_title")}</div>
+                          <div className="text-xs text-muted-foreground">{t("profile.notifications.types.maintenance_desc")}</div>
                         </div>
                       </div>
                       <input
@@ -808,8 +810,8 @@ function Profile() {
                           <Mail className="h-5 w-5" />
                         </div>
                         <div className="space-y-1">
-                          <div className="font-semibold text-sm text-foreground">Gợi ý & Ưu đãi khám phá</div>
-                          <div className="text-xs text-muted-foreground">Tin tức thị trường, danh sách phòng gợi ý và ưu đãi hợp tác từ Trovia.</div>
+                          <div className="font-semibold text-sm text-foreground">{t("profile.notifications.types.marketing_title")}</div>
+                          <div className="text-xs text-muted-foreground">{t("profile.notifications.types.marketing_desc")}</div>
                         </div>
                       </div>
                       <input
@@ -828,7 +830,7 @@ function Profile() {
                       disabled={prefsSaving}
                       className="h-11 px-8 rounded-xl font-medium shadow-lg shadow-primary/20"
                     >
-                      {prefsSaving ? "Đang lưu cấu hình…" : "Lưu tùy chọn thông báo"}
+                      {prefsSaving ? t("profile.notifications.saving_btn") : t("profile.notifications.save_btn")}
                     </Button>
                   </div>
                 </div>
@@ -844,12 +846,12 @@ function Profile() {
               {isDirty ? (
                 <span className="text-xs text-amber-600 dark:text-amber-400 font-medium flex items-center gap-1.5">
                   <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
-                  Bạn có thay đổi chưa lưu trong biểu mẫu này
+                  {t("profile.footer.dirty_message")}
                 </span>
               ) : (
                 <span className="text-xs text-muted-foreground flex items-center gap-1.5">
                   <CheckCircle2 className="h-3.5 w-3.5 text-success" />
-                  Hồ sơ đồng bộ hoàn toàn với cơ sở dữ liệu
+                  {t("profile.footer.synced_message")}
                 </span>
               )}
             </div>
@@ -862,7 +864,7 @@ function Profile() {
                   disabled={updateProfileMutation.isPending} 
                   className="h-11 flex-1 sm:flex-none rounded-xl"
                 >
-                  Hủy bỏ
+                  {t("profile.footer.cancel_btn")}
                 </Button>
               )}
               <Button 
@@ -870,7 +872,7 @@ function Profile() {
                 disabled={updateProfileMutation.isPending || !isDirty} 
                 className="h-11 flex-1 sm:flex-none px-6 font-medium shadow-lg shadow-primary/20 transition-all rounded-xl"
               >
-                {updateProfileMutation.isPending ? "Đang lưu thay đổi…" : "Lưu thay đổi"}
+                {updateProfileMutation.isPending ? t("profile.footer.saving_btn") : t("profile.footer.save_btn")}
               </Button>
             </div>
           </div>

@@ -16,26 +16,28 @@ import { SavedPropertyService } from "@/services/saved-property.service";
 import type { PropertyType } from "@/services/property.service";
 import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import heroImg from "@/assets/hero-apartment.jpg";
 
 export const Route = createFileRoute("/_authenticated/app/explore")({ component: Explore });
 
 // Comprehensive filter chips
 const filterChips = [
-  { label: "All", filter: {} },
-  { label: "Verified Only", filter: { verified: true } },
-  { label: "Studio", filter: { type: "STUDIO" as PropertyType } },
-  { label: "Apartment", filter: { type: "APARTMENT" as PropertyType } },
-  { label: "Under $400", filter: { maxPrice: 400 } },
-  { label: "Premium ($600+)", filter: { minPrice: 600 } },
+  { key: "all", labelKey: "property.explore.chips.all", filter: {} },
+  { key: "verified", labelKey: "property.explore.chips.verified", filter: { verified: true } },
+  { key: "studio", labelKey: "property.explore.chips.studio", filter: { type: "STUDIO" as PropertyType } },
+  { key: "apartment", labelKey: "property.explore.chips.apartment", filter: { type: "APARTMENT" as PropertyType } },
+  { key: "under_400", labelKey: "property.explore.chips.under_400", filter: { maxPrice: 400 } },
+  { key: "premium", labelKey: "property.explore.chips.premium", filter: { minPrice: 600 } },
 ];
 
 function Explore() {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   
   // Navigation & View states
   const [view, setView] = useState<"grid" | "list">("grid");
-  const [activeChip, setActiveChip] = useState("All");
+  const [activeChip, setActiveChip] = useState("all");
   
   // Search state variables
   const [searchLocation, setSearchLocation] = useState("");
@@ -109,7 +111,7 @@ function Explore() {
 
   const savedPropertyIds = useMemo(() => savedList.map((p) => p.id), [savedList]);
 
-  const activeChipFilter = filterChips.find((c) => c.label === activeChip)?.filter || {};
+  const activeChipFilter = filterChips.find((c) => c.key === activeChip)?.filter || {};
 
   // Combine applied smart search filters + active chip filter
   const apiFilters = useMemo((): SearchListingsFilters => {
@@ -171,13 +173,13 @@ function Explore() {
         queryClient.setQueryData(["savedProperties"], context.previousSaved);
         queryClient.setQueryData(["savedCount"], context.previousCount);
       }
-      toast.error("Failed to update save status.");
+      toast.error(t("property.explore.toasts.failed_save"));
     },
     onSuccess: (data, variables) => {
       if (variables.isCurrentlySaved) {
-        toast.success("Removed from saved list");
+        toast.success(t("property.explore.toasts.unsaved_success"));
       } else {
-        toast.success("Saved to your favorites!");
+        toast.success(t("property.explore.toasts.saved_success"));
       }
     },
     onSettled: () => {
@@ -200,14 +202,14 @@ function Explore() {
     mutationFn: (dto: { propertyId: string; roomId: string; note: string; proposedMoveInDate: string }) => 
       BookingRequestService.create(dto),
     onSuccess: () => {
-      toast.success("Rental application submitted successfully!");
+      toast.success(t("property.explore.toasts.apply_success"));
       setPreviewProperty(null);
       setMoveInDate("");
       setBookingNote("");
       queryClient.invalidateQueries({ queryKey: ["tenantBookings"] });
     },
     onError: (err: any) => {
-      toast.error(err?.response?.data?.message || "Failed to submit request.");
+      toast.error(err?.response?.data?.message || t("property.explore.toasts.apply_failed"));
     }
   });
 
@@ -229,7 +231,7 @@ function Explore() {
     }
     
     setAppliedFilters(newFilters);
-    toast.success("Applied search parameters!");
+    toast.success(t("property.explore.toasts.applied_filters"));
   };
 
   // Handle booking form submission
@@ -237,11 +239,11 @@ function Explore() {
     e.preventDefault();
     const targetRoomId = property.rooms?.[0]?.id;
     if (!targetRoomId) {
-      toast.error("This property does not have any available rooms to rent.");
+      toast.error(t("property.explore.toasts.no_rooms_available"));
       return;
     }
     if (!moveInDate) {
-      toast.error("Please select a proposed move-in date.");
+      toast.error(t("property.explore.toasts.move_in_date_required"));
       return;
     }
     bookingMutation.mutate({
@@ -259,11 +261,11 @@ function Explore() {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <div className="text-xs font-semibold text-primary uppercase tracking-wider mb-2 flex items-center gap-1.5">
-            <Sparkles className="h-3.5 w-3.5" /> Premium Rental Marketplace
+            <Sparkles className="h-3.5 w-3.5" /> {t("property.explore.premium_rental_marketplace")}
           </div>
-          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">Khám phá chỗ ở lý tưởng</h1>
+          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">{t("property.explore.explore_ideal_home")}</h1>
           <p className="text-muted-foreground mt-1 max-w-lg">
-            Find and apply directly to verified student rooms, service studios, and full apartments in Vietnam's urban centers.
+            {t("property.explore.explore_subtitle")}
           </p>
         </div>
 
@@ -273,20 +275,20 @@ function Explore() {
             <button 
               onClick={() => setView("grid")} 
               className={cn("p-2 rounded-lg cursor-pointer transition", view === "grid" ? "bg-background text-primary shadow-sm" : "text-muted-foreground hover:text-foreground")}
-              aria-label="Grid View"
+              aria-label={t("property.explore.view_grid")}
             >
               <Grid3x3 className="h-4.5 w-4.5" />
             </button>
             <button 
               onClick={() => setView("list")} 
               className={cn("p-2 rounded-lg cursor-pointer transition", view === "list" ? "bg-background text-primary shadow-sm" : "text-muted-foreground hover:text-foreground")}
-              aria-label="List View"
+              aria-label={t("property.explore.view_list")}
             >
               <List className="h-4.5 w-4.5" />
             </button>
           </div>
-          <Button variant="outline" className="gap-2 rounded-xl h-11 border-border/60"><Map className="h-4.5 w-4.5" /> Bản đồ</Button>
-          <Button variant="outline" className="gap-2 rounded-xl h-11 border-border/60"><SlidersHorizontal className="h-4.5 w-4.5" /> Bộ lọc</Button>
+          <Button variant="outline" className="gap-2 rounded-xl h-11 border-border/60"><Map className="h-4.5 w-4.5" /> {t("property.explore.map")}</Button>
+          <Button variant="outline" className="gap-2 rounded-xl h-11 border-border/60"><SlidersHorizontal className="h-4.5 w-4.5" /> {t("property.explore.filter")}</Button>
         </div>
       </div>
 
@@ -301,68 +303,68 @@ function Explore() {
         </div>
         <form onSubmit={handleSmartSearch} className="space-y-4">
           <div className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1">
-            Smart Discovery Engine
+            {t("property.explore.smart_discovery_engine")}
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Location Input */}
             <div className="space-y-1.5 relative">
-              <label className="text-xs font-semibold text-muted-foreground flex items-center gap-1"><MapPin className="h-3.5 w-3.5" /> Location / City</label>
+              <label className="text-xs font-semibold text-muted-foreground flex items-center gap-1"><MapPin className="h-3.5 w-3.5" /> {t("property.explore.location_city")}</label>
               <Input 
                 value={searchLocation}
                 onChange={(e) => setSearchLocation(e.target.value)}
-                placeholder="e.g. Ho Chi Minh, District 7" 
+                placeholder={t("property.explore.location_placeholder")} 
                 className="bg-secondary/40 border-transparent hover:bg-secondary/60 focus:bg-background focus:ring-primary/20 rounded-xl h-11 text-sm pl-4"
               />
             </div>
 
             {/* University / Landmark input */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-muted-foreground flex items-center gap-1"><Building className="h-3.5 w-3.5" /> Nearby University / Workplace</label>
+              <label className="text-xs font-semibold text-muted-foreground flex items-center gap-1"><Building className="h-3.5 w-3.5" /> {t("property.explore.nearby_university")}</label>
               <Input 
                 value={searchUniversity}
                 onChange={(e) => setSearchUniversity(e.target.value)}
-                placeholder="e.g. RMIT, Ton Duc Thang" 
+                placeholder={t("property.explore.nearby_placeholder")} 
                 className="bg-secondary/40 border-transparent hover:bg-secondary/60 focus:bg-background focus:ring-primary/20 rounded-xl h-11 text-sm pl-4"
               />
             </div>
 
             {/* Room Type Selector */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-muted-foreground flex items-center gap-1"><Grid3x3 className="h-3.5 w-3.5" /> Room Type</label>
+              <label className="text-xs font-semibold text-muted-foreground flex items-center gap-1"><Grid3x3 className="h-3.5 w-3.5" /> {t("property.explore.room_type")}</label>
               <select 
                 value={searchType}
                 onChange={(e) => setSearchType(e.target.value)}
                 className="w-full bg-secondary/40 border-transparent hover:bg-secondary/60 focus:bg-background focus:ring-primary/20 focus:ring-2 rounded-xl h-11 text-sm px-3 appearance-none font-medium cursor-pointer"
               >
-                <option value="ALL">All Types</option>
-                <option value="STUDIO">Studio Apartment</option>
-                <option value="BOARDING_HOUSE">Boarding Room / Trọ</option>
-                <option value="APARTMENT">Full Apartment</option>
-                <option value="DORMITORY">Dormitory</option>
+                <option value="ALL">{t("property.types.all")}</option>
+                <option value="STUDIO">{t("property.types.STUDIO")}</option>
+                <option value="BOARDING_HOUSE">{t("property.types.BOARDING_HOUSE")}</option>
+                <option value="APARTMENT">{t("property.types.APARTMENT")}</option>
+                <option value="DORMITORY">{t("property.types.DORMITORY")}</option>
               </select>
             </div>
 
             {/* Budget Selector */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-muted-foreground flex items-center gap-1"><DollarSign className="h-3.5 w-3.5" /> Monthly Budget</label>
+              <label className="text-xs font-semibold text-muted-foreground flex items-center gap-1"><DollarSign className="h-3.5 w-3.5" /> {t("property.explore.monthly_budget")}</label>
               <select 
                 value={searchBudget}
                 onChange={(e) => setSearchBudget(e.target.value)}
                 className="w-full bg-secondary/40 border-transparent hover:bg-secondary/60 focus:bg-background focus:ring-primary/20 focus:ring-2 rounded-xl h-11 text-sm px-3 appearance-none font-medium cursor-pointer"
               >
-                <option value="ALL">Any Budget</option>
-                <option value="0-200">Under $200 (≈5M VND)</option>
-                <option value="200-400">$200 - $400 (5M - 10M VND)</option>
-                <option value="400-600">$400 - $600 (10M - 15M VND)</option>
-                <option value="600-99999">$600+ (Premium)</option>
+                <option value="ALL">{t("property.any_budget")}</option>
+                <option value="0-200">{t("property.explore.budget_range_1")}</option>
+                <option value="200-400">{t("property.explore.budget_range_2")}</option>
+                <option value="400-600">{t("property.explore.budget_range_3")}</option>
+                <option value="600-99999">{t("property.explore.budget_range_4")}</option>
               </select>
             </div>
           </div>
 
           <div className="flex justify-end pt-2">
             <Button type="submit" className="px-8 rounded-xl h-11 font-medium shadow-[var(--shadow-glow)] gap-2">
-              <SearchIcon className="h-4 w-4" /> Search Places
+              <SearchIcon className="h-4 w-4" /> {t("property.explore.search_places")}
             </Button>
           </div>
         </form>
@@ -370,20 +372,20 @@ function Explore() {
 
       {/* 2. Filter chips */}
       <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-none">
-        <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider shrink-0 mr-1">Quick Filters:</span>
+        <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider shrink-0 mr-1">{t("property.explore.quick_filters")}</span>
         <div className="flex gap-2">
           {filterChips.map((c) => (
             <button 
-              key={c.label} 
-              onClick={() => setActiveChip(c.label)}
+              key={c.key} 
+              onClick={() => setActiveChip(c.key)}
               className={cn(
                 "px-4 py-2 rounded-full text-xs font-semibold transition border cursor-pointer shrink-0",
-                activeChip === c.label 
+                activeChip === c.key 
                   ? "bg-foreground text-background border-foreground shadow-sm" 
                   : "bg-background border-border/80 text-muted-foreground hover:bg-secondary hover:text-foreground"
               )}
             >
-              {c.label}
+              {t(c.labelKey)}
             </button>
           ))}
         </div>
@@ -402,11 +404,11 @@ function Explore() {
             <div className="h-12 w-12 rounded-full bg-secondary text-muted-foreground grid place-items-center mx-auto mb-4">
               <Building className="h-6 w-6" />
             </div>
-            <h3 className="text-lg font-semibold">Không tìm thấy phòng phù hợp</h3>
+            <h3 className="text-lg font-semibold">{t("property.explore.no_rooms_found")}</h3>
             <p className="text-muted-foreground text-sm mt-1 leading-relaxed">
-              No matching listings are currently registered with these search parameters. Adjust filters, budget limits, or locations to see more options.
+              {t("property.explore.no_rooms_found_desc")}
             </p>
-            <Button variant="outline" onClick={() => { setAppliedFilters({}); setActiveChip("All"); }} className="mt-4 rounded-xl">Reset all filters</Button>
+            <Button variant="outline" onClick={() => { setAppliedFilters({}); setActiveChip("all"); }} className="mt-4 rounded-xl">{t("property.explore.reset_all_filters")}</Button>
           </div>
         ) : (
           <div className="space-y-12">
@@ -416,9 +418,9 @@ function Explore() {
               <div className="flex items-end justify-between pb-3 border-b border-border/60">
                 <div>
                   <h2 className="text-2xl font-bold tracking-tight flex items-center gap-1.5">
-                    <Sparkles className="h-5 w-5 text-primary" /> Recommended For You
+                    <Sparkles className="h-5 w-5 text-primary" /> {t("property.explore.recommended_for_you")}
                   </h2>
-                  <p className="text-xs text-muted-foreground mt-0.5">High-rated rentals matching your student profile and save history</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{t("property.explore.recommended_desc")}</p>
                 </div>
               </div>
               
@@ -443,9 +445,9 @@ function Explore() {
                 <div className="flex items-end justify-between pb-3 border-b border-border/60">
                   <div>
                     <h2 className="text-2xl font-bold tracking-tight flex items-center gap-1.5">
-                      <ShieldCheck className="h-5 w-5 text-emerald-600" /> Verified Premium Properties
+                      <ShieldCheck className="h-5 w-5 text-emerald-600" /> {t("property.explore.verified_properties")}
                     </h2>
-                    <p className="text-xs text-muted-foreground mt-0.5">100% verified staff inspects and premium host service</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{t("property.explore.verified_properties_desc")}</p>
                   </div>
                 </div>
 
@@ -528,11 +530,11 @@ function Explore() {
                         <Star className="h-4 w-4 fill-amber-500 text-amber-500" /> 
                         {previewProperty.rating || 4.9}
                       </span>
-                      <span className="text-xs text-muted-foreground">(24 reviews)</span>
+                      <span className="text-xs text-muted-foreground">{t("property.explore.reviews_count", { count: 24 })}</span>
                     </div>
                     {previewProperty.landlord?.status === "ACTIVE" && (
                       <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full flex items-center gap-1">
-                        <ShieldCheck className="h-3.5 w-3.5" /> Verified Host
+                        <ShieldCheck className="h-3.5 w-3.5" /> {t("property.verified_landlord")}
                       </span>
                     )}
                   </div>
@@ -543,40 +545,46 @@ function Explore() {
                       <span className="text-2xl font-bold text-primary">
                         ${previewProperty.price ?? (previewProperty.rooms?.[0] ? Number(previewProperty.rooms[0].price) : 250)}
                       </span>
-                      <span className="text-xs text-muted-foreground">/ month</span>
+                      <span className="text-xs text-muted-foreground">/ {t("property.detail.table.price").toLowerCase()}</span>
                     </div>
                     
                     <div className="grid grid-cols-3 gap-3 text-xs text-muted-foreground bg-secondary/30 p-3 rounded-2xl border border-border/40">
                       <div className="text-center space-y-1">
                         <Bed className="h-4 w-4 mx-auto text-primary" />
-                        <span className="block font-semibold text-foreground">{previewProperty.beds ?? 1} Beds</span>
+                        <span className="block font-semibold text-foreground">{t("property.explore.beds_count", { count: previewProperty.beds ?? 1 })}</span>
                       </div>
                       <div className="text-center space-y-1 border-x border-border/50">
                         <Bath className="h-4 w-4 mx-auto text-primary" />
-                        <span className="block font-semibold text-foreground">{previewProperty.baths ?? 1} Bath</span>
+                        <span className="block font-semibold text-foreground">{t("property.explore.baths_count", { count: previewProperty.baths ?? 1 })}</span>
                       </div>
                       <div className="text-center space-y-1">
                         <Maximize2 className="h-4 w-4 mx-auto text-primary" />
-                        <span className="block font-semibold text-foreground">{previewProperty.area ?? 28} m²</span>
+                        <span className="block font-semibold text-foreground">{t("property.explore.area_sqm", { count: previewProperty.area ?? 28 })}</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Description */}
                   <div className="space-y-1.5">
-                    <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">About this place</h4>
+                    <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">{t("property.explore.about_this_place")}</h4>
                     <p className="text-xs leading-relaxed text-muted-foreground">
-                      {previewProperty.description || "Beautiful, sunny living space offering convenient access to local universities, supermarkets, and cafes. Completely furnished with premium beddings, desks, and air-conditioning systems."}
+                      {previewProperty.description || t("property.explore.about_this_place_fallback")}
                     </p>
                   </div>
 
                   {/* Amenities */}
                   <div className="space-y-2 mt-4">
-                    <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Amenities included</h4>
+                    <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">{t("property.explore.amenities_included")}</h4>
                     <div className="flex flex-wrap gap-1.5">
-                      {["Verified Host", "Furnished", "High-speed Wi-Fi", "Parking lot", "Air Conditioning"].map((a) => (
-                        <span key={a} className="text-[10px] font-medium bg-secondary/60 text-foreground border border-border/40 px-2 py-0.5 rounded-md">
-                          {a}
+                      {[
+                        { key: "verified_host", label: t("property.verified_landlord") },
+                        { key: "furnished", label: t("property.explore.amenities.furnished") },
+                        { key: "wifi", label: t("property.explore.amenities.wifi") },
+                        { key: "parking", label: t("property.explore.amenities.parking") },
+                        { key: "ac", label: t("property.explore.amenities.ac") },
+                      ].map((a) => (
+                        <span key={a.key} className="text-[10px] font-medium bg-secondary/60 text-foreground border border-border/40 px-2 py-0.5 rounded-md">
+                          {a.label}
                         </span>
                       ))}
                     </div>
@@ -590,11 +598,11 @@ function Explore() {
                   className="pt-4 border-t border-border/60 mt-4 space-y-3 bg-secondary/20 p-4 rounded-2xl border border-border/30"
                 >
                   <h4 className="text-xs font-bold text-foreground flex items-center gap-1">
-                    <Calendar className="h-3.5 w-3.5 text-primary" /> Apply to Rent this Unit
+                    <Calendar className="h-3.5 w-3.5 text-primary" /> {t("property.explore.apply_rent_unit")}
                   </h4>
                   
                   <div className="space-y-1.5">
-                    <label htmlFor="moveIn" className="text-[10px] font-semibold text-muted-foreground block">Proposed Move-in Date</label>
+                    <label htmlFor="moveIn" className="text-[10px] font-semibold text-muted-foreground block">{t("property.explore.proposed_move_in_date")}</label>
                     <Input 
                       id="moveIn"
                       type="date"
@@ -606,10 +614,10 @@ function Explore() {
                   </div>
 
                   <div className="space-y-1.5">
-                    <label htmlFor="bookingNote" className="text-[10px] font-semibold text-muted-foreground block">Introductory Message to Host</label>
+                    <label htmlFor="bookingNote" className="text-[10px] font-semibold text-muted-foreground block">{t("property.explore.intro_message_host")}</label>
                     <Input 
                       id="bookingNote"
-                      placeholder="Tell the host about your study/work..."
+                      placeholder={t("property.explore.intro_message_placeholder")}
                       value={bookingNote}
                       onChange={(e) => setBookingNote(e.target.value)}
                       className="bg-background border-border/80 rounded-xl h-10 text-xs px-3"
@@ -621,7 +629,7 @@ function Explore() {
                     disabled={bookingMutation.isPending}
                     className="w-full rounded-xl h-10 text-xs font-semibold shadow-[var(--shadow-glow)] mt-2"
                   >
-                    {bookingMutation.isPending ? "Sending application..." : "Send Rental Request"}
+                    {bookingMutation.isPending ? t("property.explore.sending_application") : t("property.explore.send_rental_request")}
                   </Button>
                 </form>
 
@@ -651,6 +659,7 @@ function ListingCard({
   onToggleSave: (e: React.MouseEvent) => void;
   onOpenPreview: () => void;
 }) {
+  const { t } = useTranslation();
   const image = p.images?.[0]?.url || p.image || heroImg;
   const location = `${p.district || "Quận 7"}, ${p.city || "TP. Hồ Chí Minh"}`;
   const price = p.price ?? (p.rooms?.[0] ? Number(p.rooms[0].price) : 250);
@@ -675,7 +684,7 @@ function ListingCard({
           <button 
             className="absolute top-3 right-3 h-8 w-8 rounded-full bg-background/90 backdrop-blur grid place-items-center hover:scale-110 transition shadow-sm z-20 cursor-pointer"
             onClick={onToggleSave}
-            aria-label="Save Property"
+            aria-label={t("property.explore.save_property")}
           >
             <Heart className={cn("h-4.5 w-4.5 transition-colors", isSaved ? "fill-red-500 text-red-500" : "text-foreground")} />
           </button>
@@ -694,23 +703,22 @@ function ListingCard({
           </div>
 
           <div className="flex items-center gap-4 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1"><Bed className="h-3.5 w-3.5 text-primary" />{beds} Beds</span>
-            <span className="flex items-center gap-1 border-l border-border pl-4"><Bath className="h-3.5 w-3.5 text-primary" />{baths} Bath</span>
-            <span className="flex items-center gap-1 border-l border-border pl-4"><Maximize2 className="h-3.5 w-3.5 text-primary" />{area}m²</span>
+            <span className="flex items-center gap-1"><Bed className="h-3.5 w-3.5 text-primary" />{t("property.explore.beds_count", { count: beds })}</span>
+            <span className="flex items-center gap-1 border-l border-border pl-4"><Bath className="h-3.5 w-3.5 text-primary" />{t("property.explore.baths_count", { count: baths })}</span>
+            <span className="flex items-center gap-1 border-l border-border pl-4"><Maximize2 className="h-3.5 w-3.5 text-primary" />{t("property.explore.area_sqm", { count: area })}</span>
           </div>
 
           <div className="flex items-center justify-between pt-3 border-t border-border/60">
             <div className="flex items-baseline gap-0.5">
-              <span className="text-lg font-bold text-foreground">${price}</span>
-              <span className="text-[10px] text-muted-foreground">/mo</span>
+              <span className="text-lg font-bold text-foreground">{t("property.explore.price_short", { price })}</span>
             </div>
             
             <div className="flex items-center gap-3">
               {isVerified && (
-                <span className="text-[10px] font-semibold text-emerald-600 flex items-center gap-1 bg-emerald-50 px-2.5 py-0.5 rounded-full"><ShieldCheck className="h-3.5 w-3.5" />Verified</span>
+                <span className="text-[10px] font-semibold text-emerald-600 flex items-center gap-1 bg-emerald-50 px-2.5 py-0.5 rounded-full"><ShieldCheck className="h-3.5 w-3.5" />{t("property.explore.verified_badge")}</span>
               )}
               <span className="text-xs font-semibold text-primary group-hover:underline flex items-center gap-0.5">
-                Quick Apply <ArrowUpRight className="h-3.5 w-3.5" />
+                {t("property.explore.quick_apply")} <ArrowUpRight className="h-3.5 w-3.5" />
               </span>
             </div>
           </div>
@@ -740,7 +748,7 @@ function ListingCard({
         <button 
           className="absolute top-3 right-3 h-8 w-8 rounded-full bg-background/90 backdrop-blur grid place-items-center hover:scale-110 transition shadow-sm z-20 cursor-pointer"
           onClick={onToggleSave}
-          aria-label="Save Property"
+          aria-label={t("property.explore.save_property")}
         >
           <Heart className={cn("h-4.5 w-4.5 transition-colors", isSaved ? "fill-red-500 text-red-500" : "text-foreground")} />
         </button>
@@ -761,21 +769,20 @@ function ListingCard({
         </div>
 
         <div className="flex items-center gap-3 text-xs text-muted-foreground pt-1">
-          <span className="flex items-center gap-1"><Bed className="h-3.5 w-3.5 text-primary" />{beds} Beds</span>
-          <span className="flex items-center gap-1 border-l border-border pl-3"><Bath className="h-3.5 w-3.5 text-primary" />{baths} Bath</span>
-          <span className="flex items-center gap-1 border-l border-border pl-3"><Maximize2 className="h-3.5 w-3.5 text-primary" />{area}m²</span>
+          <span className="flex items-center gap-1"><Bed className="h-3.5 w-3.5 text-primary" />{t("property.explore.beds_count", { count: beds })}</span>
+          <span className="flex items-center gap-1 border-l border-border pl-3"><Bath className="h-3.5 w-3.5 text-primary" />{t("property.explore.baths_count", { count: baths })}</span>
+          <span className="flex items-center gap-1 border-l border-border pl-3"><Maximize2 className="h-3.5 w-3.5 text-primary" />{t("property.explore.area_sqm", { count: area })}</span>
         </div>
 
         <div className="mt-4 flex items-center justify-between pt-3 border-t border-border/60">
           <div className="flex items-baseline gap-0.5">
-            <span className="text-base font-bold text-foreground">${price}</span>
-            <span className="text-[10px] text-muted-foreground">/mo</span>
+            <span className="text-base font-bold text-foreground">{t("property.explore.price_short", { price })}</span>
           </div>
           {isVerified ? (
-            <span className="text-[10px] font-semibold text-emerald-600 flex items-center gap-1 bg-emerald-50 px-2.5 py-0.5 rounded-full"><ShieldCheck className="h-3.5 w-3.5" />Verified</span>
+            <span className="text-[10px] font-semibold text-emerald-600 flex items-center gap-1 bg-emerald-50 px-2.5 py-0.5 rounded-full"><ShieldCheck className="h-3.5 w-3.5" />{t("property.explore.verified_badge")}</span>
           ) : (
             <span className="text-xs font-semibold text-primary group-hover:underline flex items-center gap-0.5">
-              Apply Now <ArrowUpRight className="h-3.5 w-3.5" />
+              {t("property.explore.apply_now")} <ArrowUpRight className="h-3.5 w-3.5" />
             </span>
           )}
         </div>

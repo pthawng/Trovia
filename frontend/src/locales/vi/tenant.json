@@ -1,0 +1,17 @@
+{
+  "title": "Quản lý yêu cầu đặt phòng",
+  "tenant_requests": "Yêu cầu thuê của tôi",
+  "landlord_requests": "Yêu cầu gửi tới bạn",
+  "proposed_date": "Ngày dọn vào dự kiến",
+  "tenant_info": "Khách thuê",
+  "room_info": "Phòng đăng ký",
+  "status": {
+    "pending": "Đang chờ duyệt",
+    "approved": "Đã phê duyệt",
+    "rejected": "Đã từ chối",
+    "cancelled": "Đã hủy bỏ"
+  },
+  "approve_btn": "Phê duyệt",
+  "reject_btn": "Từ chối",
+  "cancel_btn": "Hủy yêu cầu"
+}

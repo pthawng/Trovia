@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { AuthLayout } from "@/components/auth/AuthLayout";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,7 @@ export const Route = createFileRoute("/reset-password")({
 });
 
 function ResetPage() {
+  const { t } = useTranslation();
   const { token, email } = Route.useSearch();
   const navigate = useNavigate();
   const [password, setPassword] = useState("");
@@ -29,17 +31,17 @@ function ResetPage() {
     e.preventDefault();
 
     if (password.length < 8) {
-      toast.error("Mật khẩu phải có ít nhất 8 ký tự");
+      toast.error(t("validation.password_len"));
       return;
     }
 
     if (password !== confirmPassword) {
-      toast.error("Mật khẩu xác nhận không khớp");
+      toast.error(t("validation.confirm_password_match"));
       return;
     }
 
     if (!token || !email) {
-      toast.error("Liên kết đặt lại mật khẩu không hợp lệ. Vui lòng thử lại.");
+      toast.error(t("auth.invalid_reset_link"));
       return;
     }
 
@@ -47,12 +49,12 @@ function ResetPage() {
     try {
       await AuthService.resetPassword(token, password, email);
       setSuccess(true);
-      toast.success("Mật khẩu đã được đặt lại thành công!");
+      toast.success(t("auth.reset_password_success_toast"));
       setTimeout(() => navigate({ to: "/login" }), 2500);
     } catch (err: any) {
       const msg =
         err?.response?.data?.message ||
-        "Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết hạn.";
+        t("auth.reset_password_link_expired");
       toast.error(msg);
     } finally {
       setLoading(false);
@@ -61,14 +63,14 @@ function ResetPage() {
 
   if (success) {
     return (
-      <AuthLayout title="Thành công!" subtitle="Mật khẩu của bạn đã được cập nhật.">
+      <AuthLayout title={t("common.success")} subtitle={t("auth.password_updated_desc")}>
         <div className="rounded-2xl border border-border bg-secondary/50 p-6 space-y-3 text-center">
           <CheckCircle className="h-10 w-10 text-green-500 mx-auto" />
           <p className="text-sm text-muted-foreground">
-            Đang chuyển hướng đến trang đăng nhập…
+            {t("auth.redirecting_to_login")}
           </p>
           <Link to="/login" className="text-primary text-sm underline">
-            Nhấn đây nếu không tự chuyển
+            {t("auth.click_here_if_no_redirect")}
           </Link>
         </div>
       </AuthLayout>
@@ -77,18 +79,18 @@ function ResetPage() {
 
   return (
     <AuthLayout
-      title="Đặt lại mật khẩu"
-      subtitle="Chọn mật khẩu mới an toàn cho tài khoản Trovia của bạn."
+      title={t("auth.reset_password_title")}
+      subtitle={t("auth.reset_password_subtitle")}
     >
       <form onSubmit={onSubmit} className="space-y-4">
         <div className="space-y-1.5">
-          <Label htmlFor="pw">Mật khẩu mới</Label>
+          <Label htmlFor="pw">{t("auth.new_password")}</Label>
           <div className="relative">
             <Input
               id="pw"
               type={showPassword ? "text" : "password"}
               className="h-11 pr-10"
-              placeholder="Tối thiểu 8 ký tự"
+              placeholder={t("auth.password_hint")}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -104,12 +106,12 @@ function ResetPage() {
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="confirm-pw">Xác nhận mật khẩu</Label>
+          <Label htmlFor="confirm-pw">{t("auth.confirm_password")}</Label>
           <Input
             id="confirm-pw"
             type="password"
             className="h-11"
-            placeholder="Nhập lại mật khẩu"
+            placeholder={t("auth.confirm_password_placeholder")}
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             required
@@ -137,16 +139,16 @@ function ResetPage() {
             </div>
             <p className="text-xs text-muted-foreground">
               {password.length < 8
-                ? "Quá ngắn"
+                ? t("auth.pw_strength_short")
                 : password.length < 12
-                ? "Đủ dùng"
-                : "Mật khẩu mạnh 💪"}
+                ? t("auth.pw_strength_fair")
+                : t("auth.pw_strength_strong")}
             </p>
           </div>
         )}
 
         <Button type="submit" disabled={loading} className="w-full h-11">
-          {loading ? "Đang lưu…" : "Cập nhật mật khẩu"}
+          {loading ? t("auth.saving") : t("auth.update_password_btn")}
         </Button>
       </form>
     </AuthLayout>

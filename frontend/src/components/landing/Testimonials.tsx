@@ -1,31 +1,34 @@
 import { Star } from "lucide-react";
-
-const items = [
-  {
-    quote: "Tôi đã tìm được căn hộ studio gần RMIT chỉ trong 2 ngày. Nhãn phòng trọ xác minh của Trovia giúp tôi hoàn toàn yên tâm khi xuống tiền.",
-    name: "Linh Nguyễn",
-    role: "Sinh viên, RMIT",
-  },
-  {
-    quote: "Là một nhân viên văn phòng bận rộn, tôi cần tìm phòng nhanh chóng và an toàn. Hệ thống hợp đồng điện tử của Trovia giúp tôi tiết kiệm cả tuần làm việc.",
-    name: "Minh Trần",
-    role: "Nhà thiết kế sản phẩm",
-  },
-  {
-    quote: "Trước đây tôi phải quản lý 6 phòng trọ bằng Excel rất phức tạp. Từ khi dùng bảng điều khiển của Trovia, tôi chỉ mất 10 phút mỗi tuần.",
-    name: "Chú Hoa",
-    role: "Chủ nhà, Quận 10",
-  },
-];
+import { useTranslation } from "react-i18next";
 
 export function Testimonials() {
+  const { t } = useTranslation();
+
+  const items = [
+    {
+      quote: t("landing.testimonials.quote_linh"),
+      name: "Linh Nguyễn",
+      role: t("landing.testimonials.role_linh"),
+    },
+    {
+      quote: t("landing.testimonials.quote_minh"),
+      name: "Minh Trần",
+      role: t("landing.testimonials.role_minh"),
+    },
+    {
+      quote: t("landing.testimonials.quote_hoa"),
+      name: "Chú Hoa",
+      role: t("landing.testimonials.role_hoa"),
+    },
+  ];
+
   return (
     <section className="py-24 sm:py-32 px-4 sm:px-6">
       <div className="mx-auto max-w-7xl">
         <div className="max-w-2xl mb-14 text-left">
-          <div className="text-sm font-semibold text-primary mb-3 uppercase tracking-wider">Tin dùng bởi cả hai bên</div>
+          <div className="text-sm font-semibold text-primary mb-3 uppercase tracking-wider">{t("landing.testimonials.tag")}</div>
           <h2 className="text-4xl sm:text-5xl font-semibold tracking-tight text-foreground">
-            Câu chuyện thực tế từ<br />người thuê và chủ nhà.
+            {t("landing.testimonials.title")}
           </h2>
         </div>
         <div className="grid md:grid-cols-3 gap-5">
@@ -58,3 +61,4 @@ export function Testimonials() {
     </section>
   );
 }
+

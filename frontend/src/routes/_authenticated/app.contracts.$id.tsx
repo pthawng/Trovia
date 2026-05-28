@@ -1,4 +1,5 @@
 import { createFileRoute, useParams, Link, useNavigate } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import { motion } from "motion/react";
 import { 
   FileText, ShieldCheck, Calendar, ArrowLeft, CheckCircle2, AlertCircle, 
@@ -15,6 +16,7 @@ export const Route = createFileRoute("/_authenticated/app/contracts/$id")({
 });
 
 function ContractDetail() {
+  const { t } = useTranslation();
   const { id } = useParams({ from: "/_authenticated/app/contracts/$id" });
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -30,7 +32,7 @@ function ContractDetail() {
   const acceptMutation = useMutation({
     mutationFn: () => ContractService.acceptContract(id),
     onSuccess: () => {
-      toast.success("Ký hợp đồng điện tử thành công!");
+      toast.success(t("contract.detail.toasts.sign_accept_success"));
       queryClient.invalidateQueries({ queryKey: ["contractDetail", id] });
       queryClient.invalidateQueries({ queryKey: ["contracts"] });
       queryClient.invalidateQueries({ queryKey: ["payments"] });
@@ -41,7 +43,7 @@ function ContractDetail() {
       }, 1000);
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.message || "Ký hợp đồng thất bại.");
+      toast.error(err.response?.data?.message || t("contract.detail.toasts.sign_accept_error"));
     },
   });
 
@@ -49,7 +51,7 @@ function ContractDetail() {
   const rejectMutation = useMutation({
     mutationFn: () => ContractService.rejectContract(id),
     onSuccess: () => {
-      toast.success("Đã từ chối ký hợp đồng.");
+      toast.success(t("contract.detail.toasts.sign_reject_success"));
       queryClient.invalidateQueries({ queryKey: ["contractDetail", id] });
       queryClient.invalidateQueries({ queryKey: ["contracts"] });
       
@@ -59,7 +61,7 @@ function ContractDetail() {
       }, 1500);
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.message || "Thao tác thất bại.");
+      toast.error(err.response?.data?.message || t("contract.detail.toasts.sign_reject_error"));
     },
   });
 
@@ -83,10 +85,10 @@ function ContractDetail() {
     return (
       <div className="max-w-6xl text-center py-20">
         <XCircle className="h-14 w-14 text-rose-500 mx-auto" />
-        <h2 className="text-2xl font-semibold mt-4">Không tìm thấy hợp đồng</h2>
-        <p className="text-muted-foreground mt-2">Hợp đồng không tồn tại hoặc bạn không có quyền truy cập.</p>
+        <h2 className="text-2xl font-semibold mt-4">{t("contract.detail.not_found")}</h2>
+        <p className="text-muted-foreground mt-2">{t("contract.detail.not_found_desc")}</p>
         <Button className="mt-6 rounded-xl" asChild>
-          <Link to="/app/contracts">Quay lại danh sách</Link>
+          <Link to="/app/contracts">{t("contract.detail.back_to_list")}</Link>
         </Button>
       </div>
     );
@@ -108,13 +110,13 @@ function ContractDetail() {
           to="/app/contracts" 
           className="inline-flex items-center gap-2 text-xs font-semibold text-muted-foreground hover:text-foreground transition"
         >
-          <ArrowLeft className="h-4 w-4" /> Quay lại danh sách hợp đồng
+          <ArrowLeft className="h-4 w-4" /> {t("contract.detail.back_to_contracts")}
         </Link>
         
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <span>Hợp đồng điện tử</span>
+          <span>{t("contract.detail.digital_contract")}</span>
           <ChevronRight className="h-3 w-3" />
-          <span className="font-semibold text-foreground">Chi tiết TRV-{c.id.slice(0, 8).toUpperCase()}</span>
+          <span className="font-semibold text-foreground">{t("contract.detail.details_code", { code: c.id.slice(0, 8).toUpperCase() })}</span>
         </div>
       </div>
 
@@ -131,9 +133,9 @@ function ContractDetail() {
             >
               <AlertCircle className="h-6 w-6 text-amber-600 shrink-0 mt-0.5" />
               <div>
-                <h4 className="font-bold text-sm text-amber-950">Hợp đồng đang chờ bạn ký điện tử</h4>
+                <h4 className="font-bold text-sm text-amber-950">{t("contract.detail.banners.pending_title")}</h4>
                 <p className="text-xs text-amber-900/80 mt-1 leading-relaxed">
-                  Vui lòng đọc kỹ toàn bộ điều khoản hợp đồng bên dưới. Sau khi xác nhận đồng ý và thực hiện **Ký điện tử**, bạn sẽ tự động được chuyển sang trang thanh toán để đóng cọc kích hoạt hợp đồng.
+                  {t("contract.detail.banners.pending_desc")}
                 </p>
               </div>
             </motion.div>
@@ -147,9 +149,9 @@ function ContractDetail() {
             >
               <CheckCircle2 className="h-6 w-6 text-emerald-600 shrink-0 mt-0.5" />
               <div>
-                <h4 className="font-bold text-sm text-emerald-950">Hợp đồng đã có hiệu lực pháp lý!</h4>
+                <h4 className="font-bold text-sm text-emerald-950">{t("contract.detail.banners.active_title")}</h4>
                 <p className="text-xs text-emerald-900/80 mt-1 leading-relaxed">
-                  Hợp đồng này đã được ký kết thành công qua cổng Trovia e-Sign. Hóa đơn thanh toán cọc và tiền nhà đã được ghi nhận. Bạn có thể tải bản PDF lưu trữ bất cứ lúc nào.
+                  {t("contract.detail.banners.active_desc")}
                 </p>
               </div>
             </motion.div>
@@ -163,9 +165,9 @@ function ContractDetail() {
             >
               <XCircle className="h-6 w-6 text-rose-600 shrink-0 mt-0.5" />
               <div>
-                <h4 className="font-bold text-sm text-rose-950">Bạn đã từ chối hợp đồng này</h4>
+                <h4 className="font-bold text-sm text-rose-950">{t("contract.detail.banners.rejected_title")}</h4>
                 <p className="text-xs text-rose-900/80 mt-1 leading-relaxed">
-                  Hợp đồng này đã bị từ chối ký điện tử. Nếu có sai sót về thông tin hoặc giá cả, vui lòng nhắn tin liên hệ chủ nhà để điều chỉnh và gửi lại dự thảo hợp đồng mới.
+                  {t("contract.detail.banners.rejected_desc")}
                 </p>
               </div>
             </motion.div>
@@ -177,27 +179,27 @@ function ContractDetail() {
               <div className="h-8 w-8 rounded-lg bg-primary-soft text-primary grid place-items-center">
                 <User className="h-4.5 w-4.5" />
               </div>
-              <h3 className="font-bold text-base text-foreground">Section 1: Thông tin người thuê (Bên B)</h3>
+              <h3 className="font-bold text-base text-foreground">{t("contract.detail.sections.tenant_info_title")}</h3>
             </div>
             
             <div className="grid sm:grid-cols-3 gap-6 text-sm">
               <div className="space-y-1">
-                <span className="text-xs text-muted-foreground block">Họ và tên người thuê</span>
+                <span className="text-xs text-muted-foreground block">{t("contract.detail.sections.tenant_name")}</span>
                 <span className="font-semibold text-foreground flex items-center gap-2">
-                  {c.tenant?.fullName || "Chưa cập nhật"}
+                  {c.tenant?.fullName || t("common.no_data")}
                 </span>
               </div>
               
               <div className="space-y-1">
-                <span className="text-xs text-muted-foreground block">Số điện thoại liên hệ</span>
+                <span className="text-xs text-muted-foreground block">{t("contract.detail.sections.phone")}</span>
                 <span className="font-semibold text-foreground flex items-center gap-1.5">
                   <Phone className="h-3.5 w-3.5 text-muted-foreground" />
-                  {(c.tenant as any)?.phone || "Chưa cập nhật"}
+                  {(c.tenant as any)?.phone || t("common.no_data")}
                 </span>
               </div>
 
               <div className="space-y-1">
-                <span className="text-xs text-muted-foreground block">Địa chỉ email</span>
+                <span className="text-xs text-muted-foreground block">{t("contract.detail.sections.email")}</span>
                 <span className="font-semibold text-foreground flex items-center gap-1.5">
                   <Mail className="h-3.5 w-3.5 text-muted-foreground" />
                   {c.tenant?.email}
@@ -212,12 +214,12 @@ function ContractDetail() {
               <div className="h-8 w-8 rounded-lg bg-amber-50 text-amber-600 grid place-items-center">
                 <Landmark className="h-4.5 w-4.5" />
               </div>
-              <h3 className="font-bold text-base text-foreground">Section 2: Thông tin chủ nhà (Bên A)</h3>
+              <h3 className="font-bold text-base text-foreground">{t("contract.detail.sections.landlord_info_title")}</h3>
             </div>
             
             <div className="grid sm:grid-cols-3 gap-6 text-sm">
               <div className="space-y-1">
-                <span className="text-xs text-muted-foreground block">Họ và tên chủ nhà</span>
+                <span className="text-xs text-muted-foreground block">{t("contract.detail.sections.landlord_name")}</span>
                 <div className="flex items-center gap-2.5 mt-0.5">
                   <div className="h-7 w-7 rounded-full bg-gradient-to-br from-amber-500 to-orange-500 text-white font-bold grid place-items-center text-[10px]">
                     {(c.landlord?.fullName || "L").slice(0, 2).toUpperCase()}
@@ -227,15 +229,15 @@ function ContractDetail() {
               </div>
 
               <div className="space-y-1">
-                <span className="text-xs text-muted-foreground block">Số điện thoại liên hệ</span>
+                <span className="text-xs text-muted-foreground block">{t("contract.detail.sections.phone")}</span>
                 <span className="font-semibold text-foreground flex items-center gap-1.5 mt-1.5">
                   <Phone className="h-3.5 w-3.5 text-muted-foreground" />
-                  {(c.landlord as any)?.phone || "Chưa cập nhật"}
+                  {(c.landlord as any)?.phone || t("common.no_data")}
                 </span>
               </div>
 
               <div className="space-y-1">
-                <span className="text-xs text-muted-foreground block">Địa chỉ email</span>
+                <span className="text-xs text-muted-foreground block">{t("contract.detail.sections.email")}</span>
                 <span className="font-semibold text-foreground flex items-center gap-1.5 mt-1.5">
                   <Mail className="h-3.5 w-3.5 text-muted-foreground" />
                   {c.landlord?.email}
@@ -250,12 +252,12 @@ function ContractDetail() {
               <div className="h-8 w-8 rounded-lg bg-blue-50 text-blue-600 grid place-items-center">
                 <Building className="h-4.5 w-4.5" />
               </div>
-              <h3 className="font-bold text-base text-foreground">Section 3: Thông tin nơi thuê & Tài chính</h3>
+              <h3 className="font-bold text-base text-foreground">{t("contract.detail.sections.property_finance_title")}</h3>
             </div>
             
             <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6 text-sm">
               <div className="space-y-1">
-                <span className="text-xs text-muted-foreground block">Tên bất động sản</span>
+                <span className="text-xs text-muted-foreground block">{t("contract.detail.sections.property_name")}</span>
                 <span className="font-bold text-foreground block">{c.property?.title}</span>
                 <span className="text-xs text-muted-foreground block leading-normal mt-0.5">
                   {c.property?.address}, {c.property?.district}, {c.property?.city}
@@ -263,34 +265,34 @@ function ContractDetail() {
               </div>
 
               <div className="space-y-1">
-                <span className="text-xs text-muted-foreground block">Phòng / Căn hộ số</span>
+                <span className="text-xs text-muted-foreground block">{t("contract.detail.sections.room_number")}</span>
                 <span className="font-semibold text-foreground block">{c.room?.title}</span>
                 <span className="text-xs text-muted-foreground block mt-0.5">
-                  Diện tích sử dụng: {c.room?.area} m²
+                  {t("contract.detail.sections.room_area", { area: c.room?.area })}
                 </span>
               </div>
 
               <div className="space-y-1">
-                <span className="text-xs text-muted-foreground block">Thời hạn hợp đồng</span>
+                <span className="text-xs text-muted-foreground block">{t("contract.detail.sections.contract_term")}</span>
                 <span className="font-semibold text-foreground flex items-center gap-1.5 mt-0.5">
                   <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
-                  {c.durationMonths} tháng
+                  {t("contract.months", { count: c.durationMonths })}
                 </span>
                 <span className="text-xs text-muted-foreground block mt-0.5 leading-normal">
-                  Từ {formattedStart} <br />đến {formattedEnd}
+                  {t("contract.detail.sections.date_range", { start: formattedStart, end: formattedEnd })}
                 </span>
               </div>
 
               <div className="space-y-1 border-t border-border/60 pt-4 sm:border-0 sm:pt-0">
-                <span className="text-xs text-muted-foreground block font-medium">Giá thuê hàng tháng</span>
+                <span className="text-xs text-muted-foreground block font-medium">{t("contract.detail.sections.monthly_rent")}</span>
                 <span className="font-bold text-lg text-primary block mt-0.5">{monthlyRentFormatted}</span>
-                <span className="text-[10px] text-muted-foreground block">Chưa bao gồm dịch vụ tiện ích</span>
+                <span className="text-[10px] text-muted-foreground block">{t("contract.detail.sections.rent_exclude_utilities")}</span>
               </div>
 
               <div className="space-y-1 border-t border-border/60 pt-4 sm:border-0 sm:pt-0">
-                <span className="text-xs text-muted-foreground block font-medium">Tiền đặt cọc phòng</span>
+                <span className="text-xs text-muted-foreground block font-medium">{t("contract.detail.sections.deposit")}</span>
                 <span className="font-bold text-lg text-foreground block mt-0.5">{depositFormatted}</span>
-                <span className="text-[10px] text-muted-foreground block">Được hoàn lại đầy đủ khi hết hạn hợp đồng</span>
+                <span className="text-[10px] text-muted-foreground block">{t("contract.detail.sections.deposit_refundable")}</span>
               </div>
             </div>
           </div>
@@ -301,39 +303,39 @@ function ContractDetail() {
               <div className="h-8 w-8 rounded-lg bg-purple-50 text-purple-600 grid place-items-center">
                 <FileText className="h-4.5 w-4.5" />
               </div>
-              <h3 className="font-bold text-base text-foreground">Section 4: Điều khoản hợp đồng thỏa thuận</h3>
+              <h3 className="font-bold text-base text-foreground">{t("contract.detail.sections.terms_title")}</h3>
             </div>
 
             <div className="space-y-4 text-xs leading-relaxed text-muted-foreground max-h-80 overflow-y-auto pr-2 border border-border/40 p-4 rounded-xl bg-secondary/15">
-              <p className="font-bold text-foreground text-xs uppercase tracking-wider mb-2">QUY ĐỊNH CHUNG VÀ CAM KẾT:</p>
+              <p className="font-bold text-foreground text-xs uppercase tracking-wider mb-2">{t("contract.detail.sections.terms_general_title")}</p>
               
               <p>
-                1. **BÊN A (Chủ nhà)** cam kết bàn giao phòng đúng diện tích, trang thiết bị như đã thỏa thuận và đảm bảo quyền sử dụng phòng thuê độc lập, hợp pháp của **BÊN B (Người thuê)**.
+                {t("contract.detail.sections.term_1")}
               </p>
 
               <p>
-                2. **BÊN B** cam kết thanh toán tiền thuê phòng đúng kỳ hạn thỏa thuận, sử dụng phòng thuê đúng mục đích cư trú hợp pháp, không chuyển nhượng hoặc cho thuê lại phòng trừ khi có sự đồng ý bằng văn bản của **BÊN A**.
+                {t("contract.detail.sections.term_2")}
               </p>
 
               <p>
-                3. **TIỀN ĐẶT CỌC:** Được dùng để bảo đảm việc thực hiện đầy đủ nghĩa vụ của BÊN B. Tiền đặt cọc sẽ được hoàn trả lại cho BÊN B đầy đủ sau khi chấm dứt hợp đồng thuê và bàn giao phòng đúng hiện trạng, trừ đi các chi phí thiệt hại hư hỏng do lỗi chủ quan của BÊN B (nếu có).
+                {t("contract.detail.sections.term_3")}
               </p>
 
               <p>
-                4. **CHẤM DỨT HỢP ĐỒNG:** Mỗi bên muốn chấm dứt hợp đồng trước hạn phải thông báo cho bên kia tối thiểu 30 ngày. Vi phạm quy định này sẽ phải chịu đền bù khoản tương đương tiền cọc phòng.
+                {t("contract.detail.sections.term_4")}
               </p>
 
               {c.terms ? (
                 <div className="pt-4 border-t border-border mt-4">
                   <span className="font-bold text-foreground text-xs uppercase tracking-wider block mb-1">
-                    ĐIỀU KHOẢN BỔ SUNG CỦA CHỦ NHÀ:
+                    {t("contract.detail.sections.landlord_additional_terms")}
                   </span>
                   <p className="whitespace-pre-wrap font-sans font-medium text-foreground bg-amber-500/5 p-3 rounded-lg border border-amber-500/10 mt-1 leading-normal">
                     {c.terms}
                   </p>
                 </div>
               ) : (
-                <p className="italic text-muted-foreground/80 mt-2">Không có điều khoản bổ sung đặc biệt nào từ chủ nhà.</p>
+                <p className="italic text-muted-foreground/80 mt-2">{t("contract.detail.sections.no_additional_terms")}</p>
               )}
             </div>
           </div>
@@ -343,35 +345,35 @@ function ContractDetail() {
         <aside className="sticky top-24">
           <div className="rounded-3xl bg-surface-elevated ring-1 ring-border p-6 shadow-[var(--shadow-elegant)] border border-border">
             <h3 className="font-bold text-base text-foreground pb-4 border-b border-border">
-              Section 5: Xác nhận hợp đồng
+              {t("contract.detail.sections.confirmation_title")}
             </h3>
             
             <div className="mt-5 space-y-4">
               <div className="flex justify-between items-center text-xs">
-                <span className="text-muted-foreground">Mã lực hợp đồng:</span>
+                <span className="text-muted-foreground">{t("contract.detail.sections.contract_code_label")}</span>
                 <span className="font-semibold text-foreground">TRV-{c.id.slice(0, 8).toUpperCase()}</span>
               </div>
               <div className="flex justify-between items-center text-xs">
-                <span className="text-muted-foreground">Trạng thái:</span>
+                <span className="text-muted-foreground">{t("contract.detail.sections.status_label")}</span>
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                   c.status === "SENT" ? "text-amber-700 bg-amber-50 border border-amber-200" :
                   c.status === "ACTIVE" ? "text-emerald-700 bg-emerald-50 border border-emerald-200" :
                   c.status === "REJECTED" ? "text-rose-700 bg-rose-50 border border-rose-200" :
                   "text-gray-600 bg-gray-50 border border-gray-200"
                 }`}>
-                  {c.status === "SENT" ? "CHỜ BẠN KÝ" :
-                   c.status === "ACTIVE" ? "ĐANG HIỆU LỰC" :
-                   c.status === "REJECTED" ? "ĐÃ TỪ CHỐI" : c.status}
+                  {c.status === "SENT" ? t("contract.detail.sections.status_awaiting_signature") :
+                   c.status === "ACTIVE" ? t("contract.detail.sections.status_active") :
+                   c.status === "REJECTED" ? t("contract.detail.sections.status_rejected") : c.status}
                 </span>
               </div>
 
               <div className="border-t border-border pt-4 space-y-3">
                 <div className="flex justify-between text-xs font-semibold">
-                  <span>Tiền cọc cần đóng:</span>
+                  <span>{t("contract.detail.sections.deposit_to_pay")}</span>
                   <span className="text-foreground">{depositFormatted}</span>
                 </div>
                 <div className="flex justify-between text-xs font-semibold">
-                  <span>Giá thuê mỗi tháng:</span>
+                  <span>{t("contract.detail.sections.monthly_rent_to_pay")}</span>
                   <span className="text-primary">{monthlyRentFormatted}</span>
                 </div>
               </div>
@@ -387,7 +389,7 @@ function ContractDetail() {
                       className="mt-0.5 h-4.5 w-4.5 rounded border-border text-primary focus:ring-primary/20 shrink-0 cursor-pointer"
                     />
                     <span className="text-xs text-muted-foreground group-hover:text-foreground transition leading-normal select-none">
-                      Tôi đã đọc và đồng ý với điều khoản hợp đồng được ghi nhận ở trên.
+                      {t("contract.detail.sections.agree_terms_checkbox")}
                     </span>
                   </label>
 
@@ -397,7 +399,7 @@ function ContractDetail() {
                       disabled={!agreed || acceptMutation.isPending || rejectMutation.isPending}
                       onClick={() => acceptMutation.mutate()}
                     >
-                      {acceptMutation.isPending ? "Đang xử lý..." : "Ký điện tử"}
+                      {acceptMutation.isPending ? t("common.loading") : t("contract.detail.sections.sign_button")}
                     </Button>
 
                     <Button 
@@ -406,7 +408,7 @@ function ContractDetail() {
                       disabled={rejectMutation.isPending || acceptMutation.isPending}
                       onClick={() => rejectMutation.mutate()}
                     >
-                      {rejectMutation.isPending ? "Đang xử lý..." : "Từ chối"}
+                      {rejectMutation.isPending ? t("common.loading") : t("contract.detail.sections.reject_button")}
                     </Button>
                   </div>
                 </div>
@@ -416,16 +418,16 @@ function ContractDetail() {
                     <>
                       <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-center">
                         <CheckCircle2 className="h-5 w-5 text-emerald-600 mx-auto mb-1.5" />
-                        <span className="text-xs font-bold text-emerald-950 block">Hợp đồng đã ký kết!</span>
+                        <span className="text-xs font-bold text-emerald-950 block">{t("contract.detail.sections.signed_success_box_title")}</span>
                         <span className="text-[10px] text-emerald-800 mt-0.5 block leading-normal">
-                          Bạn đã thực hiện ký điện tử thành công qua cổng Trovia e-Sign.
+                          {t("contract.detail.sections.signed_success_box_desc")}
                         </span>
                       </div>
                       <Button 
                         className="w-full h-11 text-xs font-bold rounded-xl bg-primary text-primary-foreground hover:bg-primary/95 shadow-sm transition"
                         asChild
                       >
-                        <Link to="/app/payments">Đi tới trang Thanh toán</Link>
+                        <Link to="/app/payments">{t("contract.detail.sections.go_to_payment_button")}</Link>
                       </Button>
                     </>
                   )}
@@ -433,9 +435,9 @@ function ContractDetail() {
                   {c.status === "REJECTED" && (
                     <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-center">
                       <XCircle className="h-5 w-5 text-rose-600 mx-auto mb-1.5" />
-                      <span className="text-xs font-bold text-rose-950 block">Hợp đồng bị từ chối</span>
+                      <span className="text-xs font-bold text-rose-950 block">{t("contract.detail.sections.rejected_box_title")}</span>
                       <span className="text-[10px] text-rose-800 mt-0.5 block leading-normal">
-                        Yêu cầu ký điện tử hợp đồng này đã bị từ chối.
+                        {t("contract.detail.sections.rejected_box_desc")}
                       </span>
                     </div>
                   )}
@@ -445,7 +447,7 @@ function ContractDetail() {
             
             <div className="text-[10px] text-muted-foreground text-center mt-4 flex items-center justify-center gap-1">
               <ShieldCheck className="h-3.5 w-3.5 text-primary shrink-0" />
-              <span>Bảo mật chuẩn mã hóa Trovia e-Sign</span>
+              <span>{t("contract.detail.sections.secure_encryption_footer")}</span>
             </div>
           </div>
         </aside>

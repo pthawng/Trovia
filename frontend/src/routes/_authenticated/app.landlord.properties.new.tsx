@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { PropertyService, PropertyType } from "@/services/property.service";
+import { useTranslation } from "react-i18next";
 import { motion } from "motion/react";
 import { 
   Building, MapPin, Eye, Plus, ArrowRight, ArrowLeft,
@@ -18,6 +19,7 @@ export const Route = createFileRoute("/_authenticated/app/landlord/properties/ne
 });
 
 function NewProperty() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
@@ -53,28 +55,28 @@ function NewProperty() {
   const createMutation = useMutation({
     mutationFn: (dto: any) => PropertyService.create(dto),
     onSuccess: (newProp) => {
-      toast.success("Bản nháp bất động sản đã được tạo thành công!");
+      toast.success(t("property.creation.success_toast"));
       queryClient.invalidateQueries({ queryKey: ["landlordProperties"] });
       // Redirect to detailed view to add units/rooms and publish
       navigate({ to: `/app/landlord/properties/${newProp.id}` as any });
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.message || "Lỗi trong quá trình tạo bất động sản.");
+      toast.error(err.response?.data?.message || t("property.creation.error_create_toast"));
     }
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) {
-      toast.error("Vui lòng điền tiêu đề bất động sản.");
+      toast.error(t("property.creation.error_title_toast"));
       return;
     }
     if (!address.trim() || !district.trim() || !ward.trim()) {
-      toast.error("Vui lòng điền đầy đủ địa chỉ chi tiết.");
+      toast.error(t("property.creation.error_address_toast"));
       return;
     }
     if (!imageUrl.trim()) {
-      toast.error("Vui lòng tải lên hoặc điền liên kết hình ảnh.");
+      toast.error(t("property.creation.error_image_toast"));
       return;
     }
 
@@ -105,14 +107,14 @@ function NewProperty() {
           to="/app/landlord/properties"
           className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition"
         >
-          <ArrowLeft className="h-4 w-4" /> Quay lại danh sách bất động sản
+          <ArrowLeft className="h-4 w-4" /> {t("property.creation.back_to_list")}
         </Link>
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-primary to-[oklch(0.55_0.2_285)] bg-clip-text text-transparent">
-            Thêm bất động sản mới
+            {t("property.creation.title")}
           </h1>
           <p className="text-muted-foreground text-sm">
-            Tạo bản nháp, điền thông tin mô tả chi tiết và cấu hình tiện ích của tòa nhà.
+            {t("property.creation.subtitle")}
           </p>
         </div>
       </div>
@@ -125,16 +127,16 @@ function NewProperty() {
           <div className="rounded-3xl border border-border bg-surface p-6 shadow-sm space-y-5">
             <div className="flex items-center gap-2 pb-3 mb-1 border-b border-border/60">
               <ClipboardList className="h-5 w-5 text-primary" />
-              <h3 className="font-bold text-base text-foreground">Thông tin cơ bản</h3>
+              <h3 className="font-bold text-base text-foreground">{t("property.creation.basic_info")}</h3>
             </div>
 
             <div className="space-y-4">
               <div className="space-y-1.5">
-                <Label htmlFor="prop-title">Tiêu đề bất động sản</Label>
+                <Label htmlFor="prop-title">{t("property.creation.prop_title")}</Label>
                 <Input 
                   id="prop-title"
                   className="h-11"
-                  placeholder="e.g. Căn hộ dịch vụ cao cấp Quận 1 view Landmark"
+                  placeholder={t("property.creation.prop_title_placeholder")}
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   required
@@ -143,27 +145,27 @@ function NewProperty() {
 
               <div className="grid sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <Label htmlFor="prop-type">Loại hình bất động sản</Label>
+                  <Label htmlFor="prop-type">{t("property.creation.prop_type")}</Label>
                   <select 
                     id="prop-type"
                     className="flex h-11 w-full rounded-lg border border-input bg-surface px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     value={type}
                     onChange={(e) => setType(e.target.value as PropertyType)}
                   >
-                    <option value="BOARDING_HOUSE">Nhà trọ / Phòng trọ bình dân</option>
-                    <option value="APARTMENT">Căn hộ chung cư</option>
-                    <option value="HOUSE">Nhà nguyên căn</option>
-                    <option value="STUDIO">Phòng Studio dịch vụ</option>
-                    <option value="DORMITORY">Ký túc xá / Homestay</option>
+                    <option value="BOARDING_HOUSE">{t("property.types.BOARDING_HOUSE")}</option>
+                    <option value="APARTMENT">{t("property.types.APARTMENT")}</option>
+                    <option value="HOUSE">{t("property.types.HOUSE")}</option>
+                    <option value="STUDIO">{t("property.types.STUDIO")}</option>
+                    <option value="DORMITORY">{t("property.types.DORMITORY")}</option>
                   </select>
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label htmlFor="prop-image">Hình ảnh đại diện (URL)</Label>
+                  <Label htmlFor="prop-image">{t("property.creation.prop_image")}</Label>
                   <Input 
                     id="prop-image"
                     className="h-11"
-                    placeholder="Đường dẫn ảnh Unsplash hoặc ảnh thực tế"
+                    placeholder={t("property.creation.prop_image_placeholder")}
                     value={imageUrl}
                     onChange={(e) => setImageUrl(e.target.value)}
                     required
@@ -172,11 +174,11 @@ function NewProperty() {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="prop-desc">Mô tả chi tiết</Label>
+                <Label htmlFor="prop-desc">{t("property.creation.description")}</Label>
                 <Textarea 
                   id="prop-desc"
                   className="min-h-32"
-                  placeholder="Giới thiệu chi tiết về khu vực xung quanh, khoảng cách đến trường học/chợ, giờ giấc sinh hoạt và các ưu đãi đặc biệt..."
+                  placeholder={t("property.creation.description_placeholder")}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                 />
@@ -188,32 +190,32 @@ function NewProperty() {
           <div className="rounded-3xl border border-border bg-surface p-6 shadow-sm space-y-5">
             <div className="flex items-center gap-2 pb-3 mb-1 border-b border-border/60">
               <MapPin className="h-5 w-5 text-primary" />
-              <h3 className="font-bold text-base text-foreground">Địa chỉ & Vị trí</h3>
+              <h3 className="font-bold text-base text-foreground">{t("property.creation.location")}</h3>
             </div>
 
             <div className="space-y-4">
               <div className="grid sm:grid-cols-3 gap-4">
                 <div className="space-y-1.5">
-                  <Label htmlFor="prop-city">Tỉnh / Thành phố</Label>
+                  <Label htmlFor="prop-city">{t("property.creation.city")}</Label>
                   <Input id="prop-city" className="h-11" value={city} disabled readOnly required />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="prop-dist">Quận / Huyện</Label>
+                  <Label htmlFor="prop-dist">{t("property.creation.district")}</Label>
                   <Input 
                     id="prop-dist" 
                     className="h-11" 
-                    placeholder="e.g. Bình Thạnh" 
+                    placeholder={t("property.creation.district_placeholder")} 
                     value={district}
                     onChange={(e) => setDistrict(e.target.value)}
                     required 
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="prop-ward">Phường / Xã</Label>
+                  <Label htmlFor="prop-ward">{t("property.creation.ward")}</Label>
                   <Input 
                     id="prop-ward" 
                     className="h-11" 
-                    placeholder="e.g. Phường 25" 
+                    placeholder={t("property.creation.ward_placeholder")} 
                     value={ward}
                     onChange={(e) => setWard(e.target.value)}
                     required 
@@ -222,11 +224,11 @@ function NewProperty() {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="prop-address">Địa chỉ chi tiết (Số nhà, tên đường)</Label>
+                <Label htmlFor="prop-address">{t("property.creation.detailed_address")}</Label>
                 <Input 
                   id="prop-address" 
                   className="h-11" 
-                  placeholder="e.g. 456 Điện Biên Phủ" 
+                  placeholder={t("property.creation.detailed_address_placeholder")} 
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
                   required 
@@ -239,13 +241,13 @@ function NewProperty() {
           <div className="rounded-3xl border border-border bg-surface p-6 shadow-sm space-y-5">
             <div className="flex items-center gap-2 pb-3 mb-1 border-b border-border/60">
               <Settings className="h-5 w-5 text-primary" />
-              <h3 className="font-bold text-base text-foreground">Chi phí dịch vụ & Nội quy</h3>
+              <h3 className="font-bold text-base text-foreground">{t("property.creation.rules_utilities")}</h3>
             </div>
 
             <div className="space-y-4">
               <div className="grid sm:grid-cols-3 gap-4">
                 <div className="space-y-1.5">
-                  <Label htmlFor="prop-floors">Số tầng</Label>
+                  <Label htmlFor="prop-floors">{t("property.creation.total_floors")}</Label>
                   <Input 
                     id="prop-floors" 
                     type="number"
@@ -257,7 +259,7 @@ function NewProperty() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="prop-units">Số lượng phòng/căn hộ</Label>
+                  <Label htmlFor="prop-units">{t("property.creation.total_units")}</Label>
                   <Input 
                     id="prop-units" 
                     type="number"
@@ -276,14 +278,14 @@ function NewProperty() {
                       onChange={(e) => setHasParking(e.target.checked)}
                       className="h-5 w-5 rounded border-border text-primary focus:ring-primary/20 cursor-pointer"
                     />
-                    <span className="text-xs font-semibold text-foreground">Có chỗ để xe máy/ô tô</span>
+                    <span className="text-xs font-semibold text-foreground">{t("property.creation.has_parking")}</span>
                   </label>
                 </div>
               </div>
 
               <div className="grid sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <Label htmlFor="prop-utils">Biểu phí dịch vụ tiện ích</Label>
+                  <Label htmlFor="prop-utils">{t("property.creation.utilities_fees")}</Label>
                   <Input 
                     id="prop-utils" 
                     className="h-11" 
@@ -292,7 +294,7 @@ function NewProperty() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="prop-rules">Nội quy sinh hoạt</Label>
+                  <Label htmlFor="prop-rules">{t("property.creation.house_rules")}</Label>
                   <Input 
                     id="prop-rules" 
                     className="h-11" 
@@ -311,10 +313,10 @@ function NewProperty() {
           <div className="rounded-3xl border border-border bg-surface p-6 shadow-sm space-y-4">
             <div>
               <h3 className="font-bold text-base text-foreground flex items-center gap-2">
-                <Sparkles className="h-4.5 w-4.5 text-primary" /> Tiện ích tòa nhà
+                <Sparkles className="h-4.5 w-4.5 text-primary" /> {t("property.creation.amenities")}
               </h3>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Chọn các dịch vụ, trang thiết bị chung sẵn có tại bất động sản này.
+                {t("property.creation.amenities_subtitle")}
               </p>
             </div>
 
@@ -347,11 +349,11 @@ function NewProperty() {
           {/* Action sticky card */}
           <div className="rounded-3xl bg-surface-elevated ring-1 ring-border p-6 shadow-[var(--shadow-elegant)] border border-border space-y-4">
             <h3 className="font-bold text-base text-foreground flex items-center gap-1.5">
-              <Info className="h-4.5 w-4.5 text-primary" /> Đăng tin & Xuất bản
+              <Info className="h-4.5 w-4.5 text-primary" /> {t("property.creation.publish_status")}
             </h3>
             
             <p className="text-xs text-muted-foreground leading-normal">
-              Bất động sản mới được tạo sẽ nằm ở trạng thái **Bản nháp (DRAFT)**. Bạn cần thêm ít nhất một phòng/căn hộ khả dụng trước khi có thể xuất bản công khai.
+              {t("property.creation.publish_desc")}
             </p>
 
             <div className="pt-2">
@@ -360,7 +362,7 @@ function NewProperty() {
                 disabled={createMutation.isPending}
                 className="w-full h-11 text-xs font-bold rounded-xl bg-primary text-primary-foreground hover:bg-primary/95 flex items-center justify-center gap-1.5 shadow-sm transition"
               >
-                {createMutation.isPending ? "Đang khởi tạo..." : "Lưu bản nháp & Tiếp tục"} 
+                {createMutation.isPending ? t("property.creation.creating_loading") : t("property.creation.save_draft")} 
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </div>

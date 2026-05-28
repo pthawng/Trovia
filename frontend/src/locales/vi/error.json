@@ -1,0 +1,10 @@
+{
+  "something_went_wrong": "Đã xảy ra lỗi. Vui lòng thử lại.",
+  "something_went_wrong_server": "Có lỗi kết nối máy chủ. Vui lòng thử lại sau.",
+  "page_not_found": "Trang không tồn tại hoặc đã bị di chuyển.",
+  "not_found_title": "404 - Không Tìm Thấy Trang",
+  "not_found_desc": "Xin lỗi, chúng tôi không tìm thấy trang bạn yêu cầu.",
+  "unauthorized": "Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.",
+  "forbidden": "Bạn không có quyền thực hiện thao tác này.",
+  "validation_failed": "Dữ liệu không hợp lệ. Vui lòng kiểm tra lại."
+}

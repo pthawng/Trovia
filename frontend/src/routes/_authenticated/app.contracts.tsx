@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   FileText, ShieldCheck, Download, Calendar, ArrowRight, Clock, AlertCircle, 
@@ -22,6 +23,7 @@ export const Route = createFileRoute("/_authenticated/app/contracts")({
 });
 
 function ContractsPage() {
+  const { t } = useTranslation();
   const [historyOpen, setHistoryOpen] = useState(false);
   const queryClient = useQueryClient();
 
@@ -66,11 +68,11 @@ function ContractsPage() {
   const requestMoveOutMutation = useMutation({
     mutationFn: (tenancyId: string) => TenancyService.requestMoveOut(tenancyId),
     onSuccess: () => {
-      toast.success("Đã gửi yêu cầu trả phòng thành công! Chủ nhà sẽ liên hệ kiểm tra.");
+      toast.success(t("contract.toasts.move_out_success"));
       queryClient.invalidateQueries({ queryKey: ["tenancies"] });
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.message || "Lỗi khi gửi yêu cầu trả phòng.");
+      toast.error(err.response?.data?.message || t("contract.toasts.move_out_error"));
     }
   });
 
@@ -78,14 +80,14 @@ function ContractsPage() {
   const createMaintenanceMutation = useMutation({
     mutationFn: (dto: any) => MaintenanceService.create(dto),
     onSuccess: () => {
-      toast.success("Gửi yêu cầu sửa chữa cơ sở vật chất thành công!");
+      toast.success(t("contract.toasts.maintenance_success"));
       setShowAddMaintenance(false);
       setMTitle("");
       setMDescription("");
       queryClient.invalidateQueries({ queryKey: ["maintenanceRequests"] });
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.message || "Lỗi khi tạo yêu cầu sửa chữa.");
+      toast.error(err.response?.data?.message || t("contract.toasts.maintenance_error"));
     }
   });
 
@@ -93,14 +95,14 @@ function ContractsPage() {
   const submitReviewMutation = useMutation({
     mutationFn: (dto: any) => ReviewService.create(dto),
     onSuccess: () => {
-      toast.success("Đánh giá chủ nhà thành công! Cảm ơn phản hồi của bạn.");
+      toast.success(t("contract.toasts.review_success"));
       setShowAddReview(false);
       setRComment("");
       setRRating(5);
       queryClient.invalidateQueries({ queryKey: ["tenancies"] });
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.message || "Lỗi khi gửi đánh giá.");
+      toast.error(err.response?.data?.message || t("contract.toasts.review_error"));
     }
   });
 
@@ -129,9 +131,9 @@ function ContractsPage() {
     <div className="space-y-8 max-w-5xl">
       {/* Title & Welcome description */}
       <div>
-        <h1 className="text-3xl font-display font-bold tracking-tight text-foreground">Hợp đồng của tôi</h1>
+        <h1 className="text-3xl font-display font-bold tracking-tight text-foreground">{t("contract.my_contracts")}</h1>
         <p className="text-muted-foreground mt-1 text-sm">
-          Xem các việc cần xử lý ngay, quản lý nhà đang thuê và kiểm tra lịch sử ký kết hợp đồng của bạn.
+          {t("contract.my_contracts_desc")}
         </p>
       </div>
 
@@ -146,9 +148,9 @@ function ContractsPage() {
           <div className="h-14 w-14 rounded-2xl bg-primary-soft text-primary grid place-items-center mx-auto">
             <FileText className="h-6 w-6" />
           </div>
-          <h3 className="mt-5 text-lg font-semibold">Chưa có hợp đồng nào</h3>
+          <h3 className="mt-5 text-lg font-semibold">{t("contract.no_contracts")}</h3>
           <p className="text-sm text-muted-foreground mt-1 max-w-sm mx-auto">
-            Khi chủ nhà thiết lập và gửi dự thảo hợp đồng thuê cho bạn, thông tin chi tiết sẽ hiển thị ngay tại đây.
+            {t("contract.no_contracts_desc")}
           </p>
         </div>
       ) : (
@@ -158,10 +160,10 @@ function ContractsPage() {
           <div className="space-y-4">
             <div className="flex items-center justify-between pb-2 border-b border-border/80">
               <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
-                🔥 Cần hành động
+                🔥 {t("contract.need_action")}
                 {needActionContracts.length > 0 && (
                   <span className="text-[10px] font-bold text-amber-800 bg-amber-100 rounded-full px-2 py-0.5 animate-pulse">
-                    {needActionContracts.length} yêu cầu
+                    {t("dashboard.active_requests_count", { count: needActionContracts.length })}
                   </span>
                 )}
               </h2>
@@ -169,7 +171,7 @@ function ContractsPage() {
 
             {needActionContracts.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-border/60 p-6 text-center bg-secondary/5 text-xs text-muted-foreground">
-                Tuyệt vời! Bạn không có hợp đồng nào đang chờ ký.
+                {t("contract.no_pending_contracts")}
               </div>
             ) : (
               <div className="grid gap-6">
@@ -195,7 +197,7 @@ function ContractsPage() {
                             className="h-full w-full object-cover"
                           />
                           <span className="absolute top-3 left-3 text-[10px] font-bold tracking-wider bg-amber-500 text-white rounded px-2 py-0.5 shadow-sm uppercase flex items-center gap-1">
-                            <Clock className="h-3 w-3" /> Chờ ký hợp đồng
+                            <Clock className="h-3 w-3" /> {t("contract.status_pending")}
                           </span>
                         </div>
 
@@ -208,7 +210,7 @@ function ContractsPage() {
                                   <Link to={`/app/contracts/${c.id}` as any}>{c.property?.title}</Link>
                                 </h3>
                                 <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-                                  <MapPin className="h-3.5 w-3.5" /> Room: {c.room?.title} · {c.property?.address}, {c.property?.city}
+                                  <MapPin className="h-3.5 w-3.5" /> {t("contract.room")}: {c.room?.title} · {c.property?.address}, {c.property?.city}
                                 </p>
                               </div>
                               <span className="text-[10px] font-semibold text-muted-foreground font-mono bg-secondary px-2 py-0.5 rounded">
@@ -219,24 +221,24 @@ function ContractsPage() {
                             {/* Key contract specifications */}
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-2 border-t border-border/40 text-xs">
                               <div>
-                                <span className="text-[10px] text-muted-foreground uppercase block font-semibold">Chủ nhà</span>
+                                <span className="text-[10px] text-muted-foreground uppercase block font-semibold">{t("contract.landlord")}</span>
                                 <span className="font-semibold text-foreground block mt-0.5">{c.landlord?.fullName}</span>
                               </div>
                               
                               <div>
-                                <span className="text-[10px] text-muted-foreground uppercase block font-semibold">Tiền thuê / tháng</span>
+                                <span className="text-[10px] text-muted-foreground uppercase block font-semibold">{t("contract.rent_per_month")}</span>
                                 <span className="font-bold text-primary block mt-0.5">{formattedRent}</span>
                               </div>
 
                               <div>
-                                <span className="text-[10px] text-muted-foreground uppercase block font-semibold">Tiền đặt cọc</span>
+                                <span className="text-[10px] text-muted-foreground uppercase block font-semibold">{t("contract.security_deposit")}</span>
                                 <span className="font-semibold text-foreground block mt-0.5">{formattedDeposit}</span>
                               </div>
 
                               <div>
-                                <span className="text-[10px] text-muted-foreground uppercase block font-semibold">Thời hạn lưu trú</span>
+                                <span className="text-[10px] text-muted-foreground uppercase block font-semibold">{t("contract.rental_duration")}</span>
                                 <span className="font-semibold text-foreground block mt-0.5 flex items-center gap-1">
-                                  <Calendar className="h-3.5 w-3.5 text-muted-foreground" /> {c.durationMonths} tháng
+                                  <Calendar className="h-3.5 w-3.5 text-muted-foreground" /> {t("contract.months", { count: c.durationMonths })}
                                 </span>
                               </div>
                             </div>
@@ -245,7 +247,7 @@ function ContractsPage() {
                           {/* Action Layout */}
                           <div className="flex flex-wrap items-center justify-between gap-4 pt-3 border-t border-border/50">
                             <span className="text-[10px] text-muted-foreground">
-                              Hợp đồng được tạo vào {createdDate}
+                              {t("contract.created_at", { date: createdDate })}
                             </span>
                             
                             <div className="flex gap-2">
@@ -255,7 +257,7 @@ function ContractsPage() {
                                 className="text-xs rounded-xl h-9 font-semibold text-muted-foreground hover:text-foreground border-border/60"
                                 asChild
                               >
-                                <Link to={`/app/contracts/${c.id}` as any}>Xem chi tiết</Link>
+                                <Link to={`/app/contracts/${c.id}` as any}>{t("common.view_details")}</Link>
                               </Button>
 
                               <Button 
@@ -263,7 +265,7 @@ function ContractsPage() {
                                 className="text-xs rounded-xl h-9 px-4 font-bold bg-primary text-primary-foreground hover:bg-primary/95 flex items-center gap-1"
                                 asChild
                               >
-                                <Link to={`/app/contracts/${c.id}` as any}>Ký & Tiếp tục <ArrowRight className="h-3.5 w-3.5" /></Link>
+                                <Link to={`/app/contracts/${c.id}` as any}>{t("contract.sign_and_continue")} <ArrowRight className="h-3.5 w-3.5" /></Link>
                               </Button>
                             </div>
                           </div>
@@ -280,10 +282,10 @@ function ContractsPage() {
           <div className="space-y-4 pt-2">
             <div className="flex items-center justify-between pb-2 border-b border-border/80">
               <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
-                🏠 Đang thuê
+                🏠 {t("contract.active_rentals")}
                 {activeContracts.length > 0 && (
                   <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 rounded-full px-2 py-0.5">
-                    {activeContracts.length} căn hộ
+                    {t("contract.apartments_count", { count: activeContracts.length })}
                   </span>
                 )}
               </h2>
@@ -291,7 +293,7 @@ function ContractsPage() {
 
             {activeContracts.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-border/60 p-8 text-center bg-secondary/5 text-xs text-muted-foreground">
-                Bạn chưa có hợp đồng đang hoạt động. Bấm **Ký điện tử** ở các hợp đồng cần hành động để kích hoạt.
+                {t("contract.no_active_rentals_desc")}
               </div>
             ) : (
               <div className="grid gap-6">
@@ -319,7 +321,7 @@ function ContractsPage() {
                             className="h-full w-full object-cover"
                           />
                           <span className="absolute top-3 left-3 text-[10px] font-bold tracking-wider bg-emerald-600 text-white rounded px-2 py-0.5 shadow-sm uppercase flex items-center gap-1">
-                            <CheckCircle2 className="h-3 w-3" /> Đang hiệu lực
+                            <CheckCircle2 className="h-3 w-3" /> {t("contract.status_active")}
                           </span>
                         </div>
 
@@ -332,28 +334,28 @@ function ContractsPage() {
                                   <Link to={`/app/contracts/${c.id}` as any}>{c.property?.title}</Link>
                                 </h3>
                                 <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-                                  <MapPin className="h-3.5 w-3.5" /> Phòng: {c.room?.title} · {c.property?.address}, {c.property?.city}
+                                  <MapPin className="h-3.5 w-3.5" /> {t("contract.room")}: {c.room?.title} · {c.property?.address}, {c.property?.city}
                                 </p>
                               </div>
                               <span className="text-[10px] font-semibold text-muted-foreground font-mono bg-secondary px-2 py-0.5 rounded">
-                                Hợp đồng: TRV-{c.id.slice(0, 8).toUpperCase()}
+                                {t("contract.contract")}: TRV-{c.id.slice(0, 8).toUpperCase()}
                               </span>
                             </div>
 
                             {/* Active Rent financial status details */}
                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 pt-2 border-t border-border/40 text-xs">
                               <div>
-                                <span className="text-[10px] text-muted-foreground uppercase block font-semibold">Chủ nhà</span>
+                                <span className="text-[10px] text-muted-foreground uppercase block font-semibold">{t("contract.landlord")}</span>
                                 <span className="font-semibold text-foreground block mt-0.5">{c.landlord?.fullName}</span>
                               </div>
 
                               <div>
-                                <span className="text-[10px] text-muted-foreground uppercase block font-semibold font-medium">Kỳ hạn hàng tháng</span>
+                                <span className="text-[10px] text-muted-foreground uppercase block font-semibold font-medium">{t("contract.monthly_period")}</span>
                                 <span className="font-bold text-primary block mt-0.5">{formattedRent}</span>
                               </div>
 
                               <div>
-                                <span className="text-[10px] text-amber-700 font-bold uppercase block">Đóng tiền đợt tới</span>
+                                <span className="text-[10px] text-amber-700 font-bold uppercase block">{t("contract.next_payment")}</span>
                                 <span className="font-bold text-amber-700 block mt-0.5 flex items-center gap-1">
                                   <Calendar className="h-3.5 w-3.5" /> {nextPayment}
                                 </span>
@@ -365,18 +367,18 @@ function ContractsPage() {
                               <div className="pt-3 border-t border-border/40 space-y-3 text-xs">
                                 <div className="flex flex-wrap justify-between items-center gap-2 bg-primary/5 p-3 rounded-xl border border-primary/10">
                                   <div className="space-y-0.5">
-                                    <span className="font-semibold text-primary block">🏠 Trạng thái lưu trú:</span>
-                                    <span className="text-[10px] text-muted-foreground">Kích hoạt từ {new Date(tenancy.startedAt || c.startDate).toLocaleDateString("vi-VN")}</span>
+                                    <span className="font-semibold text-primary block">🏠 {t("contract.occupancy_status")}:</span>
+                                    <span className="text-[10px] text-muted-foreground">{t("contract.activated_since", { date: new Date(tenancy.startedAt || c.startDate).toLocaleDateString("vi-VN") })}</span>
                                   </div>
                                   <div>
                                     {tenancy.moveOutRequested ? (
                                       <span className="text-[9px] font-bold text-amber-700 bg-amber-50 px-2 py-1 rounded border border-amber-200 flex items-center gap-1">
-                                        <AlertTriangle className="h-3 w-3 animate-bounce" /> Chờ xác nhận trả phòng
+                                        <AlertTriangle className="h-3 w-3 animate-bounce" /> {t("contract.awaiting_move_out_confirm")}
                                       </span>
                                     ) : (
                                       <Button 
                                         onClick={() => {
-                                          if (confirm("Bạn có chắc chắn muốn yêu cầu trả phòng và chấm dứt hợp đồng thuê này?")) {
+                                          if (confirm(t("contract.confirm_move_out"))) {
                                             requestMoveOutMutation.mutate(tenancy.id);
                                           }
                                         }}
@@ -385,7 +387,7 @@ function ContractsPage() {
                                         className="h-8 text-[10px] text-rose-600 border-rose-200 hover:bg-rose-50 rounded-xl"
                                         disabled={requestMoveOutMutation.isPending}
                                       >
-                                        <LogOut className="h-3 w-3 mr-1" /> Yêu cầu trả phòng
+                                        <LogOut className="h-3 w-3 mr-1" /> {t("contract.request_move_out")}
                                       </Button>
                                     )}
                                   </div>
@@ -394,7 +396,7 @@ function ContractsPage() {
                                 {/* Maintenance List */}
                                 <div className="space-y-2">
                                   <div className="flex justify-between items-center">
-                                    <span className="font-bold text-foreground flex items-center gap-1"><Wrench className="h-3.5 w-3.5 text-primary" /> Sự cố cơ sở vật chất:</span>
+                                    <span className="font-bold text-foreground flex items-center gap-1"><Wrench className="h-3.5 w-3.5 text-primary" /> {t("contract.maintenance_issues")}:</span>
                                     <Button 
                                       onClick={() => {
                                         setSelectedTenancyForMaintenance(tenancy.id);
@@ -403,21 +405,21 @@ function ContractsPage() {
                                       size="sm" 
                                       className="h-7 text-[10px] bg-primary/10 text-primary hover:bg-primary/20 rounded-lg px-2 cursor-pointer"
                                     >
-                                      <Plus className="h-3 w-3 mr-0.5" /> Báo sự cố
+                                      <Plus className="h-3 w-3 mr-0.5" /> {t("contract.report_issue")}
                                     </Button>
                                   </div>
 
                                   {/* Filter and show active maintenance requests for this tenancy */}
                                   {maintenanceRequests.filter(m => m.propertyId === tenancy.propertyId).length === 0 ? (
-                                    <p className="text-[10px] text-muted-foreground italic pl-4">Không có sự cố nào được ghi nhận.</p>
+                                    <p className="text-[10px] text-muted-foreground italic pl-4">{t("contract.no_maintenance_recorded")}</p>
                                   ) : (
                                     <div className="space-y-1.5 pl-4 border-l-2 border-border/80">
                                       {maintenanceRequests.filter(m => m.propertyId === tenancy.propertyId).slice(0, 3).map((m: any) => (
                                         <div key={m.id} className="flex justify-between items-center text-[10px] py-1 bg-secondary/10 px-2 rounded-lg border border-border/40">
                                           <div className="min-w-0 pr-2">
                                             <span className="font-semibold text-foreground truncate block">{m.title}</span>
-                                            {m.assignedTo && <span className="text-[9px] text-indigo-600 block">Thợ sửa chữa: {m.assignedTo}</span>}
-                                            {m.comment && <span className="text-[9px] text-muted-foreground block">Chủ nhà nhắn: "{m.comment}"</span>}
+                                            {m.assignedTo && <span className="text-[9px] text-indigo-600 block">{t("contract.technician")}: {m.assignedTo}</span>}
+                                            {m.comment && <span className="text-[9px] text-muted-foreground block">{t("contract.landlord_note")}: "{m.comment}"</span>}
                                           </div>
                                           <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded border shrink-0 ${
                                             m.status === "OPEN" ? "bg-amber-50 text-amber-600 border-amber-200" :
@@ -445,7 +447,7 @@ function ContractsPage() {
                               asChild
                             >
                               <Link to="/app/messages">
-                                <MessageSquare className="h-4 w-4 text-muted-foreground" /> Mở tin nhắn
+                                <MessageSquare className="h-4 w-4 text-muted-foreground" /> {t("contract.open_messages")}
                               </Link>
                             </Button>
 
@@ -456,7 +458,7 @@ function ContractsPage() {
                               asChild
                             >
                               <Link to={`/app/contracts/${c.id}` as any}>
-                                <FileText className="h-4 w-4 text-muted-foreground" /> Xem hợp đồng
+                                <FileText className="h-4 w-4 text-muted-foreground" /> {t("contract.view_contract")}
                               </Link>
                             </Button>
 
@@ -466,7 +468,7 @@ function ContractsPage() {
                               asChild
                             >
                               <Link to="/app/payments">
-                                <CreditCard className="h-4 w-4" /> Thanh toán
+                                <CreditCard className="h-4 w-4" /> {t("contract.pay_now")}
                               </Link>
                             </Button>
                           </div>
@@ -487,10 +489,10 @@ function ContractsPage() {
             >
               <span className="text-sm font-bold text-foreground flex items-center gap-2">
                 <Archive className="h-4.5 w-4.5 text-muted-foreground" />
-                📁 Lịch sử hợp đồng ({historyContracts.length})
+                {t("contract.contract_history")} ({historyContracts.length})
               </span>
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <span>{historyOpen ? "Thu gọn" : "Mở rộng"}</span>
+                <span>{historyOpen ? t("common.collapse") : t("common.expand")}</span>
                 {historyOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
               </div>
             </button>
@@ -505,7 +507,7 @@ function ContractsPage() {
                 >
                   {historyContracts.length === 0 ? (
                     <div className="text-center p-6 text-xs text-muted-foreground bg-secondary/10 rounded-xl border border-dashed border-border/40">
-                      Chưa có hợp đồng nào thuộc mục lịch sử.
+                      {t("contract.no_history_contracts")}
                     </div>
                   ) : (
                     <div className="grid gap-4">
@@ -529,20 +531,20 @@ function ContractsPage() {
                                   c.status === "TERMINATED" ? "text-red-700 bg-red-50 border border-red-100" :
                                   "text-gray-500 bg-gray-50 border border-gray-200"
                                 }`}>
-                                  {c.status === "REJECTED" ? "ĐÃ TỪ CHỐI" :
-                                   c.status === "TERMINATED" ? "ĐÃ CHẤM DỨT" : "HẾT HẠN"}
+                                  {c.status === "REJECTED" ? t("contract.status_rejected") :
+                                   c.status === "TERMINATED" ? t("contract.status_terminated") : t("contract.status_expired")}
                                 </span>
                                 <span className="font-semibold text-foreground">{c.property?.title}</span>
                               </div>
                               <p className="text-[11px] text-muted-foreground">
-                                Phòng: {c.room?.title} · Thời hạn lưu trú: {formattedStart} - {formattedEnd}
+                                {t("contract.room")}: {c.room?.title} · {t("contract.rental_duration")}: {formattedStart} - {formattedEnd}
                               </p>
                             </div>
 
                             <div className="flex items-center gap-4">
                               <div className="text-right">
-                                <span className="block font-semibold text-foreground">{formattedRent} / tháng</span>
-                                <span className="block text-[10px] text-muted-foreground">Đối tác: {c.landlord?.fullName}</span>
+                                <span className="block font-semibold text-foreground">{formattedRent} / {t("contract.month")}</span>
+                                <span className="block text-[10px] text-muted-foreground">{t("contract.partner")}: {c.landlord?.fullName}</span>
                               </div>
 
                               <div className="flex gap-2">
@@ -552,7 +554,7 @@ function ContractsPage() {
                                   className="h-8 text-[11px] rounded-lg border-border/60 hover:bg-secondary cursor-pointer"
                                   asChild
                                 >
-                                  <Link to={`/app/contracts/${c.id}` as any}>Xem chi tiết</Link>
+                                  <Link to={`/app/contracts/${c.id}` as any}>{t("common.view_details")}</Link>
                                 </Button>
 
                                 {tenancy && tenancy.status === "ENDED" && (
@@ -564,7 +566,7 @@ function ContractsPage() {
                                     size="sm"
                                     className="h-8 text-[11px] bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-lg px-2.5 flex items-center gap-1 cursor-pointer"
                                   >
-                                    <Star className="h-3 w-3 fill-white" /> Viết Đánh Giá
+                                    <Star className="h-3 w-3 fill-white" /> {t("contract.write_review")}
                                   </Button>
                                 )}
                               </div>
@@ -589,9 +591,9 @@ function ContractsPage() {
             <ShieldCheck className="h-5 w-5" />
           </div>
           <div>
-            <h3 className="font-semibold text-sm">Hợp đồng mẫu chuẩn pháp lý Việt Nam</h3>
+            <h3 className="font-semibold text-sm">{t("contract.legal_banner_title")}</h3>
             <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
-              Tất cả hợp đồng thuê tại Trovia đều tuân thủ chặt chẽ theo quy định của Luật Nhà ở và Luật Dân sự Việt Nam hiện hành, đảm bảo an toàn tuyệt đối cho cả hai bên.
+              {t("contract.legal_banner_desc")}
             </p>
           </div>
         </div>
@@ -603,7 +605,7 @@ function ContractsPage() {
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowAddMaintenance(false)} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
             <motion.div initial={{ opacity: 0, scale: 0.95, y: 15 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 15 }} className="relative w-full max-w-md bg-surface ring-1 ring-border rounded-3xl p-6 shadow-2xl z-10 border border-border text-left">
-              <h3 className="font-bold text-lg text-foreground mb-4 flex items-center gap-1.5"><Wrench className="h-5 w-5 text-primary" /> Báo Cáo Sự Cố Thiết Bị</h3>
+              <h3 className="font-bold text-lg text-foreground mb-4 flex items-center gap-1.5"><Wrench className="h-5 w-5 text-primary" /> {t("contract.maintenance_modal_title")}</h3>
               
               <form onSubmit={(e) => {
                 e.preventDefault();
@@ -618,28 +620,28 @@ function ContractsPage() {
                 });
               }} className="space-y-4">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold uppercase text-muted-foreground">Tên sự cố / Thiết bị hỏng</label>
-                  <Input placeholder="Ví dụ: Hỏng vòi nước nhà vệ sinh, Điều hòa chảy nước..." value={mTitle} onChange={(e) => setMTitle(e.target.value)} required className="bg-secondary/40 text-xs h-10 rounded-xl" />
+                  <label className="text-[10px] font-bold uppercase text-muted-foreground">{t("contract.maintenance_title_label")}</label>
+                  <Input placeholder={t("contract.maintenance_title_placeholder")} value={mTitle} onChange={(e) => setMTitle(e.target.value)} required className="bg-secondary/40 text-xs h-10 rounded-xl" />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold uppercase text-muted-foreground">Mô tả chi tiết tình trạng</label>
-                  <Textarea rows={3} placeholder="Mô tả cụ thể sự cố để chủ nhà chuẩn bị linh kiện thay thế hoặc gọi thợ chuyên môn phù hợp..." value={mDescription} onChange={(e) => setMDescription(e.target.value)} required className="bg-secondary/40 text-xs rounded-xl p-3 resize-none" />
+                  <label className="text-[10px] font-bold uppercase text-muted-foreground">{t("contract.maintenance_desc_label")}</label>
+                  <Textarea rows={3} placeholder={t("contract.maintenance_desc_placeholder")} value={mDescription} onChange={(e) => setMDescription(e.target.value)} required className="bg-secondary/40 text-xs rounded-xl p-3 resize-none" />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold uppercase text-muted-foreground">Mức độ khẩn cấp</label>
+                  <label className="text-[10px] font-bold uppercase text-muted-foreground">{t("contract.maintenance_priority_label")}</label>
                   <select value={mPriority} onChange={(e) => setMPriority(e.target.value as any)} className="w-full bg-secondary/40 text-xs h-10 rounded-xl px-3 border border-border focus:outline-none">
-                    <option value="LOW">Thấp (Sắp xếp sửa trong tuần)</option>
-                    <option value="MEDIUM">Trung bình (Sửa trong 1-2 ngày)</option>
-                    <option value="HIGH">🔥 Khẩn cấp (Sửa ngay lập tức)</option>
+                    <option value="LOW">{t("contract.priority_low")}</option>
+                    <option value="MEDIUM">{t("contract.priority_medium")}</option>
+                    <option value="HIGH">{t("contract.priority_high")}</option>
                   </select>
                 </div>
 
                 <div className="flex gap-3 pt-2">
-                  <Button type="button" onClick={() => setShowAddMaintenance(false)} variant="outline" className="flex-1 rounded-xl h-10 border-border/60 text-xs font-semibold cursor-pointer">Hủy</Button>
+                  <Button type="button" onClick={() => setShowAddMaintenance(false)} variant="outline" className="flex-1 rounded-xl h-10 border-border/60 text-xs font-semibold cursor-pointer">{t("common.cancel")}</Button>
                   <Button type="submit" disabled={createMaintenanceMutation.isPending} className="flex-1 rounded-xl h-10 bg-primary text-white font-semibold text-xs cursor-pointer">
-                    {createMaintenanceMutation.isPending ? "Đang gửi..." : "Gửi Yêu Cầu"}
+                    {createMaintenanceMutation.isPending ? t("common.loading") : t("contract.submit_request")}
                   </Button>
                 </div>
               </form>
@@ -654,8 +656,8 @@ function ContractsPage() {
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowAddReview(false)} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
             <motion.div initial={{ opacity: 0, scale: 0.95, y: 15 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 15 }} className="relative w-full max-w-md bg-surface ring-1 ring-border rounded-3xl p-6 shadow-2xl z-10 border border-border text-left">
-              <h3 className="font-bold text-lg text-foreground mb-2 flex items-center gap-1.5 text-amber-500"><Star className="h-5 w-5 fill-amber-500 text-amber-500" /> Đánh Giá Trải Nghiệm Thuê</h3>
-              <p className="text-xs text-muted-foreground mb-4">Chia sẻ phản hồi trung thực về chất lượng phòng và độ hỗ trợ của chủ nhà để giúp cộng đồng Trovia phát triển tốt hơn.</p>
+              <h3 className="font-bold text-lg text-foreground mb-2 flex items-center gap-1.5 text-amber-500"><Star className="h-5 w-5 fill-amber-500 text-amber-500" /> {t("contract.review_modal_title")}</h3>
+              <p className="text-xs text-muted-foreground mb-4">{t("contract.review_modal_desc")}</p>
 
               <form onSubmit={(e) => {
                 e.preventDefault();
@@ -666,7 +668,7 @@ function ContractsPage() {
                 });
               }} className="space-y-4">
                 <div className="space-y-2 text-center py-2 bg-secondary/15 rounded-xl border">
-                  <span className="text-[10px] font-bold uppercase text-muted-foreground block">Điểm số (Sao)</span>
+                  <span className="text-[10px] font-bold uppercase text-muted-foreground block">{t("contract.rating_score")}</span>
                   <div className="flex justify-center gap-2 mt-1">
                     {[1, 2, 3, 4, 5].map((star) => (
                       <button
@@ -680,22 +682,22 @@ function ContractsPage() {
                     ))}
                   </div>
                   <span className="text-[11px] font-bold text-amber-600 mt-1 block">
-                    {rRating === 5 ? "Rất hài lòng ⭐⭐⭐⭐⭐" : 
-                     rRating === 4 ? "Hài lòng ⭐⭐⭐⭐" : 
-                     rRating === 3 ? "Bình thường ⭐⭐⭐" : 
-                     rRating === 2 ? "Không tốt ⭐⭐" : "Rất tệ ⭐"}
+                    {rRating === 5 ? t("contract.rating_5") : 
+                     rRating === 4 ? t("contract.rating_4") : 
+                     rRating === 3 ? t("contract.rating_3") : 
+                     rRating === 2 ? t("contract.rating_2") : t("contract.rating_1")}
                   </span>
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold uppercase text-muted-foreground">Nhận xét chi tiết</label>
-                  <Textarea rows={3} placeholder="Chất lượng phòng tốt, chủ nhà thân thiện, xử lý sự cố nhanh..." value={rComment} onChange={(e) => setRComment(e.target.value)} required className="bg-secondary/40 text-xs rounded-xl p-3 resize-none" />
+                  <label className="text-[10px] font-bold uppercase text-muted-foreground">{t("contract.review_comment_label")}</label>
+                  <Textarea rows={3} placeholder={t("contract.review_comment_placeholder")} value={rComment} onChange={(e) => setRComment(e.target.value)} required className="bg-secondary/40 text-xs rounded-xl p-3 resize-none" />
                 </div>
 
                 <div className="flex gap-3 pt-2">
-                  <Button type="button" onClick={() => setShowAddReview(false)} variant="outline" className="flex-1 rounded-xl h-10 border-border/60 text-xs font-semibold cursor-pointer">Hủy</Button>
+                  <Button type="button" onClick={() => setShowAddReview(false)} variant="outline" className="flex-1 rounded-xl h-10 border-border/60 text-xs font-semibold cursor-pointer">{t("common.cancel")}</Button>
                   <Button type="submit" disabled={submitReviewMutation.isPending} className="flex-1 rounded-xl h-10 bg-primary text-white font-semibold text-xs cursor-pointer">
-                    {submitReviewMutation.isPending ? "Đang gửi..." : "Gửi Đánh Giá"}
+                    {submitReviewMutation.isPending ? t("common.loading") : t("contract.submit_review")}
                   </Button>
                 </div>
               </form>

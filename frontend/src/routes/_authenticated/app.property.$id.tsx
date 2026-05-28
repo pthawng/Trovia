@@ -78,11 +78,11 @@ function PropertyDetail() {
   const handleBookingSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedRoomId) {
-      toast.error("Please select a room to rent.");
+      toast.error(t("property.explore.toasts.select_room_required"));
       return;
     }
     if (!moveInDate) {
-      toast.error("Please specify a proposed move-in date.");
+      toast.error(t("property.explore.toasts.move_in_date_required"));
       return;
     }
 
@@ -185,9 +185,9 @@ function PropertyDetail() {
             </div>
             
             <div className="flex flex-wrap gap-5 mt-5 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1.5"><Star className="h-4 w-4 fill-current text-amber-500" />4.9 · 18 reviews</span>
+              <span className="flex items-center gap-1.5"><Star className="h-4 w-4 fill-current text-amber-500" />4.9 · {t("property.explore.reviews_count", { count: 18 })}</span>
               <span className="flex items-center gap-1.5"><Bed className="h-4 w-4" />{defaultRoom?.capacity || 1} {t("property.capacity").toLowerCase()}</span>
-              <span className="flex items-center gap-1.5"><Maximize2 className="h-4 w-4" />{defaultRoom?.area || 30} m² {t("landlord.room_size").split(" ")[0].toLowerCase()}</span>
+              <span className="flex items-center gap-1.5"><Maximize2 className="h-4 w-4" />{t("property.explore.area_sqm", { count: defaultRoom?.area || 30 })}</span>
             </div>
           </div>
 
@@ -211,9 +211,9 @@ function PropertyDetail() {
                   >
                     <div>
                       <h4 className="font-semibold text-base">{room.title}</h4>
-                      <p className="text-sm text-muted-foreground mt-1">{room.description || "Move-in ready room package."}</p>
+                      <p className="text-sm text-muted-foreground mt-1">{room.description || t("property.explore.room_default_desc")}</p>
                       <div className="flex items-center gap-4 text-xs text-muted-foreground mt-2">
-                        <span>{t("landlord.room_size")}: {room.area}m²</span>
+                        <span>{t("dashboard.room_size")}: {room.area}m²</span>
                         <span>{t("property.capacity")}: {room.capacity}</span>
                         <span>{t("property.deposit")}: {Number(room.deposit).toLocaleString('vi-VN')} VND</span>
                       </div>

@@ -4,16 +4,10 @@ import { Heart, MapPin, Wifi, Users, LayoutGrid, AlertCircle, Home } from "lucid
 import { Link } from "@tanstack/react-router";
 import { ListingService } from "@/services/listing.service";
 import type { Property } from "@/services/property.service";
-
-const propertyTypeLabels: Record<string, string> = {
-  BOARDING_HOUSE: "Nhà trọ",
-  APARTMENT: "Căn hộ",
-  HOUSE: "Nhà nguyên căn",
-  STUDIO: "Phòng Studio",
-  DORMITORY: "Ký túc xá",
-};
+import { useTranslation } from "react-i18next";
 
 export function Properties() {
+  const { t } = useTranslation();
   const { data, isLoading, error } = useQuery({
     queryKey: ["publicFeaturedListings"],
     queryFn: () => ListingService.search({ limit: 6, status: "PUBLISHED" }),
@@ -33,16 +27,16 @@ export function Properties() {
       <div className="mx-auto max-w-7xl">
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-12 text-left">
           <div className="max-w-2xl">
-            <div className="text-sm font-semibold text-primary mb-3 uppercase tracking-wider">Tin nổi bật</div>
+            <div className="text-sm font-semibold text-primary mb-3 uppercase tracking-wider">{t("landing.properties.tag")}</div>
             <h2 className="text-4xl sm:text-5xl font-semibold tracking-tight text-foreground">
-              Phòng trọ chọn lọc,<br className="hidden sm:block" /> sẵn sàng dọn vào ngay.
+              {t("landing.properties.title")}
             </h2>
           </div>
           <Link
             to="/app/explore"
             className="text-sm font-semibold text-primary hover:underline underline-offset-4 flex items-center gap-1.5"
           >
-            Xem tất cả phòng trọ →
+            {t("landing.properties.view_all")}
           </Link>
         </div>
 
@@ -71,14 +65,14 @@ export function Properties() {
           <div className="text-center py-16 border border-dashed border-destructive/20 rounded-3xl bg-destructive/5 space-y-4 max-w-2xl mx-auto">
             <AlertCircle className="h-10 w-10 text-destructive mx-auto animate-bounce" />
             <div className="space-y-1">
-              <h4 className="text-sm font-bold text-foreground">Không thể tải danh sách phòng lúc này.</h4>
-              <p className="text-xs text-muted-foreground">Vui lòng kiểm tra lại kết nối mạng hoặc quay lại sau.</p>
+              <h4 className="text-sm font-bold text-foreground">{t("landing.properties.error_title")}</h4>
+              <p className="text-xs text-muted-foreground">{t("landing.properties.error_desc")}</p>
             </div>
             <Link
               to="/app/explore"
               className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-xl bg-primary text-primary-foreground hover:opacity-95 shadow-md shadow-primary/20 transition-all"
             >
-              Thử lại trên trang khám phá
+              {t("landing.properties.retry_btn")}
             </Link>
           </div>
         )}
@@ -88,8 +82,8 @@ export function Properties() {
           <div className="text-center py-16 border border-dashed border-border rounded-3xl bg-muted/10 space-y-4 max-w-2xl mx-auto">
             <Home className="h-10 w-10 text-muted-foreground mx-auto" />
             <div className="space-y-1">
-              <h4 className="text-sm font-bold text-foreground">Hiện chưa có phòng phù hợp.</h4>
-              <p className="text-xs text-muted-foreground">Hãy quay lại sau hoặc liên hệ với chúng tôi để đặt chỗ.</p>
+              <h4 className="text-sm font-bold text-foreground">{t("landing.properties.empty_title")}</h4>
+              <p className="text-xs text-muted-foreground">{t("landing.properties.empty_desc")}</p>
             </div>
           </div>
         )}
@@ -102,10 +96,10 @@ export function Properties() {
               const firstRoom = p.rooms?.[0];
               const minPrice = firstRoom?.price
                 ? `${firstRoom.price.toLocaleString("vi-VN")} VND`
-                : "Liên hệ";
-              const area = firstRoom?.area ? `${firstRoom.area} m²` : "Chưa cập nhật";
-              const capacity = firstRoom?.capacity ? `Tối đa ${firstRoom.capacity} người` : "Chưa cập nhật";
-              const typeLabel = propertyTypeLabels[p.type] || "Phòng trọ";
+                : t("landing.properties.contact_price");
+              const area = firstRoom?.area ? `${firstRoom.area} m²` : t("landing.properties.no_update");
+              const capacity = firstRoom?.capacity ? t("landing.properties.max_guests", { count: firstRoom.capacity }) : t("landing.properties.no_update");
+              const typeLabel = t(`landing.properties.type_labels.${p.type}`) || t("landing.properties.type_labels.BOARDING_HOUSE");
 
               return (
                 <motion.article
@@ -130,7 +124,7 @@ export function Properties() {
                         </span>
                         {p.hasParking && (
                           <span className="glass text-[11px] font-semibold px-2.5 py-1 rounded-full text-foreground">
-                            Có chỗ để xe
+                            {t("landing.properties.parking_label")}
                           </span>
                         )}
                       </div>
@@ -164,7 +158,7 @@ export function Properties() {
                         </span>
                         <span className="flex items-center gap-1.5">
                           <Wifi className="h-3.5 w-3.5" />
-                          Wifi miễn phí
+                          {t("landing.properties.wifi_label")}
                         </span>
                       </div>
                     </div>
@@ -174,14 +168,14 @@ export function Properties() {
                     <div className="flex items-end justify-between pt-3 border-t border-border">
                       <div>
                         <span className="text-xl font-bold text-primary">{minPrice}</span>
-                        {firstRoom?.price && <span className="text-xs text-muted-foreground"> / tháng</span>}
+                        {firstRoom?.price && <span className="text-xs text-muted-foreground">{t("landing.properties.per_month")}</span>}
                       </div>
                       <Link
                         to="/app/property/$id"
                         params={{ id: p.id }}
                         className="text-sm font-semibold text-primary hover:underline underline-offset-4"
                       >
-                        Xem chi tiết
+                        {t("landing.properties.view_details")}
                       </Link>
                     </div>
                   </div>
@@ -194,3 +188,4 @@ export function Properties() {
     </section>
   );
 }
+

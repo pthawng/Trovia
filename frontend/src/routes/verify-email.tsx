@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { AuthLayout } from "@/components/auth/AuthLayout";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,7 @@ export const Route = createFileRoute("/verify-email")({
 type State = "loading" | "success" | "error" | "idle";
 
 function VerifyEmailPage() {
+  const { t } = useTranslation();
   const { token, email } = Route.useSearch();
   const navigate = useNavigate();
   const [state, setState] = useState<State>(token && email ? "loading" : "idle");
@@ -34,7 +36,7 @@ function VerifyEmailPage() {
         await AuthService.verifyEmail(token, email);
         if (!cancelled) {
           setState("success");
-          toast.success("Email xác minh thành công!");
+          toast.success(t("auth.email_verified_success_toast"));
         }
       } catch {
         if (!cancelled) setState("error");
@@ -42,15 +44,15 @@ function VerifyEmailPage() {
     })();
 
     return () => { cancelled = true; };
-  }, [token, email]);
+  }, [token, email, t]);
 
   const handleResend = async () => {
     setResending(true);
     try {
       await AuthService.resendVerification();
-      toast.success("Đã gửi lại email xác minh!");
+      toast.success(t("auth.resend_verify_email_success_toast"));
     } catch {
-      toast.error("Không thể gửi lại. Vui lòng thử lại sau.");
+      toast.error(t("auth.resend_verify_email_error_toast"));
     } finally {
       setResending(false);
     }
@@ -58,13 +60,13 @@ function VerifyEmailPage() {
 
   return (
     <AuthLayout
-      title="Xác minh email"
-      subtitle="Kiểm tra hộp thư của bạn để hoàn tất đăng ký Trovia."
+      title={t("auth.verify_email_title")}
+      subtitle={t("auth.verify_email_subtitle")}
     >
       {state === "loading" && (
         <div className="flex flex-col items-center gap-4 py-6">
           <Loader2 className="h-10 w-10 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">Đang xác minh email…</p>
+          <p className="text-sm text-muted-foreground">{t("auth.verifying_email")}</p>
         </div>
       )}
 
@@ -72,16 +74,16 @@ function VerifyEmailPage() {
         <div className="rounded-2xl border border-border bg-secondary/50 p-6 space-y-4 text-center">
           <CheckCircle className="h-12 w-12 text-green-500 mx-auto" />
           <div>
-            <p className="font-semibold text-foreground">Email đã được xác minh! 🎉</p>
+            <p className="font-semibold text-foreground">{t("auth.email_verified_title")}</p>
             <p className="text-sm text-muted-foreground mt-1">
-              Bạn có thể đăng nhập và bắt đầu sử dụng Trovia.
+              {t("auth.email_verified_desc")}
             </p>
           </div>
           <Button
             className="w-full"
             onClick={() => navigate({ to: "/login" })}
           >
-            Đăng nhập ngay
+            {t("auth.login_now_btn")}
           </Button>
         </div>
       )}
@@ -90,9 +92,9 @@ function VerifyEmailPage() {
         <div className="rounded-2xl border border-border bg-secondary/50 p-6 space-y-4 text-center">
           <XCircle className="h-12 w-12 text-red-500 mx-auto" />
           <div>
-            <p className="font-semibold text-foreground">Xác minh thất bại</p>
+            <p className="font-semibold text-foreground">{t("auth.verify_email_failed_title")}</p>
             <p className="text-sm text-muted-foreground mt-1">
-              Liên kết không hợp lệ hoặc đã hết hạn (24 giờ).
+              {t("auth.verify_email_failed_desc")}
             </p>
           </div>
           <Button
@@ -102,9 +104,9 @@ function VerifyEmailPage() {
             onClick={handleResend}
           >
             {resending ? (
-              <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Đang gửi…</>
+              <><Loader2 className="h-4 w-4 animate-spin mr-2" /> {t("auth.sending")}</>
             ) : (
-              <><Mail className="h-4 w-4 mr-2" /> Gửi lại email xác minh</>
+              <><Mail className="h-4 w-4 mr-2" /> {t("auth.resend_verify_email_btn")}</>
             )}
           </Button>
         </div>
@@ -114,10 +116,9 @@ function VerifyEmailPage() {
         <div className="rounded-2xl border border-border bg-secondary/50 p-6 space-y-4 text-center">
           <Mail className="h-12 w-12 text-muted-foreground mx-auto" />
           <div>
-            <p className="font-semibold text-foreground">Kiểm tra hộp thư</p>
+            <p className="font-semibold text-foreground">{t("auth.check_inbox_title")}</p>
             <p className="text-sm text-muted-foreground mt-1">
-              Chúng tôi đã gửi email xác minh khi bạn đăng ký.
-              Kiểm tra hộp thư (kể cả spam).
+              {t("auth.check_inbox_desc")}
             </p>
           </div>
           <Button
@@ -127,9 +128,9 @@ function VerifyEmailPage() {
             onClick={handleResend}
           >
             {resending ? (
-              <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Đang gửi…</>
+              <><Loader2 className="h-4 w-4 animate-spin mr-2" /> {t("auth.sending")}</>
             ) : (
-              "Gửi lại email xác minh"
+              t("auth.resend_verify_email_btn")
             )}
           </Button>
         </div>
@@ -137,7 +138,7 @@ function VerifyEmailPage() {
 
       <div className="text-center mt-4">
         <Link to="/login" className="text-sm text-primary hover:underline">
-          Quay lại đăng nhập
+          {t("auth.back_to_login")}
         </Link>
       </div>
     </AuthLayout>

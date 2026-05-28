@@ -111,16 +111,16 @@ export function AppShell({ children }: { children: ReactNode }) {
   ];
 
   const landlordNav: NavItem[] = [
-    { to: "/app/landlord?view=overview", view: "overview", label: "Tổng quan", icon: LayoutDashboard },
-    { to: "/app/landlord?view=properties", view: "properties", label: "Bất động sản", icon: Building },
-    { to: "/app/landlord?view=rooms", view: "rooms", label: "Phòng / Căn hộ", icon: Home },
-    { to: "/app/landlord?view=requests", view: "requests", label: "Yêu cầu thuê", icon: FileText },
-    { to: "/app/landlord?view=messages", view: "messages", label: "Tin nhắn", icon: MessageSquare, badge: unreadCount },
-    { to: "/app/landlord?view=tenants", view: "tenants", label: "Người thuê", icon: User },
-    { to: "/app/landlord?view=contracts", view: "contracts", label: "Hợp đồng", icon: FileText },
-    { to: "/app/landlord?view=payments", view: "payments", label: "Thanh toán", icon: CreditCard },
-    { to: "/app/landlord?view=maintenance", view: "maintenance", label: "Bảo trì", icon: Wrench },
-    { to: "/app/landlord?view=settings", view: "settings", label: "Cài đặt", icon: Settings },
+    { to: "/app/landlord?view=overview", view: "overview", labelKey: "dashboard.nav.overview", icon: LayoutDashboard },
+    { to: "/app/landlord?view=properties", view: "properties", labelKey: "dashboard.nav.properties", icon: Building },
+    { to: "/app/landlord?view=rooms", view: "rooms", labelKey: "dashboard.nav.rooms", icon: Home },
+    { to: "/app/landlord?view=requests", view: "requests", labelKey: "dashboard.nav.requests", icon: FileText },
+    { to: "/app/landlord?view=messages", view: "messages", labelKey: "dashboard.nav.messages", icon: MessageSquare, badge: unreadCount },
+    { to: "/app/landlord?view=tenants", view: "tenants", labelKey: "dashboard.nav.tenants", icon: User },
+    { to: "/app/landlord?view=contracts", view: "contracts", labelKey: "dashboard.nav.contracts", icon: FileText },
+    { to: "/app/landlord?view=payments", view: "payments", labelKey: "dashboard.nav.payments", icon: CreditCard },
+    { to: "/app/landlord?view=maintenance", view: "maintenance", labelKey: "dashboard.nav.maintenance", icon: Wrench },
+    { to: "/app/landlord?view=settings", view: "settings", labelKey: "dashboard.nav.settings", icon: Settings },
   ];
 
   const SidebarInner = (isMobileView = false) => {
@@ -197,7 +197,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               <div className={cn("pt-4 mt-4 border-t border-border/60", isCollapsed && "px-0")}>
                 {!isCollapsed ? (
                   <div className="px-4 mb-2 text-[10px] font-bold text-muted-foreground tracking-wider uppercase flex items-center gap-1.5">
-                    <span>🏠 Chỗ ở hiện tại</span>
+                    <span>{t("common.current_stay")}</span>
                   </div>
                 ) : (
                   <div className="w-6 h-px bg-border/60 mx-auto mb-2" />
@@ -267,7 +267,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   key={item.to} 
                   to={item.to as any} 
                   onClick={() => setMobileOpen(false)}
-                  title={isCollapsed ? item.label : undefined}
+                  title={isCollapsed ? (item.labelKey ? t(item.labelKey) : item.label) : undefined}
                   className={cn(
                     "flex items-center rounded-xl py-3 text-sm font-medium transition-all duration-200 border border-transparent relative",
                     isCollapsed ? "justify-center px-0 h-11 w-11 mx-auto" : "gap-3 px-4",
@@ -277,7 +277,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   )}
                 >
                   <item.icon className={cn("h-4.5 w-4.5 shrink-0 transition-transform duration-200", active && "scale-105")} />
-                  {!isCollapsed && <span className="flex-1 text-left whitespace-nowrap">{item.label}</span>}
+                  {!isCollapsed && <span className="flex-1 text-left whitespace-nowrap">{item.labelKey ? t(item.labelKey) : item.label}</span>}
                   {!!item.badge && (
                     isCollapsed ? (
                       <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-amber-600" />
@@ -298,27 +298,27 @@ export function AppShell({ children }: { children: ReactNode }) {
               <Link 
                 to="/app/explore" 
                 onClick={() => setMobileOpen(false)}
-                title={isCollapsed ? "Quay lại Khám phá" : undefined}
+                title={isCollapsed ? t("property.back_to_explore") : undefined}
                 className={cn(
                   "flex items-center rounded-xl py-3 text-sm font-medium text-muted-foreground hover:bg-secondary/60 hover:text-foreground transition-all",
                   isCollapsed ? "justify-center px-0 h-11 w-11 mx-auto" : "gap-3 px-4"
                 )}
               >
                 <ArrowLeftRight className="h-4.5 w-4.5 shrink-0" />
-                {!isCollapsed && <span>Quay lại Khám phá</span>}
+                {!isCollapsed && <span>{t("property.back_to_explore")}</span>}
               </Link>
             ) : isLandlord ? (
               <Link 
                 to={"/app/landlord" as any} 
                 onClick={() => setMobileOpen(false)}
-                title={isCollapsed ? "Kênh chủ nhà" : undefined}
+                title={isCollapsed ? t("nav.landlord_dashboard") : undefined}
                 className={cn(
                   "flex items-center rounded-xl py-3 text-sm font-medium text-muted-foreground hover:bg-secondary/60 hover:text-foreground transition-all",
                   isCollapsed ? "justify-center px-0 h-11 w-11 mx-auto" : "gap-3 px-4"
                 )}
               >
                 <Building className="h-4.5 w-4.5 text-amber-500 shrink-0" />
-                {!isCollapsed && <span>Kênh chủ nhà</span>}
+                {!isCollapsed && <span>{t("nav.landlord_dashboard")}</span>}
               </Link>
             ) : (
               isCollapsed ? (
@@ -347,14 +347,14 @@ export function AppShell({ children }: { children: ReactNode }) {
             {/* Expand/Collapse desktop toggle button at bottom */}
             <button
               onClick={() => setCollapsed(!collapsed)}
-              title={isCollapsed ? "Mở rộng thanh bên" : "Thu gọn thanh bên"}
+              title={isCollapsed ? t("common.expand_sidebar") : t("common.collapse_sidebar")}
               className={cn(
                 "hidden lg:flex items-center rounded-xl py-3 text-sm font-medium text-muted-foreground hover:bg-secondary/60 hover:text-foreground transition-all duration-200",
                 isCollapsed ? "justify-center px-0 h-11 w-11 mx-auto" : "gap-3 px-4 w-full"
               )}
             >
               <ArrowLeftRight className={cn("h-4.5 w-4.5 shrink-0 transition-transform duration-300", isCollapsed && "rotate-180")} />
-              {!isCollapsed && <span className="whitespace-nowrap">Thu gọn thanh bên</span>}
+              {!isCollapsed && <span className="whitespace-nowrap">{t("common.collapse_sidebar")}</span>}
             </button>
           </div>
         </nav>
@@ -404,7 +404,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 className="hidden lg:flex shrink-0 hover:bg-secondary h-10 w-10 rounded-xl" 
                 onClick={() => setCollapsed((v) => !v)}
                 aria-label="Toggle sidebar collapse"
-                title={collapsed ? "Mở rộng thanh bên" : "Thu gọn thanh bên"}
+                title={collapsed ? t("common.expand_sidebar") : t("common.collapse_sidebar")}
               >
                 <Menu className="h-5 w-5 text-muted-foreground" />
               </Button>
@@ -413,7 +413,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               <div className="flex-1 max-w-xl relative group hidden sm:block">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
                 <Input 
-                  placeholder="Tìm phòng trọ, căn hộ, quận huyện, trường học..." 
+                  placeholder={t("property.search_placeholder")} 
                   className="pl-9 h-11 bg-secondary/40 border-transparent hover:bg-secondary/70 focus-visible:bg-background focus-visible:ring-2 focus-visible:ring-primary/20 transition-all rounded-xl text-sm" 
                 />
               </div>
@@ -436,7 +436,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   )}
                 >
                   <ArrowLeftRight className="h-3.5 w-3.5" />
-                  <span>{inLandlordMode ? "Kênh khách thuê" : "Switch to Landlord"}</span>
+                  <span>{inLandlordMode ? t("common.switch_to_tenant") : t("common.switch_to_landlord")}</span>
                 </Button>
               )}
 
@@ -487,7 +487,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   {/* Redirect to Personal Hub (Tenant Dashboard) */}
                   <DropdownMenuItem onSelect={() => navigate({ to: "/app/tenant/dashboard" })} className="rounded-xl px-3 py-2 text-xs font-medium cursor-pointer">
                     <Laptop className="h-4 w-4 mr-2 text-muted-foreground" />
-                    Personal Hub
+                    {t("common.personal_hub")}
                   </DropdownMenuItem>
 
                   <DropdownMenuItem onSelect={() => navigate({ to: "/app/profile" })} className="rounded-xl px-3 py-2 text-xs font-medium cursor-pointer">

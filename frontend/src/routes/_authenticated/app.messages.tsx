@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { 
   Send, Search, MessageSquare, Calendar, ShieldCheck, User as UserIcon, 
   Building, FileText, CreditCard, Image as ImageIcon, Paperclip, 
@@ -16,6 +17,7 @@ import { useConversationSocket } from "@/hooks/useConversationSocket";
 export const Route = createFileRoute("/_authenticated/app/messages")({ component: Messages });
 
 export function Messages() {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -109,7 +111,7 @@ export function Messages() {
   const sendAppointment = () => {
     if (!activeId) return;
     socketSendMessage(
-      "Xin chào! Mình muốn hẹn lịch xem phòng vào cuối tuần này. Nhờ bạn xác nhận lịch nhé!",
+      t("chat.mock_actions.appointment"),
       "APPOINTMENT",
       {
         appointmentDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
@@ -122,7 +124,7 @@ export function Messages() {
   const sendPaymentRequest = () => {
     if (!activeId) return;
     socketSendMessage(
-      "Yêu cầu thanh toán tiền đặt cọc giữ chỗ để hoàn thiện hồ sơ thuê phòng.",
+      t("chat.mock_actions.payment"),
       "PAYMENT",
       {
         amount: 2500000,
@@ -135,7 +137,7 @@ export function Messages() {
   const sendContractInvitation = () => {
     if (!activeId) return;
     socketSendMessage(
-      "Hợp đồng thuê nhà điện tử đã được khởi tạo thành công. Vui lòng xem kỹ điều khoản và thực hiện ký e-Sign.",
+      t("chat.mock_actions.contract"),
       "CONTRACT",
       {
         status: "DRAFT"
@@ -198,7 +200,7 @@ export function Messages() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Tìm kiếm liên hệ..."
+              placeholder={t("chat.search_placeholder")}
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
               className="pl-9 h-10 bg-background border-border/80 focus-visible:ring-primary/20 rounded-xl text-xs"
@@ -214,7 +216,7 @@ export function Messages() {
                 activeTab === "ALL" ? "bg-background text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
               )}
             >
-              Tất cả
+              {t("chat.tabs.all")}
             </button>
             <button
               onClick={() => setActiveTab("TENANT")}
@@ -223,7 +225,7 @@ export function Messages() {
                 activeTab === "TENANT" ? "bg-background text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
               )}
             >
-              Với chủ nhà
+              {t("chat.tabs.tenant")}
             </button>
             <button
               onClick={() => setActiveTab("LANDLORD")}
@@ -232,7 +234,7 @@ export function Messages() {
                 activeTab === "LANDLORD" ? "bg-background text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
               )}
             >
-              Với người thuê
+              {t("chat.tabs.landlord")}
             </button>
           </div>
         </div>
@@ -248,7 +250,7 @@ export function Messages() {
           ) : filteredThreads.length === 0 ? (
             <div className="text-center py-16 text-muted-foreground space-y-2">
               <MessageSquare className="h-8 w-8 mx-auto text-muted-foreground/40 animate-bounce" />
-              <p className="text-xs font-medium">Không tìm thấy cuộc hội thoại nào.</p>
+              <p className="text-xs font-medium">{t("chat.no_conversations_found")}</p>
             </div>
           ) : (
             filteredThreads.map((t) => {
@@ -271,14 +273,14 @@ export function Messages() {
                       {initials}
                     </div>
                     {/* Glowing Online Status Indicator placeholder */}
-                    <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full bg-emerald-500 border-2 border-background animate-pulse" title="Đang trực tuyến" />
+                    <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full bg-emerald-500 border-2 border-background animate-pulse" title={t("chat.status.online")} />
                     
                     {isTenantRole ? (
-                      <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 text-[8px] text-white ring-2 ring-background font-bold" title="Vai trò: Khách thuê">
+                      <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 text-[8px] text-white ring-2 ring-background font-bold" title={t("chat.roles.tenant_role")}>
                         T
                       </span>
                     ) : (
-                      <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-[8px] text-white ring-2 ring-background font-bold" title="Vai trò: Chủ nhà">
+                      <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-[8px] text-white ring-2 ring-background font-bold" title={t("chat.roles.landlord_role")}>
                         L
                       </span>
                     )}
@@ -287,7 +289,7 @@ export function Messages() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
                       <div className="font-bold text-xs truncate text-foreground flex items-center gap-1.5">
-                        {otherUser?.fullName || "Người liên hệ"}
+                        {otherUser?.fullName || t("chat.other_user_placeholder")}
                       </div>
                       <div className="text-[9px] text-muted-foreground shrink-0 font-medium">
                         {t.lastMessage ? new Date(t.lastMessage.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ""}
@@ -297,13 +299,13 @@ export function Messages() {
                     {/* Render preview of custom card types in sidebar */}
                     <div className={cn("text-[11px] truncate mt-1", hasUnread ? "text-foreground font-semibold" : "text-muted-foreground")}>
                       {t.lastMessage ? (
-                        t.lastMessage.type === "CONTRACT" ? "📄 Gửi lời mời ký hợp đồng" :
-                        t.lastMessage.type === "PAYMENT" ? "💳 Yêu cầu thanh toán mới" :
-                        t.lastMessage.type === "APPOINTMENT" ? "📅 Hẹn lịch xem phòng" :
-                        t.lastMessage.type === "IMAGE" ? "📷 [Hình ảnh]" :
-                        t.lastMessage.type === "FILE" ? "📎 [Tệp đính kèm]" :
+                        t.lastMessage.type === "CONTRACT" ? t("chat.types.contract") :
+                        t.lastMessage.type === "PAYMENT" ? t("chat.types.payment") :
+                        t.lastMessage.type === "APPOINTMENT" ? t("chat.types.appointment") :
+                        t.lastMessage.type === "IMAGE" ? t("chat.types.image") :
+                        t.lastMessage.type === "FILE" ? t("chat.types.file") :
                         t.lastMessage.content
-                      ) : "Chưa có tin nhắn"}
+                      ) : t("chat.no_messages_yet")}
                     </div>
                   </div>
                   {hasUnread && <span className="h-2 w-2 rounded-full bg-primary shrink-0 absolute right-4 top-1/2 -translate-y-1/2" />}
@@ -333,26 +335,26 @@ export function Messages() {
                     {otherParticipant.fullName}
                     {currentUser?.id === activeThread.tenantId ? (
                       <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full flex items-center gap-0.5">
-                        <ShieldCheck className="h-2.5 w-2.5" /> CHỦ NHÀ
+                        <ShieldCheck className="h-2.5 w-2.5" /> {t("chat.roles.landlord").toUpperCase()}
                       </span>
                     ) : (
                       <span className="text-[9px] font-bold text-blue-700 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-full flex items-center gap-0.5">
-                        <UserIcon className="h-2.5 w-2.5" /> KHÁCH THUÊ
+                        <UserIcon className="h-2.5 w-2.5" /> {t("chat.roles.tenant").toUpperCase()}
                       </span>
                     )}
                   </div>
                   <div className="text-[10px] text-muted-foreground flex items-center gap-1.5 mt-1 font-medium">
                     <span className="flex items-center gap-1">
                       <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping" />
-                      <span className="text-emerald-600 dark:text-emerald-400 font-bold">Đang hoạt động</span>
+                      <span className="text-emerald-600 dark:text-emerald-400 font-bold">{t("chat.status.active")}</span>
                     </span>
                     <span className="text-border">|</span>
                     <Building className="h-3 w-3 text-primary shrink-0" /> 
-                    <span>{activeThread.property?.title || "Bất động sản"}</span>
+                    <span>{activeThread.property?.title || t("chat.chat_room.property_label")}</span>
                     {activeThread.room && (
                       <>
                         <ChevronRight className="h-2.5 w-2.5 text-muted-foreground shrink-0" />
-                        <span className="text-foreground font-semibold">Phòng {activeThread.room.roomNumber || activeThread.room.title}</span>
+                        <span className="text-foreground font-semibold">{t("chat.chat_room.room_label", { room: activeThread.room.roomNumber || activeThread.room.title })}</span>
                       </>
                     )}
                   </div>
@@ -361,11 +363,11 @@ export function Messages() {
               <div className="text-[10px] text-muted-foreground font-bold flex items-center gap-1">
                 {isConnected ? (
                   <span className="text-emerald-500 flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/20 px-2.5 py-1 rounded-full border border-emerald-100 dark:border-emerald-950/30">
-                    ● Realtime Connected
+                    ● {t("chat.status.connected")}
                   </span>
                 ) : (
                   <span className="text-amber-500 flex items-center gap-1 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-100">
-                    ▲ Reconnecting...
+                    ▲ {t("chat.status.reconnecting")}
                   </span>
                 )}
               </div>
@@ -375,12 +377,12 @@ export function Messages() {
             <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-background/5">
               {loadingMessages ? (
                 <div className="flex items-center justify-center h-full">
-                  <div className="text-xs text-muted-foreground animate-pulse">Đang tải tin nhắn...</div>
+                  <div className="text-xs text-muted-foreground animate-pulse">{t("chat.loading_messages")}</div>
                 </div>
               ) : messages.length === 0 ? (
                 <div className="text-center py-20 text-muted-foreground space-y-2">
                   <MessageSquare className="h-8 w-8 mx-auto text-muted-foreground/40 animate-pulse" />
-                  <p className="text-xs">Chưa có tin nhắn nào. Bắt đầu câu chuyện ngay!</p>
+                  <p className="text-xs">{t("chat.no_messages_history")}</p>
                 </div>
               ) : (
                 messages.map((m) => {
@@ -399,7 +401,7 @@ export function Messages() {
                     return (
                       <div key={m.id} className="flex justify-center my-4">
                         <div className="max-w-md bg-secondary/50 border border-border/80 rounded-2xl px-5 py-4 text-center shadow-xs space-y-1.5 backdrop-blur-xs">
-                          <span className="text-[10px] font-bold text-primary tracking-widest uppercase block">Thông báo hệ thống</span>
+                          <span className="text-[10px] font-bold text-primary tracking-widest uppercase block">{t("chat.roles.system")}</span>
                           <p className="text-xs text-foreground font-semibold leading-relaxed">{m.content}</p>
                         </div>
                       </div>
@@ -423,14 +425,14 @@ export function Messages() {
                             </div>
                             <div className="flex-1 space-y-1.5">
                               <h4 className="font-bold text-xs text-foreground flex items-center gap-1.5">
-                                Lịch Hẹn Xem Nhà
+                                {t("chat.cards.appointment_title")}
                               </h4>
                               <p className="text-[11px] text-muted-foreground leading-relaxed">
                                 {m.content}
                               </p>
                               {metadata?.appointmentDate && (
                                 <div className="text-[10px] font-bold text-blue-600 dark:text-blue-400 bg-blue-500/5 py-1 px-2 rounded-md border border-blue-500/10 inline-block">
-                                  Thời gian: {new Date(metadata.appointmentDate).toLocaleString("vi-VN")}
+                                  {t("chat.cards.appointment_time", { time: new Date(metadata.appointmentDate).toLocaleString() })}
                                 </div>
                               )}
                               <div className="pt-2">
@@ -439,7 +441,7 @@ export function Messages() {
                                   onClick={() => navigate({ to: "/app/requests" as any })}
                                   className="h-8 text-[10px] font-bold rounded-lg px-3 bg-blue-600 hover:bg-blue-700 text-white cursor-pointer"
                                 >
-                                  Quản lý lịch hẹn
+                                  {t("chat.cards.appointment_btn")}
                                 </Button>
                               </div>
                             </div>
@@ -466,7 +468,7 @@ export function Messages() {
                             </div>
                             <div className="flex-1 space-y-1.5">
                               <h4 className="font-bold text-xs text-foreground flex items-center gap-1.5">
-                                Ký Hợp Đồng Thuê Nhà
+                                {t("chat.cards.contract_title")}
                               </h4>
                               <p className="text-[11px] text-muted-foreground leading-relaxed">
                                 {m.content}
@@ -477,7 +479,7 @@ export function Messages() {
                                   onClick={() => navigate({ to: isCurrentUserLandlordInActiveThread ? "/app/landlord?view=contracts" as any : "/app/contracts" as any })}
                                   className="h-8 text-[10px] font-bold rounded-lg px-3 bg-amber-500 hover:bg-amber-600 text-white cursor-pointer"
                                 >
-                                  Ký Hợp Đồng e-Sign
+                                  {t("chat.cards.contract_btn")}
                                 </Button>
                               </div>
                             </div>
@@ -504,14 +506,14 @@ export function Messages() {
                             </div>
                             <div className="flex-1 space-y-1.5">
                               <h4 className="font-bold text-xs text-foreground flex items-center gap-1.5">
-                                Yêu Cầu Thanh Toán
+                                {t("chat.cards.payment_title")}
                               </h4>
                               <p className="text-[11px] text-muted-foreground leading-relaxed">
                                 {m.content}
                               </p>
                               {metadata?.amount && (
                                 <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400 mt-1">
-                                  Số tiền: {Number(metadata.amount).toLocaleString("vi-VN")} đ
+                                  {t("chat.cards.payment_amount", { amount: Number(metadata.amount).toLocaleString() })}
                                 </div>
                               )}
                               <div className="pt-2">
@@ -520,7 +522,7 @@ export function Messages() {
                                   onClick={() => navigate({ to: isCurrentUserLandlordInActiveThread ? "/app/landlord?view=payments" as any : "/app/payments" as any })}
                                   className="h-8 text-[10px] font-bold rounded-lg px-3 bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
                                 >
-                                  Thanh Toán Ngay
+                                  {t("chat.cards.payment_btn")}
                                 </Button>
                               </div>
                             </div>
@@ -535,7 +537,7 @@ export function Messages() {
                     return (
                       <div key={m.id} className={cn("flex", isMe ? "justify-end" : "justify-start", "my-2")}>
                         <div className="max-w-xs rounded-2xl overflow-hidden shadow-xs border border-border/80 bg-surface group relative cursor-pointer">
-                          <img src={m.content} alt="Attachment" className="w-full h-auto max-h-56 object-cover" />
+                          <img src={m.content} alt={t("chat.types.image")} className="w-full h-auto max-h-56 object-cover" />
                           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition duration-200 grid place-items-center">
                             <ImageIcon className="h-6 w-6 text-white" />
                           </div>
@@ -565,7 +567,7 @@ export function Messages() {
                               rel="noreferrer" 
                               className="text-[10px] font-bold text-primary hover:underline mt-1 block"
                             >
-                              Tải tài liệu đính kèm
+                              {t("chat.cards.file_download")}
                             </a>
                           </div>
                         </div>
@@ -595,11 +597,11 @@ export function Messages() {
                           {isMe && (
                             m.readAt ? (
                               <span className="text-emerald-300 dark:text-emerald-400 flex items-center gap-0.5">
-                                <Check className="h-2 w-2 stroke-[4px]" /> Đã xem
+                                <Check className="h-2 w-2 stroke-[4px]" /> {t("chat.status.read")}
                               </span>
                             ) : (
                               <span className="opacity-60 flex items-center gap-0.5">
-                                <Check className="h-2 w-2 stroke-[3px]" /> Đã gửi
+                                <Check className="h-2 w-2 stroke-[3px]" /> {t("chat.status.sent")}
                               </span>
                             )
                           )}
@@ -613,7 +615,7 @@ export function Messages() {
               {/* Animated Typing Indicator inside viewport */}
               {isPeerTyping && (
                 <div className="flex justify-start items-center gap-2.5 text-xs text-muted-foreground/90 bg-secondary/20 py-2 px-4 rounded-xl border border-border/30 w-fit animate-pulse">
-                  <span className="font-bold">{otherParticipant?.fullName} đang nhập</span>
+                  <span className="font-bold">{t("chat.status.typing", { name: otherParticipant?.fullName })}</span>
                   <span className="flex gap-1 items-center h-2">
                     <span className="h-1.5 w-1.5 bg-primary rounded-full animate-bounce [animation-delay:-0.3s]" />
                     <span className="h-1.5 w-1.5 bg-primary rounded-full animate-bounce [animation-delay:-0.15s]" />
@@ -633,7 +635,7 @@ export function Messages() {
                   className="flex flex-col items-center gap-2 p-3 bg-blue-500/5 hover:bg-blue-500/10 border border-blue-500/10 rounded-xl transition text-center cursor-pointer"
                 >
                   <Calendar className="h-5 w-5 text-blue-600" />
-                  <span className="text-[10px] font-bold text-blue-700">Hẹn Xem Nhà</span>
+                  <span className="text-[10px] font-bold text-blue-700">{t("chat.quick_actions.appointment")}</span>
                 </button>
 
                 <button 
@@ -641,7 +643,7 @@ export function Messages() {
                   className="flex flex-col items-center gap-2 p-3 bg-secondary/50 hover:bg-secondary border border-border/10 rounded-xl transition text-center cursor-pointer"
                 >
                   <ImageIcon className="h-5 w-5 text-muted-foreground" />
-                  <span className="text-[10px] font-bold text-foreground">Gửi Ảnh</span>
+                  <span className="text-[10px] font-bold text-foreground">{t("chat.quick_actions.send_image")}</span>
                 </button>
 
                 <button 
@@ -649,7 +651,7 @@ export function Messages() {
                   className="flex flex-col items-center gap-2 p-3 bg-secondary/50 hover:bg-secondary border border-border/10 rounded-xl transition text-center cursor-pointer"
                 >
                   <Paperclip className="h-5 w-5 text-muted-foreground" />
-                  <span className="text-[10px] font-bold text-foreground">Gửi Tài Liệu</span>
+                  <span className="text-[10px] font-bold text-foreground">{t("chat.quick_actions.send_file")}</span>
                 </button>
 
                 {isCurrentUserLandlordInActiveThread && (
@@ -659,7 +661,7 @@ export function Messages() {
                       className="flex flex-col items-center gap-2 p-3 bg-emerald-500/5 hover:bg-emerald-500/10 border border-emerald-500/10 rounded-xl transition text-center cursor-pointer"
                     >
                       <CreditCard className="h-5 w-5 text-emerald-600" />
-                      <span className="text-[10px] font-bold text-emerald-700">Y/C Thanh Toán</span>
+                      <span className="text-[10px] font-bold text-emerald-700">{t("chat.quick_actions.payment_req")}</span>
                     </button>
 
                     <button 
@@ -667,7 +669,7 @@ export function Messages() {
                       className="flex flex-col items-center gap-2 p-3 bg-amber-500/5 hover:bg-amber-500/10 border border-amber-500/10 rounded-xl transition text-center cursor-pointer"
                     >
                       <FilePlus className="h-5 w-5 text-amber-600" />
-                      <span className="text-[10px] font-bold text-amber-700">Lập Hợp Đồng</span>
+                      <span className="text-[10px] font-bold text-amber-700">{t("chat.quick_actions.create_contract")}</span>
                     </button>
                   </>
                 )}
@@ -684,13 +686,13 @@ export function Messages() {
                   "h-11 w-11 rounded-xl grid place-items-center transition cursor-pointer border-border shrink-0 hover:bg-secondary",
                   showActions && "bg-secondary text-primary"
                 )}
-                title="Tính năng nhanh & Tài liệu đính kèm"
+                title={t("chat.quick_actions.tooltip")}
               >
                 <Paperclip className="h-4.5 w-4.5 text-muted-foreground" />
               </Button>
 
               <Input
-                placeholder="Nhập nội dung tin nhắn..."
+                placeholder={t("chat.input_placeholder")}
                 value={inputText}
                 onChange={handleInputChange}
                 className="h-11 bg-background border-border rounded-xl text-xs px-4"
@@ -711,9 +713,9 @@ export function Messages() {
               <MessageSquare className="h-14 w-14 text-muted-foreground/20" />
               <Sparkles className="absolute -top-1 -right-1 h-5 w-5 text-amber-500 animate-pulse" />
             </div>
-            <h3 className="text-base font-bold text-foreground">Hộp Thư Phân Hệ</h3>
+            <h3 className="text-base font-bold text-foreground">{t("chat.empty_state.title")}</h3>
             <p className="text-xs max-w-xs leading-relaxed text-muted-foreground">
-              Vui lòng chọn một cuộc hội thoại ở danh sách bên trái để kiểm tra lịch sử nhắn tin, gửi tệp đính kèm, lập lịch xem nhà hoặc giao dịch thanh toán đặt cọc.
+              {t("chat.empty_state.desc")}
             </p>
           </div>
         )}

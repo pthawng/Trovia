@@ -1,23 +1,31 @@
 {
-  "common": {
-    "app_name": "Trovia",
-    "search": "Tìm kiếm",
-    "save": "Lưu lại",
-    "cancel": "Hủy bỏ",
-    "delete": "Xóa",
-    "edit": "Chỉnh sửa",
-    "loading": "Đang tải dữ liệu...",
-    "error": "Đã xảy ra lỗi. Vui lòng thử lại.",
-    "success": "Thao tác thành công!",
-    "no_data": "Không có dữ liệu.",
-    "back": "Quay lại",
-    "continue": "Tiếp tục",
-    "status": "Trạng thái",
-    "actions": "Thao tác",
-    "submit": "Gửi đi",
-    "logout": "Đăng xuất",
-    "select": "Chọn"
-  },
+  "app_name": "Trovia",
+  "you": "bạn",
+  "search": "Tìm kiếm",
+  "save": "Lưu lại",
+  "save_changes": "Lưu thay đổi",
+  "cancel": "Hủy bỏ",
+  "delete": "Xóa",
+  "edit": "Chỉnh sửa",
+  "loading": "Đang tải dữ liệu...",
+  "loading_session": "Đang tải phiên đăng nhập...",
+  "error": "Đã xảy ra lỗi. Vui lòng thử lại.",
+  "success": "Thao tác thành công!",
+  "no_data": "Không có dữ liệu.",
+  "back": "Quay lại",
+  "continue": "Tiếp tục",
+  "status": "Trạng thái",
+  "actions": "Thao tác",
+  "submit": "Gửi đi",
+  "logout": "Đăng xuất",
+  "select": "Chọn",
+  "or": "HOẶC",
+  "messages": "Tin nhắn",
+  "no_conversations": "Chưa có cuộc trò chuyện nào",
+  "profile_info": "Thông tin cá nhân",
+  "view_details": "Xem chi tiết",
+  "back_to_home": "Về trang chủ",
+  "try_again": "Thử lại",
   "nav": {
     "dashboard": "Bảng điều khiển",
     "explore": "Khám phá",
@@ -30,27 +38,14 @@
     "landlord_dashboard": "Kênh chủ nhà",
     "become_landlord": "Trở thành Chủ nhà",
     "login": "Đăng nhập",
-    "register": "Đăng ký"
+    "register": "Đăng ký",
+    "current_stay": "🏠 Chỗ ở hiện tại"
   },
-  "auth": {
-    "login_title": "Đăng nhập Trovia",
-    "login_subtitle": "Chào mừng quay trở lại. Hãy đăng nhập để tiếp tục.",
-    "register_title": "Tạo tài khoản mới",
-    "register_subtitle": "Tham gia cùng hàng ngàn người tìm kiếm chỗ ở lý tưởng.",
-    "email": "Địa chỉ Email",
-    "password": "Mật khẩu",
-    "full_name": "Họ và tên",
-    "forgot_password": "Quên mật khẩu?",
-    "no_account": "Chưa có tài khoản?",
-    "has_account": "Đã có tài khoản?",
-    "login_btn": "Đăng nhập",
-    "register_btn": "Đăng ký tài khoản",
-    "validation": {
-      "email_invalid": "Email không hợp lệ",
-      "password_len": "Mật khẩu phải từ 8 ký tự trở lên",
-      "name_required": "Vui lòng nhập họ và tên của bạn"
-    }
-  },
+  "collapse_sidebar": "Thu gọn thanh bên",
+  "expand_sidebar": "Mở rộng thanh bên",
+  "switch_to_tenant": "Kênh khách thuê",
+  "switch_to_landlord": "Kênh chủ nhà",
+  "personal_hub": "Trang cá nhân của tôi",
   "landing": {
     "hero_title": "Tìm phòng trọ & căn hộ phù hợp nhất với bạn",
     "hero_subtitle": "Nền tảng PropTech hàng đầu Việt Nam kết nối sinh viên, người đi làm trẻ với chủ nhà uy tín. Giao dịch trực tiếp, an toàn và nhanh chóng.",
@@ -178,93 +173,73 @@
       "talk_team": "Liên hệ với chúng tôi"
     }
   },
-  "explore": {
-    "title": "Khám phá phòng trọ",
-    "subtitle": "Tìm kiếm chỗ ở ưng ý tại các khu vực trung tâm.",
-    "placeholder": "Tìm kiếm theo tên căn hộ, quận huyện hoặc tên chủ nhà...",
-    "types": {
-      "all": "Tất cả chỗ ở",
-      "studio": "Căn hộ Studio",
-      "boarding": "Nhà trọ / Phòng trọ",
-      "apartment": "Chung cư nguyên căn"
+  "chat": {
+    "search_placeholder": "Tìm kiếm liên hệ...",
+    "tabs": {
+      "all": "Tất cả",
+      "tenant": "Với chủ nhà",
+      "landlord": "Với người thuê"
     },
-    "budget": {
-      "all": "Mọi mức giá",
-      "under_400": "Dưới 10 triệu VND"
-    },
-    "no_results": "Không tìm thấy kết quả phù hợp.",
-    "found_count": "Tìm thấy {{count}} phòng trống"
-  },
-  "property": {
-    "district": "Quận/Huyện",
-    "city": "Thành phố",
-    "address": "Địa chỉ chi tiết",
-    "description": "Mô tả chi tiết",
-    "rooms_available": "Phòng trống có sẵn",
-    "capacity": "Sức chứa",
-    "price_per_month": "Giá thuê",
-    "deposit": "Tiền đặt cọc",
-    "amenities": "Tiện ích đi kèm",
-    "about_landlord": "Thông tin chủ nhà",
-    "verified_landlord": "Chủ nhà đã xác minh",
-    "request_rent": "Gửi yêu cầu thuê phòng",
-    "favorite_added": "Đã lưu vào danh sách yêu thích",
-    "favorite_removed": "Đã xóa khỏi danh sách yêu thích",
-    "book_room": "Thuê ngay phòng này",
-    "move_in_date": "Ngày dự kiến dọn vào",
-    "note": "Lời nhắn gửi đến chủ nhà (tùy chọn)",
-    "own_property_warning": "Bạn không thể tự gửi yêu cầu thuê căn hộ của chính mình.",
-    "not_found": "Không tìm thấy căn hộ",
-    "not_found_desc": "Căn hộ này không tồn tại hoặc đã bị xóa.",
-    "back_to_explore": "Quay lại Khám phá",
-    "select_room_placeholder": "-- Chọn phòng --",
-    "note_placeholder": "Hãy giới thiệu về bản thân, công việc và thời gian bạn muốn qua xem phòng...",
-    "book_tour": "Hẹn lịch xem phòng",
-    "no_charge_yet": "Bạn sẽ chưa bị tính phí ở bước này.",
-    "service_fee": "Phí dịch vụ",
-    "move_in_total": "Tổng phí nhận phòng",
-    "no_amenities": "Không có tiện ích nào được thiết lập.",
-    "landlord_response": "Phản hồi trong ~1 giờ · Chủ nhà thân thiện"
-  },
-  "landlord": {
-    "dashboard_title": "Kênh Quản lý Chủ nhà",
-    "dashboard_subtitle": "Quản lý danh sách nhà cho thuê, phòng trống và phê duyệt yêu cầu từ khách thuê.",
-    "my_properties": "Căn hộ của tôi",
-    "add_property": "Thêm căn hộ mới",
-    "property_name": "Tên căn hộ cho thuê",
-    "verify_status": "Trạng thái xác minh",
-    "active": "Đang hoạt động",
-    "pending": "Chờ xác minh",
-    "not_started": "Chưa bắt đầu",
-    "add_room": "Thêm phòng trống",
-    "room_title": "Tên/Số phòng",
-    "room_price": "Giá thuê hàng tháng (VND)",
-    "room_deposit": "Tiền cọc (VND)",
-    "room_capacity": "Số người ở tối đa",
-    "room_size": "Diện tích (m²)",
-    "onboarding": {
-      "title": "Đăng ký làm chủ nhà",
-      "subtitle": "Kích hoạt tính năng đăng tin để bắt đầu tiếp cận hàng ngàn khách thuê tiềm năng.",
-      "identity": "Xác thực danh tính",
-      "payment": "Tài khoản nhận tiền",
-      "done": "Kích hoạt thành công"
-    }
-  },
-  "booking": {
-    "title": "Quản lý yêu cầu đặt phòng",
-    "tenant_requests": "Yêu cầu thuê của tôi",
-    "landlord_requests": "Yêu cầu gửi tới bạn",
-    "proposed_date": "Ngày dọn vào dự kiến",
-    "tenant_info": "Khách thuê",
-    "room_info": "Phòng đăng ký",
+    "no_conversations_found": "Không tìm thấy cuộc hội thoại nào.",
     "status": {
-      "pending": "Đang chờ duyệt",
-      "approved": "Đã phê duyệt",
-      "rejected": "Đã từ chối",
-      "cancelled": "Đã hủy bỏ"
+      "online": "Đang trực tuyến",
+      "active": "Đang hoạt động",
+      "connected": "Kết nối trực tiếp",
+      "reconnecting": "Đang kết nối lại...",
+      "read": "Đã xem",
+      "sent": "Đã gửi",
+      "typing": "{{name}} đang nhập"
     },
-    "approve_btn": "Phê duyệt",
-    "reject_btn": "Từ chối",
-    "cancel_btn": "Hủy yêu cầu"
+    "roles": {
+      "tenant": "Khách thuê",
+      "landlord": "Chủ nhà",
+      "tenant_role": "Vai trò: Khách thuê",
+      "landlord_role": "Vai trò: Chủ nhà",
+      "system": "Thông báo hệ thống"
+    },
+    "other_user_placeholder": "Người liên hệ",
+    "no_messages_yet": "Chưa có tin nhắn",
+    "no_messages_history": "Chưa có tin nhắn nào. Bắt đầu câu chuyện ngay!",
+    "loading_messages": "Đang tải tin nhắn...",
+    "chat_room": {
+      "room_label": "Phòng {{room}}",
+      "property_label": "Bất động sản"
+    },
+    "types": {
+      "contract": "📄 Gửi lời mời ký hợp đồng",
+      "payment": "💳 Yêu cầu thanh toán mới",
+      "appointment": "📅 Hẹn lịch xem phòng",
+      "image": "📷 [Hình ảnh]",
+      "file": "📎 [Tệp đính kèm]"
+    },
+    "cards": {
+      "appointment_title": "Lịch Hẹn Xem Nhà",
+      "appointment_btn": "Quản lý lịch hẹn",
+      "appointment_time": "Thời gian: {{time}}",
+      "contract_title": "Ký Hợp Đồng Thuê Nhà",
+      "contract_btn": "Ký Hợp Đồng e-Sign",
+      "payment_title": "Yêu Cầu Thanh Toán",
+      "payment_amount": "Số tiền: {{amount}} đ",
+      "payment_btn": "Thanh Toán Ngay",
+      "file_download": "Tải tài liệu đính kèm"
+    },
+    "quick_actions": {
+      "tooltip": "Tính năng nhanh & Tài liệu đính kèm",
+      "appointment": "Hẹn Xem Nhà",
+      "send_image": "Gửi Ảnh",
+      "send_file": "Gửi Tài Liệu",
+      "payment_req": "Y/C Thanh Toán",
+      "create_contract": "Lập Hợp Đồng"
+    },
+    "input_placeholder": "Nhập nội dung tin nhắn...",
+    "empty_state": {
+      "title": "Hộp Thư Phân Hệ",
+      "desc": "Vui lòng chọn một cuộc hội thoại ở danh sách bên trái để kiểm tra lịch sử nhắn tin, gửi tệp đính kèm, lập lịch xem nhà hoặc giao dịch thanh toán đặt cọc."
+    },
+    "mock_actions": {
+      "appointment": "Xin chào! Mình muốn hẹn lịch xem phòng vào cuối tuần này. Nhờ bạn xác nhận lịch nhé!",
+      "payment": "Yêu cầu thanh toán tiền đặt cọc giữ chỗ để hoàn thiện hồ sơ thuê phòng.",
+      "contract": "Hợp đồng thuê nhà điện tử đã được khởi tạo thành công. Vui lòng xem kỹ điều khoản và thực hiện ký e-Sign."
+    }
   }
 }

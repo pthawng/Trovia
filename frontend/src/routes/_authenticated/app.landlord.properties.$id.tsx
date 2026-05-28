@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { PropertyService } from "@/services/property.service";
 import { RoomService } from "@/services/room.service";
 import { useAuth } from "@/lib/auth-context";
+import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   Building, MapPin, Eye, Plus, ArrowRight, ArrowLeft,
@@ -22,6 +23,7 @@ export const Route = createFileRoute("/_authenticated/app/landlord/properties/$i
 });
 
 function PropertyDetail() {
+  const { t } = useTranslation();
   const { id } = Route.useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -88,44 +90,44 @@ function PropertyDetail() {
   const updateMutation = useMutation({
     mutationFn: (dto: any) => PropertyService.update(id, dto),
     onSuccess: () => {
-      toast.success("Cập nhật bất động sản thành công!");
+      toast.success(t("property.detail.toasts.update_success"));
       setIsEditing(false);
       queryClient.invalidateQueries({ queryKey: ["propertyDetail", id] });
       queryClient.invalidateQueries({ queryKey: ["landlordProperties"] });
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.message || "Không thể cập nhật bất động sản.");
+      toast.error(err.response?.data?.message || t("property.detail.toasts.update_error"));
     }
   });
 
   const deleteMutation = useMutation({
     mutationFn: () => PropertyService.delete(id),
     onSuccess: () => {
-      toast.success("Bất động sản đã được xóa thành công!");
+      toast.success(t("property.detail.toasts.delete_success"));
       queryClient.invalidateQueries({ queryKey: ["landlordProperties"] });
       navigate({ to: "/app/landlord/properties" as any });
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.message || "Không thể xóa bất động sản.");
+      toast.error(err.response?.data?.message || t("property.detail.toasts.delete_error"));
     }
   });
 
   const publishMutation = useMutation({
     mutationFn: () => PropertyService.publish(id),
     onSuccess: () => {
-      toast.success("Tin cho thuê đã được XUẤT BẢN thành công! Bất động sản hiện đã hiển thị trên Explore.");
+      toast.success(t("property.detail.toasts.publish_success"));
       queryClient.invalidateQueries({ queryKey: ["propertyDetail", id] });
       queryClient.invalidateQueries({ queryKey: ["landlordProperties"] });
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.message || "Không thể xuất bản tin cho thuê.");
+      toast.error(err.response?.data?.message || t("property.detail.toasts.publish_error"));
     }
   });
 
   const addRoomMutation = useMutation({
     mutationFn: (dto: any) => RoomService.create(id, dto),
     onSuccess: () => {
-      toast.success("Phòng mới đã được thêm thành công!");
+      toast.success(t("property.detail.toasts.add_room_success"));
       setIsAddRoomOpen(false);
       // Reset form
       setRoomTitle("");
@@ -140,18 +142,18 @@ function PropertyDetail() {
       queryClient.invalidateQueries({ queryKey: ["propertyDetail", id] });
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.message || "Lỗi khi thêm phòng mới.");
+      toast.error(err.response?.data?.message || t("property.detail.toasts.add_room_error"));
     }
   });
 
   const deleteRoomMutation = useMutation({
     mutationFn: (roomId: string) => RoomService.delete(roomId),
     onSuccess: () => {
-      toast.success("Phòng đã được xóa thành công!");
+      toast.success(t("property.detail.toasts.delete_room_success"));
       queryClient.invalidateQueries({ queryKey: ["propertyDetail", id] });
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.message || "Không thể xóa phòng.");
+      toast.error(err.response?.data?.message || t("property.detail.toasts.delete_room_error"));
     }
   });
 
@@ -171,9 +173,9 @@ function PropertyDetail() {
     return (
       <div className="max-w-md mx-auto text-center space-y-4 py-16">
         <XCircle className="h-16 w-16 text-destructive mx-auto" />
-        <h2 className="text-xl font-bold">Không tìm thấy bất động sản</h2>
+        <h2 className="text-xl font-bold">{t("property.not_found")}</h2>
         <Button asChild className="rounded-xl">
-          <Link to="/app/landlord/properties">Quay lại</Link>
+          <Link to="/app/landlord/properties">{t("property.detail.back_to_list")}</Link>
         </Button>
       </div>
     );
@@ -211,7 +213,7 @@ function PropertyDetail() {
   const handleAddRoom = (e: React.FormEvent) => {
     e.preventDefault();
     if (!roomTitle.trim() || !roomPrice || !roomArea || !roomDeposit || !roomCapacity) {
-      toast.error("Vui lòng điền đầy đủ các trường thông tin phòng bắt buộc.");
+      toast.error(t("property.detail.toasts.fill_required_room"));
       return;
     }
 
@@ -244,7 +246,7 @@ function PropertyDetail() {
           to="/app/landlord/properties"
           className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition"
         >
-          <ArrowLeft className="h-4 w-4" /> Danh sách bất động sản
+          <ArrowLeft className="h-4 w-4" /> {t("property.detail.back_to_list")}
         </Link>
 
         <div className="flex gap-2">
@@ -255,18 +257,18 @@ function PropertyDetail() {
                 variant="outline" 
                 className="rounded-xl h-10 gap-1.5 border-border hover:bg-secondary/40 text-foreground font-semibold"
               >
-                <Edit3 className="h-4 w-4" /> Chỉnh sửa thông tin
+                <Edit3 className="h-4 w-4" /> {t("property.detail.edit_info")}
               </Button>
               <Button 
                 onClick={() => {
-                  if (confirm("Bạn có chắc chắn muốn xóa bất động sản này?")) {
+                  if (confirm(t("property.detail.confirm_delete_prop"))) {
                     deleteMutation.mutate();
                   }
                 }} 
                 variant="outline" 
                 className="rounded-xl h-10 gap-1.5 border-destructive/20 hover:bg-destructive/10 text-destructive font-semibold"
               >
-                <Trash2 className="h-4 w-4" /> Xóa
+                <Trash2 className="h-4 w-4" /> {t("property.detail.delete")}
               </Button>
             </>
           )}
@@ -294,13 +296,11 @@ function PropertyDetail() {
                     ? "bg-emerald-50 text-emerald-700 border-emerald-200" 
                     : "bg-amber-50 text-amber-700 border-amber-200"
                 }`}>
-                  {property.status === "PUBLISHED" ? "ĐANG ĐĂNG TIN" : "BẢN NHÁP"}
+                  {property.status === "PUBLISHED" ? t("property.detail.published_status") : t("property.detail.draft_status")}
                 </span>
                 
                 <span className="text-[10px] font-extrabold tracking-wider uppercase px-2.5 py-1 rounded-full bg-secondary/80 text-foreground border border-border backdrop-blur-md">
-                  {property.type === "BOARDING_HOUSE" ? "Nhà trọ" :
-                   property.type === "APARTMENT" ? "Căn hộ" :
-                   property.type === "HOUSE" ? "Nhà nguyên căn" : "Phòng studio"}
+                  {t("property.types." + property.type)}
                 </span>
               </div>
             </div>
@@ -318,7 +318,7 @@ function PropertyDetail() {
                     className="space-y-5"
                   >
                     <div className="flex justify-between items-center pb-3 border-b border-border">
-                      <h3 className="font-bold text-base">Sửa thông tin chi tiết</h3>
+                      <h3 className="font-bold text-base">{t("property.detail.edit_title")}</h3>
                       <button 
                         type="button" 
                         onClick={() => setIsEditing(false)}
@@ -330,53 +330,54 @@ function PropertyDetail() {
 
                     <div className="space-y-4">
                       <div className="space-y-1.5">
-                        <Label>Tiêu đề bất động sản</Label>
+                        <Label>{t("property.detail.prop_title")}</Label>
                         <Input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} required />
                       </div>
 
                       <div className="grid sm:grid-cols-2 gap-4">
                         <div className="space-y-1.5">
-                          <Label>Loại hình</Label>
+                          <Label>{t("property.detail.prop_type")}</Label>
                           <select 
                             className="flex h-11 w-full rounded-lg border border-input bg-surface px-3 py-2 text-sm focus-visible:outline-none"
                             value={editType}
                             onChange={(e) => setEditType(e.target.value as any)}
                           >
-                            <option value="BOARDING_HOUSE">Nhà trọ / Phòng trọ</option>
-                            <option value="APARTMENT">Căn hộ chung cư</option>
-                            <option value="HOUSE">Nhà nguyên căn</option>
-                            <option value="STUDIO">Phòng Studio dịch vụ</option>
+                            <option value="BOARDING_HOUSE">{t("property.types.BOARDING_HOUSE")}</option>
+                            <option value="APARTMENT">{t("property.types.APARTMENT")}</option>
+                            <option value="HOUSE">{t("property.types.HOUSE")}</option>
+                            <option value="STUDIO">{t("property.types.STUDIO")}</option>
+                            <option value="DORMITORY">{t("property.types.DORMITORY")}</option>
                           </select>
                         </div>
                         <div className="space-y-1.5">
-                          <Label>Liên kết hình ảnh (URL)</Label>
+                          <Label>{t("property.detail.prop_image")}</Label>
                           <Input value={editImage} onChange={(e) => setEditImage(e.target.value)} required />
                         </div>
                       </div>
 
                       <div className="grid sm:grid-cols-2 gap-4">
                         <div className="space-y-1.5">
-                          <Label>Quận / Huyện</Label>
+                          <Label>{t("property.detail.district")}</Label>
                           <Input value={editDist} onChange={(e) => setEditDist(e.target.value)} required />
                         </div>
                         <div className="space-y-1.5">
-                          <Label>Phường / Xã</Label>
+                          <Label>{t("property.detail.ward")}</Label>
                           <Input value={editWard} onChange={(e) => setEditWard(e.target.value)} required />
                         </div>
                       </div>
 
                       <div className="space-y-1.5">
-                        <Label>Địa chỉ chi tiết</Label>
+                        <Label>{t("property.detail.detailed_address")}</Label>
                         <Input value={editAddr} onChange={(e) => setEditAddr(e.target.value)} required />
                       </div>
 
                       <div className="grid sm:grid-cols-3 gap-4">
                         <div className="space-y-1.5">
-                          <Label>Số tầng</Label>
+                          <Label>{t("property.detail.total_floors")}</Label>
                           <Input type="number" min={1} value={editFloors} onChange={(e) => setEditFloors(Number(e.target.value))} required />
                         </div>
                         <div className="space-y-1.5">
-                          <Label>Tổng số phòng</Label>
+                          <Label>{t("property.detail.total_rooms")}</Label>
                           <Input type="number" min={1} value={editUnits} onChange={(e) => setEditUnits(Number(e.target.value))} required />
                         </div>
                         <div className="space-y-1.5 flex flex-col justify-end pb-3">
@@ -387,29 +388,29 @@ function PropertyDetail() {
                               onChange={(e) => setEditHasParking(e.target.checked)}
                               className="h-5 w-5 rounded border-border"
                             />
-                            <span className="text-xs font-semibold">Chỗ để xe máy</span>
+                            <span className="text-xs font-semibold">{t("property.detail.has_parking")}</span>
                           </label>
                         </div>
                       </div>
 
                       <div className="grid sm:grid-cols-2 gap-4">
                         <div className="space-y-1.5">
-                          <Label>Quy định chi phí dịch vụ</Label>
+                          <Label>{t("property.detail.utilities_rules")}</Label>
                           <Input value={editUtils} onChange={(e) => setEditUtils(e.target.value)} />
                         </div>
                         <div className="space-y-1.5">
-                          <Label>Nội quy chung</Label>
+                          <Label>{t("property.detail.house_rules")}</Label>
                           <Input value={editRules} onChange={(e) => setEditRules(e.target.value)} />
                         </div>
                       </div>
 
                       <div className="space-y-1.5">
-                        <Label>Mô tả chi tiết</Label>
+                        <Label>{t("property.detail.description")}</Label>
                         <Textarea className="min-h-24" value={editDesc} onChange={(e) => setEditDesc(e.target.value)} />
                       </div>
 
                       <div className="space-y-2">
-                        <Label className="block">Tiện ích tòa nhà</Label>
+                        <Label className="block">{t("property.detail.building_amenities")}</Label>
                         <div className="grid grid-cols-3 gap-2">
                           {amenities.map((a: any) => {
                             const selected = editAmenities.includes(a.id);
@@ -432,10 +433,10 @@ function PropertyDetail() {
 
                     <div className="flex gap-2 pt-2">
                       <Button type="submit" disabled={updateMutation.isPending} className="rounded-xl h-10 px-6 gap-1.5">
-                        <Save className="h-4 w-4" /> Lưu thay đổi
+                        <Save className="h-4 w-4" /> {t("property.detail.save_changes")}
                       </Button>
                       <Button type="button" variant="outline" onClick={() => setIsEditing(false)} className="rounded-xl h-10 px-6">
-                        Hủy
+                        {t("property.detail.cancel")}
                       </Button>
                     </div>
                   </motion.form>
@@ -458,13 +459,17 @@ function PropertyDetail() {
                     <div className="grid sm:grid-cols-2 gap-6 border-t border-b border-border/60 py-5 text-sm">
                       <div className="space-y-3">
                         <div>
-                          <span className="text-xs text-muted-foreground block font-medium uppercase tracking-wider">Thông số chung</span>
+                          <span className="text-xs text-muted-foreground block font-medium uppercase tracking-wider">{t("property.detail.specs_title")}</span>
                           <span className="font-bold text-foreground mt-1 block">
-                            {property.totalFloors} Tầng • {property.totalUnits} Phòng trọ • {property.hasParking ? "Có chỗ đậu xe" : "Không chỗ xe"}
+                            {t("property.detail.specs_desc", { 
+                              floors: property.totalFloors, 
+                              rooms: property.totalUnits, 
+                              parking: property.hasParking ? t("property.detail.parking_yes") : t("property.detail.parking_no") 
+                            })}
                           </span>
                         </div>
                         <div>
-                          <span className="text-xs text-muted-foreground block font-medium uppercase tracking-wider">Mô tả</span>
+                          <span className="text-xs text-muted-foreground block font-medium uppercase tracking-wider">{t("property.detail.desc_title")}</span>
                           <p className="text-foreground text-xs leading-relaxed mt-1 text-justify">
                             {property.description}
                           </p>
@@ -473,26 +478,26 @@ function PropertyDetail() {
 
                       <div className="space-y-3">
                         <div>
-                          <span className="text-xs text-muted-foreground block font-medium uppercase tracking-wider">Biểu phí tiện ích</span>
+                          <span className="text-xs text-muted-foreground block font-medium uppercase tracking-wider">{t("property.detail.utilities_title")}</span>
                           <span className="font-bold text-foreground text-xs mt-1 block">
-                            {property.utilities || "Điện nước theo giá kinh doanh công cộng"}
+                            {property.utilities || t("property.detail.utilities_fallback")}
                           </span>
                         </div>
                         <div>
-                          <span className="text-xs text-muted-foreground block font-medium uppercase tracking-wider">Nội quy tòa nhà</span>
+                          <span className="text-xs text-muted-foreground block font-medium uppercase tracking-wider">{t("property.detail.rules_title")}</span>
                           <span className="font-bold text-foreground text-xs mt-1 block">
-                            {property.rules || "Giữ trật tự công cộng"}
+                            {property.rules || t("property.detail.rules_fallback")}
                           </span>
                         </div>
                       </div>
                     </div>
 
                     <div>
-                      <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-2.5">Tiện ích đi kèm</h4>
+                      <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-2.5">{t("property.detail.amenities_title")}</h4>
                       <div className="flex flex-wrap gap-1.5">
                         {property.propertyAmenities?.map((pa: any) => (
                           <span key={pa.id} className="text-[10px] font-bold bg-secondary/70 text-foreground border border-border/40 px-3 py-1 rounded-full shadow-sm">
-                            {pa.amenity?.name || "Tiện ích"}
+                            {pa.amenity?.name || t("property.detail.amenity_fallback")}
                           </span>
                         ))}
                       </div>
@@ -508,68 +513,68 @@ function PropertyDetail() {
             <div className="flex justify-between items-center pb-3 border-b border-border/60">
               <div className="flex items-center gap-2">
                 <Bed className="h-5 w-5 text-primary" />
-                <h3 className="font-bold text-base text-foreground">Danh sách phòng / căn hộ</h3>
+                <h3 className="font-bold text-base text-foreground">{t("property.detail.room_list_title")}</h3>
               </div>
               
               <Dialog open={isAddRoomOpen} onOpenChange={setIsAddRoomOpen}>
                 <DialogTrigger asChild>
                   <Button className="rounded-xl h-9 text-xs font-bold gap-1 shadow-sm bg-primary text-primary-foreground hover:bg-primary/95">
-                    <Plus className="h-3.5 w-3.5" /> Thêm phòng mới
+                    <Plus className="h-3.5 w-3.5" /> {t("property.detail.add_room_btn")}
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-lg rounded-3xl bg-surface p-6">
                   <DialogHeader>
-                    <DialogTitle className="text-lg font-bold">Thêm phòng mới cho tòa nhà</DialogTitle>
+                    <DialogTitle className="text-lg font-bold">{t("property.detail.add_room_modal_title")}</DialogTitle>
                   </DialogHeader>
                   <form onSubmit={handleAddRoom} className="space-y-4 pt-4">
                     <div className="grid sm:grid-cols-2 gap-4">
                       <div className="space-y-1.5">
-                        <Label htmlFor="room-name">Tên / Mã phòng (Bắt buộc)</Label>
+                        <Label htmlFor="room-name">{t("property.detail.room_name_label")}</Label>
                         <Input id="room-name" placeholder="e.g. Phòng 101 - Lầu 1" value={roomTitle} onChange={(e) => setRoomTitle(e.target.value)} required />
                       </div>
                       <div className="space-y-1.5">
-                        <Label htmlFor="room-num">Số phòng</Label>
+                        <Label htmlFor="room-num">{t("property.detail.room_number_label")}</Label>
                         <Input id="room-num" placeholder="e.g. 101" value={roomNumber} onChange={(e) => setRoomNumber(e.target.value)} />
                       </div>
                     </div>
 
                     <div className="grid sm:grid-cols-3 gap-4">
                       <div className="space-y-1.5">
-                        <Label htmlFor="room-price">Giá thuê / tháng (VND)</Label>
+                        <Label htmlFor="room-price">{t("property.detail.room_price_label")}</Label>
                         <Input id="room-price" type="number" placeholder="e.g. 3500000" value={roomPrice} onChange={(e) => setRoomPrice(e.target.value)} required />
                       </div>
                       <div className="space-y-1.5">
-                        <Label htmlFor="room-dep">Tiền đặt cọc (VND)</Label>
+                        <Label htmlFor="room-dep">{t("property.detail.room_deposit_label")}</Label>
                         <Input id="room-dep" type="number" placeholder="e.g. 3500000" value={roomDeposit} onChange={(e) => setRoomDeposit(e.target.value)} required />
                       </div>
                       <div className="space-y-1.5">
-                        <Label htmlFor="room-area">Diện tích (m²)</Label>
+                        <Label htmlFor="room-area">{t("property.detail.room_area_label")}</Label>
                         <Input id="room-area" type="number" placeholder="e.g. 20" value={roomArea} onChange={(e) => setRoomArea(e.target.value)} required />
                       </div>
                     </div>
 
                     <div className="grid sm:grid-cols-2 gap-4">
                       <div className="space-y-1.5">
-                        <Label htmlFor="room-floor">Tầng</Label>
+                        <Label htmlFor="room-floor">{t("property.detail.room_floor_label")}</Label>
                         <Input id="room-floor" type="number" placeholder="e.g. 1" value={roomFloor} onChange={(e) => setRoomFloor(e.target.value)} />
                       </div>
                       <div className="space-y-1.5">
-                        <Label htmlFor="room-cap">Sức chứa tối đa (người)</Label>
+                        <Label htmlFor="room-cap">{t("property.detail.room_capacity_label")}</Label>
                         <Input id="room-cap" type="number" placeholder="e.g. 2" value={roomCapacity} onChange={(e) => setRoomCapacity(e.target.value)} required />
                       </div>
                     </div>
 
                     <div className="space-y-1.5">
-                      <Label htmlFor="room-desc">Mô tả ngắn gọn phòng</Label>
-                      <Textarea id="room-desc" placeholder="Trang bị sẵn giường, tủ âm tường, ban công riêng..." value={roomDesc} onChange={(e) => setRoomDesc(e.target.value)} />
+                      <Label htmlFor="room-desc">{t("property.detail.room_desc_label")}</Label>
+                      <Textarea id="room-desc" placeholder={t("property.detail.room_desc_placeholder")} value={roomDesc} onChange={(e) => setRoomDesc(e.target.value)} />
                     </div>
 
                     <div className="pt-2 flex justify-end gap-2">
                       <Button type="submit" disabled={addRoomMutation.isPending} className="rounded-xl h-10 px-6 font-bold">
-                        {addRoomMutation.isPending ? "Đang thêm..." : "Tạo phòng"}
+                        {addRoomMutation.isPending ? t("property.detail.publishing_loading") : t("property.detail.room_create_btn")}
                       </Button>
                       <Button type="button" variant="outline" onClick={() => setIsAddRoomOpen(false)} className="rounded-xl h-10 px-6">
-                        Hủy
+                        {t("property.detail.cancel")}
                       </Button>
                     </div>
                   </form>
@@ -580,9 +585,9 @@ function PropertyDetail() {
             {(!property.rooms || property.rooms.length === 0) ? (
               <div className="text-center py-10 bg-secondary/10 rounded-2xl border border-dashed border-border/80 space-y-2">
                 <Bed className="h-8 w-8 text-muted-foreground mx-auto" />
-                <p className="text-sm font-semibold">Chưa có phòng nào được đăng ký</p>
+                <p className="text-sm font-semibold">{t("property.detail.no_rooms_title")}</p>
                 <p className="text-xs text-muted-foreground max-w-xs mx-auto">
-                  Vui lòng thêm ít nhất một phòng trọ hoặc căn hộ khả dụng để có thể xuất bản bài đăng lên Trovia.
+                  {t("property.detail.no_rooms_desc")}
                 </p>
               </div>
             ) : (
@@ -590,12 +595,12 @@ function PropertyDetail() {
                 <table className="w-full border-collapse text-left text-xs">
                   <thead>
                     <tr className="border-b border-border text-muted-foreground uppercase font-semibold">
-                      <th className="py-3 px-4">Tên phòng</th>
-                      <th className="py-3 px-4">Giá thuê</th>
-                      <th className="py-3 px-4">Diện tích</th>
-                      <th className="py-3 px-4">Số người ở</th>
-                      <th className="py-3 px-4">Trạng thái</th>
-                      <th className="py-3 px-4 text-right">Thao tác</th>
+                      <th className="py-3 px-4">{t("property.detail.table.name")}</th>
+                      <th className="py-3 px-4">{t("property.detail.table.price")}</th>
+                      <th className="py-3 px-4">{t("property.detail.table.area")}</th>
+                      <th className="py-3 px-4">{t("property.detail.table.capacity")}</th>
+                      <th className="py-3 px-4">{t("property.detail.table.status")}</th>
+                      <th className="py-3 px-4 text-right">{t("property.detail.table.actions")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -608,20 +613,20 @@ function PropertyDetail() {
                           {room.price.toLocaleString("vi-VN")} đ
                         </td>
                         <td className="py-3.5 px-4 font-medium">{room.area} m²</td>
-                        <td className="py-3.5 px-4 text-muted-foreground">Tối đa {room.capacity} người</td>
+                        <td className="py-3.5 px-4 text-muted-foreground">{t("property.detail.table.capacity_text", { count: room.capacity })}</td>
                         <td className="py-3.5 px-4">
                           <span className={`px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase border ${
                             room.isAvailable && room.status === "AVAILABLE"
                               ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                               : "bg-amber-50 text-amber-700 border-amber-200"
                           }`}>
-                            {room.isAvailable && room.status === "AVAILABLE" ? "Còn trống" : "Đã thuê"}
+                            {room.isAvailable && room.status === "AVAILABLE" ? t("property.detail.table.available") : t("property.detail.table.rented")}
                           </span>
                         </td>
                         <td className="py-3.5 px-4 text-right">
                           <Button 
                             onClick={() => {
-                              if (confirm(`Bạn có chắc muốn xóa ${room.title}?`)) {
+                              if (confirm(t("property.detail.confirm_delete_room", { title: room.title }))) {
                                 deleteRoomMutation.mutate(room.id);
                               }
                             }}
@@ -645,10 +650,10 @@ function PropertyDetail() {
           <div className="rounded-3xl bg-surface border border-border p-6 shadow-sm space-y-6">
             <div>
               <h3 className="font-bold text-base text-foreground flex items-center gap-1.5">
-                <Flame className="h-4.5 w-4.5 text-primary animate-pulse" /> Xuất bản & Đăng tin
+                <Flame className="h-4.5 w-4.5 text-primary animate-pulse" /> {t("property.detail.publish_box_title")}
               </h3>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Xem xét tiêu chuẩn tối thiểu trước khi xuất bản bất động sản của bạn.
+                {t("property.detail.publish_box_desc")}
               </p>
             </div>
 
@@ -662,9 +667,9 @@ function PropertyDetail() {
                 )}
                 <div>
                   <span className={`font-semibold ${checkLandlord ? "text-foreground" : "text-muted-foreground"}`}>
-                    Tài khoản chủ nhà đã kích hoạt
+                    {t("property.detail.checklist.landlord_active")}
                   </span>
-                  <p className="text-[10px] text-muted-foreground">Cần được phê duyệt đầy đủ quyền Host.</p>
+                  <p className="text-[10px] text-muted-foreground">{t("property.detail.checklist.landlord_active_desc")}</p>
                 </div>
               </div>
 
@@ -676,9 +681,9 @@ function PropertyDetail() {
                 )}
                 <div>
                   <span className={`font-semibold ${checkAddress ? "text-foreground" : "text-muted-foreground"}`}>
-                    Cung cấp địa chỉ thực tế chi tiết
+                    {t("property.detail.checklist.address_provided")}
                   </span>
-                  <p className="text-[10px] text-muted-foreground">Có địa chỉ, quận huyện, tỉnh thành phố rõ ràng.</p>
+                  <p className="text-[10px] text-muted-foreground">{t("property.detail.checklist.address_provided_desc")}</p>
                 </div>
               </div>
 
@@ -690,9 +695,9 @@ function PropertyDetail() {
                 )}
                 <div>
                   <span className={`font-semibold ${checkImage ? "text-foreground" : "text-muted-foreground"}`}>
-                    Hình ảnh thực tế bất động sản
+                    {t("property.detail.checklist.image_uploaded")}
                   </span>
-                  <p className="text-[10px] text-muted-foreground">Tải lên ít nhất 1 hình ảnh đại diện / ảnh chụp phòng.</p>
+                  <p className="text-[10px] text-muted-foreground">{t("property.detail.checklist.image_uploaded_desc")}</p>
                 </div>
               </div>
 
@@ -704,9 +709,9 @@ function PropertyDetail() {
                 )}
                 <div>
                   <span className={`font-semibold ${checkAmenity ? "text-foreground" : "text-muted-foreground"}`}>
-                    Cung cấp ít nhất một tiện ích
+                    {t("property.detail.checklist.amenity_provided")}
                   </span>
-                  <p className="text-[10px] text-muted-foreground">Giúp khách thuê tìm kiếm nhanh chóng.</p>
+                  <p className="text-[10px] text-muted-foreground">{t("property.detail.checklist.amenity_provided_desc")}</p>
                 </div>
               </div>
 
@@ -718,9 +723,9 @@ function PropertyDetail() {
                 )}
                 <div>
                   <span className={`font-semibold ${checkRoomAvailable ? "text-foreground" : "text-muted-foreground"}`}>
-                    Có tối thiểu một phòng còn trống khả dụng
+                    {t("property.detail.checklist.room_available")}
                   </span>
-                  <p className="text-[10px] text-muted-foreground">Phải có phòng trạng thái "Khả dụng" (AVAILABLE).</p>
+                  <p className="text-[10px] text-muted-foreground">{t("property.detail.checklist.room_available_desc")}</p>
                 </div>
               </div>
             </div>
@@ -728,7 +733,7 @@ function PropertyDetail() {
             <div className="pt-4 border-t border-border mt-4">
               {property.status === "PUBLISHED" ? (
                 <div className="p-3.5 bg-emerald-500/10 text-emerald-700 text-xs font-bold rounded-2xl flex items-center justify-center gap-1.5 border border-emerald-500/20">
-                  <CheckCircle2 className="h-4 w-4" /> Bất động sản đã xuất bản
+                  <CheckCircle2 className="h-4 w-4" /> {t("property.detail.published_box_badge")}
                 </div>
               ) : (
                 <Button 
@@ -740,7 +745,7 @@ function PropertyDetail() {
                       : "bg-secondary text-muted-foreground cursor-not-allowed"
                   }`}
                 >
-                  {publishMutation.isPending ? "Đang xử lý..." : "Xuất bản tin cho thuê"}
+                  {publishMutation.isPending ? t("property.detail.publishing_loading") : t("property.detail.publish_action_btn")}
                   <Sparkles className="h-3.5 w-3.5" />
                 </Button>
               )}
