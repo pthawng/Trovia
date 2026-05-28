@@ -197,7 +197,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               <div className={cn("pt-4 mt-4 border-t border-border/60", isCollapsed && "px-0")}>
                 {!isCollapsed ? (
                   <div className="px-4 mb-2 text-[10px] font-bold text-muted-foreground tracking-wider uppercase flex items-center gap-1.5">
-                    <span>{t("common.current_stay")}</span>
+                    <span>{t("nav.current_stay")}</span>
                   </div>
                 ) : (
                   <div className="w-6 h-px bg-border/60 mx-auto mb-2" />
@@ -339,7 +339,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   <div className="flex items-center gap-2 text-sm font-semibold">
                     <Sparkles className="h-4 w-4" /> {t("nav.become_landlord")}
                   </div>
-                  <p className="text-[11px] mt-1 opacity-90 leading-normal">{t("landlord.onboarding.subtitle")}</p>
+                  <p className="text-[11px] mt-1 opacity-90 leading-normal">{t("dashboard.onboarding.subtitle")}</p>
                 </Link>
               )
             )}
