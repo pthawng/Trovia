@@ -1,34 +1,27 @@
-import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import { useState, useEffect, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Home, Compass, Heart, MessageSquare, FileText, User, Sparkles,
-  Search, Bell, Moon, Sun, LogOut, Settings, Menu, X, LayoutDashboard,
-  CreditCard, ArrowLeftRight, Building, HelpCircle, Laptop, Wrench
+  Search, Settings, Menu, X, LayoutDashboard,
+  CreditCard, ArrowLeftRight, Building, Wrench
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
-  DropdownMenuSeparator, DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { useQuery } from "@tanstack/react-query";
 import { SavedPropertyService } from "@/services/saved-property.service";
 import { useAuth } from "@/lib/auth-context";
-import { useTheme } from "@/lib/theme-context";
-import { LanguageSwitcher } from "@/components/common/LanguageSwitcher";
 import { ConversationService } from "@/services/conversation.service";
 import { useSocket } from "@/hooks/useSocket";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "motion/react";
+import { UserBar } from "@/components/app/UserBar";
 
 type NavItem = { to: string; labelKey?: string; label?: string; view?: string; icon: any; exact?: boolean; badge?: number };
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { t } = useTranslation();
-  const { user, signOut } = useAuth();
-  const { theme, toggle } = useTheme();
-  const navigate = useNavigate();
+  const { user } = useAuth();
   const path = useRouterState({ select: (s) => s.location.pathname });
   
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -86,7 +79,6 @@ export function AppShell({ children }: { children: ReactNode }) {
     };
   }, [socket, user]);
 
-  const initials = (user?.fullName || user?.email || "U").slice(0, 2).toUpperCase();
   const isLandlord = user?.roles?.includes("LANDLORD");
   const inLandlordMode = path.startsWith("/app/landlord");
 
@@ -131,7 +123,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <div className="flex h-full flex-col">
         {/* Brand Header */}
         <Link 
-          to={inLandlordMode ? "/app/landlord" : "/app/explore"} 
+          to="/explore"
           className={cn(
             "flex items-center gap-2 h-20 border-b border-border/60 shrink-0 transition-all duration-300",
             isCollapsed ? "px-0 justify-center" : "px-6"
@@ -422,91 +414,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             {/* Right controls */}
             <div className="flex items-center gap-4 shrink-0">
               
-              {/* Switch to Landlord/Tenant Button */}
-              {isLandlord && (
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => navigate({ to: inLandlordMode ? "/app/explore" : "/app/landlord" })}
-                  className={cn(
-                    "hidden md:inline-flex items-center gap-2 h-10 px-4 rounded-xl text-xs font-semibold cursor-pointer border transition-all duration-200",
-                    inLandlordMode
-                      ? "text-primary border-primary/20 bg-primary-soft/30 hover:bg-primary-soft/60"
-                      : "text-amber-700 border-amber-200 bg-amber-50/50 hover:bg-amber-50"
-                  )}
-                >
-                  <ArrowLeftRight className="h-3.5 w-3.5" />
-                  <span>{inLandlordMode ? t("common.switch_to_tenant") : t("common.switch_to_landlord")}</span>
-                </Button>
-              )}
-
-              <LanguageSwitcher />
-
-              <Button variant="ghost" size="icon" onClick={toggle} aria-label="Toggle theme" className="h-10 w-10 rounded-xl hover:bg-secondary">
-                {theme === "dark" ? <Sun className="h-4.5 w-4.5 text-amber-500" /> : <Moon className="h-4.5 w-4.5" />}
-              </Button>
-
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={() => navigate({ to: inLandlordMode ? "/app/landlord?view=messages" as any : "/app/messages" as any })}
-                className="relative h-10 w-10 rounded-xl hover:bg-secondary cursor-pointer" 
-                aria-label="Messages"
-              >
-                <MessageSquare className="h-4.5 w-4.5 text-muted-foreground" />
-                {unreadCount > 0 && (
-                  <span className={cn(
-                    "absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-bold text-white shadow-sm animate-pulse",
-                    inLandlordMode ? "bg-amber-600" : "bg-primary"
-                  )}>
-                    {unreadCount}
-                  </span>
-                )}
-              </Button>
-
-              <Button variant="ghost" size="icon" className="relative h-10 w-10 rounded-xl hover:bg-secondary cursor-pointer" aria-label="Notifications">
-                <Bell className="h-4.5 w-4.5 text-muted-foreground" />
-                <span className="absolute top-2.5 right-2.5 h-2 w-2 rounded-full bg-primary ring-2 ring-background" />
-              </Button>
-
-              {/* Personal Hub dropdown */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-[oklch(0.55_0.2_285)] hover:scale-105 transition duration-200 grid place-items-center text-primary-foreground text-xs font-bold cursor-pointer shadow-sm relative group overflow-hidden">
-                    <span className="relative z-10">{initials}</span>
-                    <span className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-60 p-1.5 rounded-2xl shadow-xl ring-1 ring-black/5 mt-1">
-                  <DropdownMenuLabel className="font-normal px-3 py-2">
-                    <div className="text-sm font-semibold text-foreground leading-none">{user?.fullName || "Trovia User"}</div>
-                    <div className="text-xs text-muted-foreground truncate mt-1">{user?.email}</div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator className="my-1.5" />
-                  
-                  {/* Redirect to Personal Hub (Tenant Dashboard) */}
-                  <DropdownMenuItem onSelect={() => navigate({ to: "/app/tenant/dashboard" })} className="rounded-xl px-3 py-2 text-xs font-medium cursor-pointer">
-                    <Laptop className="h-4 w-4 mr-2 text-muted-foreground" />
-                    {t("common.personal_hub")}
-                  </DropdownMenuItem>
-
-                  <DropdownMenuItem onSelect={() => navigate({ to: "/app/profile" })} className="rounded-xl px-3 py-2 text-xs font-medium cursor-pointer">
-                    <User className="h-4 w-4 mr-2 text-muted-foreground" />
-                    {t("nav.profile")}
-                  </DropdownMenuItem>
-                  
-                  <DropdownMenuItem className="rounded-xl px-3 py-2 text-xs font-medium cursor-pointer">
-                    <Settings className="h-4 w-4 mr-2 text-muted-foreground" />
-                    {t("common.actions")}
-                  </DropdownMenuItem>
-                  
-                  <DropdownMenuSeparator className="my-1.5" />
-                  
-                  <DropdownMenuItem onSelect={async () => { await signOut(); navigate({ to: "/" }); }} className="rounded-xl px-3 py-2 text-xs font-semibold text-rose-600 focus:text-rose-700 focus:bg-rose-50 cursor-pointer">
-                    <LogOut className="h-4 w-4 mr-2" />{t("common.logout")}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <UserBar showModeSwitch />
             </div>
           </div>
         </header>

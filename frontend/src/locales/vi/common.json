@@ -15,7 +15,7 @@
   "back": "Quay lại",
   "continue": "Tiếp tục",
   "status": "Trạng thái",
-  "actions": "Thao tác",
+  "actions": "Cài đặt",
   "submit": "Gửi đi",
   "logout": "Đăng xuất",
   "select": "Chọn",
@@ -45,7 +45,7 @@
   "expand_sidebar": "Mở rộng thanh bên",
   "switch_to_tenant": "Kênh khách thuê",
   "switch_to_landlord": "Kênh chủ nhà",
-  "personal_hub": "Trang cá nhân của tôi",
+  "personal_hub": "Bảng điều khiển",
   "landing": {
     "hero_title": "Tìm phòng trọ & căn hộ phù hợp nhất với bạn",
     "hero_subtitle": "Nền tảng PropTech hàng đầu Việt Nam kết nối sinh viên, người đi làm trẻ với chủ nhà uy tín. Giao dịch trực tiếp, an toàn và nhanh chóng.",

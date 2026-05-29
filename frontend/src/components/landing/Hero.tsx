@@ -47,14 +47,14 @@ export function Hero() {
             className="flex flex-wrap items-center gap-3"
           >
             <a
-              href="/app/explore"
+              href="/explore"
               className="group inline-flex items-center gap-2 rounded-xl bg-primary text-primary-foreground px-6 py-3.5 text-sm font-medium shadow-[var(--shadow-glow)] hover:shadow-[0_14px_48px_-10px_oklch(0.45_0.22_265/0.6)] transition-all hover:-translate-y-0.5"
             >
               {t("landing.start_search")}
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
             </a>
             <a
-              href="/app/become-landlord"
+              href="/landlords"
               className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface-elevated px-6 py-3.5 text-sm font-medium hover:bg-secondary transition-colors"
             >
               {t("nav.become_landlord")}

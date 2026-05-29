@@ -33,7 +33,7 @@ export function Properties() {
             </h2>
           </div>
           <Link
-            to="/app/explore"
+            to="/explore"
             className="text-sm font-semibold text-primary hover:underline underline-offset-4 flex items-center gap-1.5"
           >
             {t("landing.properties.view_all")}
@@ -69,7 +69,7 @@ export function Properties() {
               <p className="text-xs text-muted-foreground">{t("landing.properties.error_desc")}</p>
             </div>
             <Link
-              to="/app/explore"
+              to="/explore"
               className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-xl bg-primary text-primary-foreground hover:opacity-95 shadow-md shadow-primary/20 transition-all"
             >
               {t("landing.properties.retry_btn")}
@@ -188,4 +188,3 @@ export function Properties() {
     </section>
   );
 }
-

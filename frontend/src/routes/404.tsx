@@ -81,7 +81,7 @@ export function NotFoundPage() {
                 {t("common.back_to_home")}
               </Link>
               <Link
-                to="/app/explore"
+                to="/explore"
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-primary text-primary-foreground px-6 py-3.5 text-sm font-semibold shadow-md shadow-primary/20 hover:opacity-95 transition"
               >
                 <Compass className="h-4.5 w-4.5" />

@@ -20,6 +20,7 @@ import { MaintenanceService, MaintenancePriority, MaintenanceStatus } from "@/se
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { LandlordSetupGuide } from "@/components/landlord/LandlordSetupGuide";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "motion/react";
 import { Messages } from "./app.messages";
@@ -93,6 +94,7 @@ function LandlordDashboard() {
   const [roomGender, setRoomGender] = useState("ANY");
   const [roomStatus, setRoomStatus] = useState("AVAILABLE");
   const [roomDescription, setRoomDescription] = useState("Phòng sạch sẽ thoáng mát đầy đủ nội thất cơ bản.");
+  const [settingsSection, setSettingsSection] = useState("brand");
 
   // Form states - Invoice Creation
   const [invAmount, setInvAmount] = useState(4000000);
@@ -162,7 +164,7 @@ function LandlordDashboard() {
     queryFn: () => MaintenanceService.findForLandlord(),
   });
 
-  const { data: landlordProfile } = useQuery({
+  const { data: landlordProfile, isLoading: landlordProfileLoading } = useQuery({
     queryKey: ["landlordProfile"],
     queryFn: () => LandlordService.getMe(),
   });
@@ -494,6 +496,15 @@ function LandlordDashboard() {
   // Calculate potential monthly revenue (sum of active contracts rents)
   const activeLeases = contracts.filter((c: any) => c.status === "ACTIVE");
   const monthlyRevenueProjection = activeLeases.reduce((sum, c) => sum + Number(c.monthlyRent), 0);
+  const draftProperties = properties.filter((p: any) => p.status === "DRAFT");
+  const publishedProperties = properties.filter((p: any) => p.status === "PUBLISHED");
+  const shouldShowSetupGuide =
+    !propertiesLoading &&
+    !landlordProfileLoading &&
+    (landlordProfile?.status !== "ACTIVE" ||
+      properties.length === 0 ||
+      draftProperties.length > 0 ||
+      publishedProperties.length === 0);
 
   // Rent status
   const totalUnitsCalculated = properties.reduce((sum, p) => sum + Number(p.totalUnits || 0), 0);
@@ -583,6 +594,10 @@ function LandlordDashboard() {
       {/* RENDER - OVERVIEW VIEW */}
       {view === "overview" && (
         <div className="space-y-10">
+          {shouldShowSetupGuide && (
+            <LandlordSetupGuide landlordStatus={landlordProfile?.status} properties={properties} />
+          )}
+
           {/* KPI Dashboard Cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="rounded-2xl bg-surface-elevated ring-1 ring-border p-5 border border-border text-left">
@@ -832,16 +847,19 @@ function LandlordDashboard() {
             </div>
           ) : properties.length === 0 ? (
             <div className="text-center py-16 bg-secondary/10 rounded-2xl border border-dashed p-8">
-              <Building className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <Building className="h-12 w-12 text-primary mx-auto mb-4" />
               <h3 className="font-bold text-base text-foreground">Bạn chưa đăng ký bất động sản nào</h3>
-              <p className="text-xs text-muted-foreground mt-2 max-w-sm mx-auto">
-                Bắt đầu khai báo thông tin tòa nhà chung cư mini, nhà nguyên căn, phòng trọ dịch vụ để quản lý hợp đồng thuê.
+              <p className="text-xs text-muted-foreground mt-2 max-w-md mx-auto leading-relaxed">
+                Dashboard vẫn sẵn sàng. Bắt đầu bằng một hồ sơ nháp, sau đó thêm phòng, ảnh, tiện ích và xuất bản khi đã đủ điều kiện.
               </p>
-              <Button asChild className="mt-4 bg-primary text-white text-xs font-semibold cursor-pointer">
-                <Link to="/app/landlord/properties/new">
-                  Đăng tin ngay
-                </Link>
-              </Button>
+              <div className="mt-5 flex flex-wrap justify-center gap-2">
+                <Button asChild className="bg-primary text-white text-xs font-semibold cursor-pointer">
+                  <Link to="/app/landlord/properties/new">Tạo bất động sản đầu tiên</Link>
+                </Button>
+                <Button asChild variant="outline" className="text-xs font-semibold">
+                  <Link to="/app/landlord" search={{ view: "overview" }}>Xem checklist setup</Link>
+                </Button>
+              </div>
             </div>
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -916,8 +934,14 @@ function LandlordDashboard() {
             <div className="h-20 bg-muted animate-pulse rounded-2xl" />
           ) : properties.length === 0 ? (
             <div className="text-center py-16 bg-secondary/10 rounded-2xl p-8 border border-dashed">
-              <Building className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-              <p className="text-xs text-muted-foreground">Vui lòng đăng ký bất động sản trước khi quản lý phòng trọ.</p>
+              <Building className="h-10 w-10 text-primary mx-auto mb-3" />
+              <h3 className="font-bold text-sm text-foreground">Cần có bất động sản trước khi thêm phòng</h3>
+              <p className="text-xs text-muted-foreground mt-1 max-w-md mx-auto">
+                Tạo hồ sơ bất động sản đầu tiên để hệ thống biết phòng/unit thuộc tòa nhà nào.
+              </p>
+              <Button asChild className="mt-5 h-10 rounded-xl bg-primary text-xs font-bold text-white">
+                <Link to="/app/landlord/properties/new">Tạo bất động sản đầu tiên</Link>
+              </Button>
             </div>
           ) : (
             <div className="space-y-6">
@@ -1422,9 +1446,9 @@ function LandlordDashboard() {
                   
                   <button
                     type="button"
-                    onClick={() => setRoomStatus("brand")}
+                    onClick={() => setSettingsSection("brand")}
                     className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold transition flex items-center gap-2 ${
-                      roomStatus === "brand" || (roomStatus !== "payment" && roomStatus !== "policy" && roomStatus !== "advanced")
+                      settingsSection === "brand" || (settingsSection !== "payment" && settingsSection !== "policy" && settingsSection !== "advanced")
                         ? "bg-primary text-primary-foreground shadow-md shadow-primary/10"
                         : "text-muted-foreground hover:bg-muted/30"
                     }`}
@@ -1435,9 +1459,9 @@ function LandlordDashboard() {
 
                   <button
                     type="button"
-                    onClick={() => setRoomStatus("payment")}
+                    onClick={() => setSettingsSection("payment")}
                     className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold transition flex items-center gap-2 ${
-                      roomStatus === "payment"
+                      settingsSection === "payment"
                         ? "bg-primary text-primary-foreground shadow-md shadow-primary/10"
                         : "text-muted-foreground hover:bg-muted/30"
                     }`}
@@ -1448,9 +1472,9 @@ function LandlordDashboard() {
 
                   <button
                     type="button"
-                    onClick={() => setRoomStatus("policy")}
+                    onClick={() => setSettingsSection("policy")}
                     className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold transition flex items-center gap-2 ${
-                      roomStatus === "policy"
+                      settingsSection === "policy"
                         ? "bg-primary text-primary-foreground shadow-md shadow-primary/10"
                         : "text-muted-foreground hover:bg-muted/30"
                     }`}
@@ -1461,9 +1485,9 @@ function LandlordDashboard() {
 
                   <button
                     type="button"
-                    onClick={() => setRoomStatus("advanced")}
+                    onClick={() => setSettingsSection("advanced")}
                     className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold transition flex items-center gap-2 ${
-                      roomStatus === "advanced"
+                      settingsSection === "advanced"
                         ? "bg-primary text-primary-foreground shadow-md shadow-primary/10"
                         : "text-muted-foreground hover:bg-muted/30"
                     }`}
@@ -1485,7 +1509,7 @@ function LandlordDashboard() {
               <div className="md:col-span-2 space-y-6">
                 
                 {/* 1. BRAND & CONTACTS GROUP */}
-                {(roomStatus === "brand" || (roomStatus !== "payment" && roomStatus !== "policy" && roomStatus !== "advanced")) && (
+                {(settingsSection === "brand" || (settingsSection !== "payment" && settingsSection !== "policy" && settingsSection !== "advanced")) && (
                   <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl bg-surface-elevated ring-1 ring-border p-6 border border-border space-y-4">
                     <div className="border-b border-border pb-3">
                       <h4 className="font-bold text-sm text-foreground">Thương hiệu & Kênh liên hệ</h4>
@@ -1558,7 +1582,7 @@ function LandlordDashboard() {
                 )}
 
                 {/* 2. BANKING & VIETQR GROUP */}
-                {roomStatus === "payment" && (
+                {settingsSection === "payment" && (
                   <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl bg-surface-elevated ring-1 ring-border p-6 border border-border space-y-4">
                     <div className="border-b border-border pb-3">
                       <h4 className="font-bold text-sm text-foreground">Tài khoản nhận tiền & VietQR</h4>
@@ -1620,7 +1644,7 @@ function LandlordDashboard() {
                 )}
 
                 {/* 3. DEFAULT RENTAL POLICIES GROUP */}
-                {roomStatus === "policy" && (
+                {settingsSection === "policy" && (
                   <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl bg-surface-elevated ring-1 ring-border p-6 border border-border space-y-4">
                     <div className="border-b border-border pb-3">
                       <h4 className="font-bold text-sm text-foreground">Chính sách thuê & Nội quy mặc định</h4>
@@ -1680,7 +1704,7 @@ function LandlordDashboard() {
                 )}
 
                 {/* 4. SYSTEM & ADVANCED GROUP */}
-                {roomStatus === "advanced" && (
+                {settingsSection === "advanced" && (
                   <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl bg-surface-elevated ring-1 ring-border p-6 border border-border space-y-5">
                     <div className="border-b border-border pb-3">
                       <h4 className="font-bold text-sm text-foreground">Hệ thống & Tự động hóa</h4>

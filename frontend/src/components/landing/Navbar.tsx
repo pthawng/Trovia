@@ -4,9 +4,12 @@ import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { LanguageSwitcher } from "@/components/common/LanguageSwitcher";
+import { UserBar } from "@/components/app/UserBar";
+import { useAuth } from "@/lib/auth-context";
 
 export function Navbar() {
   const { t } = useTranslation();
+  const { user, loading } = useAuth();
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -17,7 +20,7 @@ export function Navbar() {
   }, []);
 
   const links = [
-    { label: t("nav.explore"), href: "/app/explore" },
+    { label: t("nav.explore"), href: "/explore" },
     { label: t("landing.why_us"), href: "#why-us" },
   ];
 
@@ -54,14 +57,19 @@ export function Navbar() {
             ))}
           </nav>
           <div className="flex items-center gap-2">
-            <LanguageSwitcher />
-            
-            <Link to="/login" className="hidden sm:inline-flex px-4 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-              {t("nav.login")}
-            </Link>
-            <Link to="/register" className="inline-flex items-center gap-1.5 rounded-lg bg-foreground text-background px-4 py-2.5 text-sm font-medium shadow-sm hover:opacity-90 transition-opacity">
-              {t("nav.register")}
-            </Link>
+            {!loading && user ? (
+              <UserBar showModeSwitch={false} />
+            ) : (
+              <>
+                <LanguageSwitcher />
+                <Link to="/login" className="hidden sm:inline-flex px-4 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+                  {t("nav.login")}
+                </Link>
+                <Link to="/register" className="inline-flex items-center gap-1.5 rounded-lg bg-foreground text-background px-4 py-2.5 text-sm font-medium shadow-sm hover:opacity-90 transition-opacity">
+                  {t("nav.register")}
+                </Link>
+              </>
+            )}
             <button className="md:hidden p-2 rounded-lg hover:bg-secondary" aria-label="Menu">
               <Menu className="h-5 w-5" />
             </button>

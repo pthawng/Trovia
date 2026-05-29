@@ -15,7 +15,7 @@
   "back": "Back",
   "continue": "Continue",
   "status": "Status",
-  "actions": "Actions",
+  "actions": "Settings",
   "submit": "Submit",
   "logout": "Sign out",
   "select": "Select",
@@ -45,7 +45,7 @@
   "expand_sidebar": "Expand sidebar",
   "switch_to_tenant": "Switch to Tenant",
   "switch_to_landlord": "Switch to Landlord",
-  "personal_hub": "Personal Hub",
+  "personal_hub": "Dashboard",
   "landing": {
     "hero_title": "Find the perfect rental room & apartment",
     "hero_subtitle": "Vietnam's premium PropTech platform connecting students and young professionals with verified landlords. Direct, safe, and transparent.",

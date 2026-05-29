@@ -62,12 +62,17 @@ function LandlordProperties() {
           <div>
             <h3 className="font-bold text-lg text-foreground">Chưa có bất động sản nào</h3>
             <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
-              Bắt đầu tạo hồ sơ bất động sản đầu tiên của bạn để thêm phòng và đăng tin cho thuê trên thị trường Trovia.
+              Tạo một hồ sơ nháp trước, sau đó thêm phòng, ảnh, tiện ích và xuất bản khi checklist đã đủ.
             </p>
           </div>
-          <Button asChild className="rounded-xl px-6">
-            <Link to="/app/landlord/properties/new">Thêm ngay bất động sản</Link>
-          </Button>
+          <div className="flex flex-wrap justify-center gap-2">
+            <Button asChild className="rounded-xl px-6">
+              <Link to="/app/landlord/properties/new">Tạo bất động sản đầu tiên</Link>
+            </Button>
+            <Button asChild variant="outline" className="rounded-xl px-6">
+              <Link to="/app/landlord" search={{ view: "overview" }}>Xem checklist setup</Link>
+            </Button>
+          </div>
         </div>
       ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">

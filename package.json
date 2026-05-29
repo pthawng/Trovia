@@ -1,0 +1,8 @@
+{
+  "name": "trovia-home-hub",
+  "private": true,
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "dev:services": "node scripts/dev.mjs"
+  }
+}

@@ -219,6 +219,9 @@ export class PropertiesService {
       include: {
         images: true,
         rooms: true,
+        propertyAmenities: {
+          include: { amenity: true },
+        },
       },
     });
   }

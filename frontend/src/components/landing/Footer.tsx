@@ -51,7 +51,7 @@ export function Footer() {
           <h4 className="text-sm font-bold text-foreground mb-4">Sản phẩm</h4>
           <ul className="space-y-3 text-sm">
             <li>
-              <Link to="/app/explore" className="text-muted-foreground hover:text-primary transition-colors">
+              <Link to="/explore" className="text-muted-foreground hover:text-primary transition-colors">
                 Khám phá phòng
               </Link>
             </li>

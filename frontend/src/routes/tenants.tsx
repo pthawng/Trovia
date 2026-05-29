@@ -57,7 +57,7 @@ function TenantsPage() {
                 className="flex items-center gap-3"
               >
                 <Link
-                  to="/app/explore"
+                  to="/explore"
                   className="inline-flex items-center gap-2 rounded-xl bg-primary text-primary-foreground px-5 py-3.5 text-sm font-semibold shadow-[var(--shadow-glow)] hover:opacity-95 transition"
                 >
                   Bắt đầu tìm phòng ngay
@@ -146,7 +146,7 @@ function TenantsPage() {
               <h3 className="text-xl sm:text-2xl font-bold text-foreground">Tìm căn phòng lý tưởng của bạn ngay bây giờ</h3>
               <p className="text-xs text-muted-foreground max-w-lg mx-auto">Hàng ngàn phòng trọ dịch vụ cao cấp, phòng trọ giá rẻ gần các trường đại học lớn đang chờ bạn khám phá.</p>
               <Link
-                to="/app/explore"
+                to="/explore"
                 className="inline-flex items-center gap-2 rounded-xl bg-primary text-primary-foreground px-6 py-3 text-sm font-semibold shadow-md shadow-primary/20 hover:opacity-95 transition animate-pulse"
               >
                 Khám phá bản đồ phòng trọ

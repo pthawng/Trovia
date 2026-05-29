@@ -19,6 +19,7 @@ import {
 import { PropertiesService } from './properties.service';
 import { CreatePropertyDto, UpdatePropertyDto } from './dto/property.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from '../../common/guards/optional-jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { GetUser } from '../../common/decorators/get-user.decorator';
@@ -86,12 +87,12 @@ export class PropertiesController {
   }
 
   @Get(':id')
+  @UseGuards(OptionalJwtAuthGuard)
   @ApiOperation({
     summary:
       'Get a specific property detailed info (includes rooms & landlord info)',
   })
-  async findOne(@Param('id') id: string, @Query('userId') userId?: string) {
-    // Note: If calling from authenticated FE, pass the user ID if available to access DRAFT listings
+  async findOne(@Param('id') id: string, @GetUser('id') userId?: string) {
     return this.propertiesService.findOne(id, userId);
   }
 

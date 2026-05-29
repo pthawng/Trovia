@@ -37,7 +37,7 @@ export function SmartSearch() {
     if (keyword) searchParams.append("query", keyword);
 
     router.navigate({
-      to: "/app/explore",
+      to: "/explore",
       search: {
         city: city || undefined,
         type: roomType !== "ALL" ? roomType : undefined,
@@ -50,7 +50,7 @@ export function SmartSearch() {
 
   const handleChipClick = (filter: any) => {
     router.navigate({
-      to: "/app/explore",
+      to: "/explore",
       search: {
         type: filter.type || undefined,
         budgetMax: filter.budgetMax || undefined,
@@ -160,4 +160,3 @@ export function SmartSearch() {
     </section>
   );
 }
-
